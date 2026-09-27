@@ -694,10 +694,24 @@
     },
     {
       "path": "docs/transcriptions/T00032.md",
+      "title": "§T00032 — переход к папке скрипта Василия",
+      "status": "reference",
+      "purpose": "Сохранение прежнего адреса карточки скрипта Василия",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00032/index.md",
       "title": "§T00032 — Скрипт Василия «Ор-ва! Ендерект!»",
       "status": "reference",
       "purpose": "Исходная строка и предложенное чтение скрипта Василия о защите молитвы",
       "tags": ["T00032"]
+    },
+    {
+      "path": "docs/transcriptions/T00032/T00014-analysis-2026-09-27.md",
+      "title": "Пересмотр разбора §T00014 — первый скрипт",
+      "status": "reference",
+      "purpose": "Предоставленный автором новый разбор первого скрипта и теория миропомазания",
+      "tags": []
     },
     {
       "path": "docs/CHANNEL_HYPOTHESIS.md",
