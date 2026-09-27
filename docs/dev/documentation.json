@@ -614,6 +614,97 @@
       "tags": [
         "T00026"
       ]
+    },
+    {
+      "path": "docs/transcriptions/T00028.md",
+      "title": "§T00028 — Скрипт 5 — «Шалом! Ве!»",
+      "status": "reference",
+      "purpose": "Указатель прежнего адреса на часть 5 эпизода Наташи",
+      "tags": ["T00028"]
+    },
+    {
+      "path": "docs/transcriptions/T00029.md",
+      "title": "§T00029 — Скрипт 6, часть 1 — «Елохим! Шва-де!»",
+      "status": "reference",
+      "purpose": "Указатель прежнего адреса на часть 6 эпизода Наташи",
+      "tags": ["T00029"]
+    },
+    {
+      "path": "docs/transcriptions/T00030.md",
+      "title": "§T00030 — Второй скрипт для Алексея",
+      "status": "reference",
+      "purpose": "Исходная строка и статус предложенного чтения: Второй скрипт для Алексея",
+      "tags": ["T00030"]
+    },
+    {
+      "path": "docs/transcriptions/T00031.md",
+      "title": "§T00031 — «Лави-рук д(как т)ессей»",
+      "status": "reference",
+      "purpose": "Исходная строка и статус предложенного чтения: «Лави-рук д(как т)ессей»",
+      "tags": ["T00031"]
+    },
+    {
+      "path": "docs/transcriptions/T00027/index.md",
+      "title": "§T00027 — Эпизод Наташи: шесть последовательных скриптов",
+      "status": "reference",
+      "purpose": "Общее оглавление шести частей эпизода Наташи",
+      "tags": ["T00027"]
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_1.md",
+      "title": "§T00027 — part_1: Первый скрипт — временный защитник",
+      "status": "reference",
+      "purpose": "Исходная строка и предложенное чтение части 1 эпизода Наташи",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_2.md",
+      "title": "§T00027 — part_2: Второй скрипт — заселение храма души",
+      "status": "reference",
+      "purpose": "Исходная строка и предложенное чтение части 2 эпизода Наташи",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_3.md",
+      "title": "§T00027 — part_3: Третий скрипт — пробуждение",
+      "status": "reference",
+      "purpose": "Исходная строка и предложенное чтение части 3 эпизода Наташи",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_4.md",
+      "title": "§T00027 — part_4: Четвёртый скрипт — псалом освобождения",
+      "status": "reference",
+      "purpose": "Исходная строка и предложенное чтение части 4 эпизода Наташи",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_5.md",
+      "title": "§T00027 — part_5: Пятый скрипт — восстановление власти",
+      "status": "reference",
+      "purpose": "Исходная строка и предложенное чтение части 5 эпизода Наташи",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_6.md",
+      "title": "§T00027 — part_6: Шестой скрипт, часть 1 — исцеление",
+      "status": "reference",
+      "purpose": "Исходная строка и предложенное чтение части 6 эпизода Наташи",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00032.md",
+      "title": "§T00032 — Скрипт Василия «Ор-ва! Ендерект!»",
+      "status": "reference",
+      "purpose": "Исходная строка и предложенное чтение скрипта Василия о защите молитвы",
+      "tags": ["T00032"]
+    },
+    {
+      "path": "docs/CHANNEL_HYPOTHESIS.md",
+      "title": "Гипотезы о «канале» по скрипту Василия",
+      "status": "reference",
+      "purpose": "Семь предложенных сопоставлений по скрипту Василия и границы проверки",
+      "tags": ["channelhypothesis"]
     }
   ]
 }
