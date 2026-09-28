@@ -315,6 +315,152 @@ a:focus-visible {
   line-height: 1.6;
 }
 
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 50px;
+}
+
+.help-card {
+  position: relative;
+  display: block;
+  min-height: 225px;
+  padding: 27px 54px 27px 30px;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.help-card:hover {
+  border-color: var(--accent);
+}
+
+.help-card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.help-card-number {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.help-card h3 {
+  max-width: 430px;
+  margin: 22px 0 12px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(23px, 2.3vw, 30px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.help-card p {
+  max-width: 510px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.help-card-arrow {
+  position: absolute;
+  right: 26px;
+  bottom: 24px;
+  color: var(--accent);
+  font-size: 23px;
+}
+
+.help-back {
+  display: inline-block;
+  margin-bottom: 34px;
+  color: var(--accent-dark);
+  font-size: 14px;
+  font-weight: 700;
+  text-underline-offset: 3px;
+}
+
+.help-page {
+  max-width: 850px;
+  margin-top: 42px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
+  line-height: 1.7;
+}
+
+.help-page p {
+  margin: 0 0 25px;
+}
+
+.help-page h3 {
+  margin: 42px 0 16px;
+  font-size: clamp(27px, 3vw, 36px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.help-page ul {
+  margin: 0 0 26px;
+  padding-left: 30px;
+}
+
+.help-page li + li {
+  margin-top: 12px;
+}
+
+.situation-table-wrap {
+  overflow-x: auto;
+  margin-top: 50px;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+}
+
+.situation-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.situation-table th,
+.situation-table td {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.situation-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.situation-table th {
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.situation-table td:first-child {
+  width: 80px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.situation-table a {
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-underline-offset: 4px;
+}
+
+.situation-table a:hover {
+  color: var(--accent-dark);
+}
+
 .empty-state,
 .donate-card {
   display: flex;
@@ -598,6 +744,10 @@ a:focus-visible {
     gap: 22px;
   }
 
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+
   .note-card {
     max-width: 500px;
   }
@@ -657,6 +807,36 @@ a:focus-visible {
   .empty-state,
   .donate-card {
     margin-top: 40px;
+  }
+
+  .help-grid {
+    margin-top: 40px;
+  }
+
+  .situation-table-wrap {
+    margin-top: 40px;
+  }
+
+  .situation-table th,
+  .situation-table td {
+    padding: 15px 13px;
+  }
+
+  .situation-table td:first-child {
+    width: 50px;
+  }
+
+  .situation-table a {
+    font-size: 15px;
+  }
+
+  .help-card {
+    min-height: 0;
+    padding: 24px 48px 24px 24px;
+  }
+
+  .help-page {
+    font-size: 18px;
   }
 
   .body-copy {

@@ -107,7 +107,9 @@
     const collectionEntries = entries.filter((entry) => entry.published && entry.type === type);
 
     if (collectionEntries.length === 0) {
-      addText(container, "p", "day-empty", emptyMessage);
+      if (emptyMessage) {
+        addText(container, "p", "day-empty", emptyMessage);
+      }
       return;
     }
 
@@ -118,7 +120,7 @@
 
   function renderCollections() {
     renderCollection(newsResults, "news", "Новостей пока нет.");
-    renderCollection(situationsResults, "situation", "Ситуаций в каталоге пока нет.");
+    renderCollection(situationsResults, "situation", "");
   }
 
   function renderCalendar() {
@@ -174,7 +176,9 @@
     const currentId = panelIds.has(hash) ? hash : "about";
 
     for (const link of links) {
-      const isCurrent = link.dataset.tabLink === currentId;
+      const isCurrent = link.dataset.tabLink === currentId
+        || (link.dataset.tabLink === "help" && currentId.startsWith("help-"))
+        || (link.dataset.tabLink === "situations" && currentId.startsWith("situation-"));
       link.classList.toggle("is-active", isCurrent);
 
       if (isCurrent) {
