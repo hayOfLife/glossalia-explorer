@@ -47,6 +47,7 @@ $paths = @()
 $tagOwners = @{}
 $contents = @{}
 $anchors = @{}
+$verbatimPaths = @{}
 $issues = New-Object 'System.Collections.Generic.List[string]'
 $allowedStatuses = @("current", "plan", "evidence", "reference", "process", "template", "generated")
 
@@ -120,6 +121,10 @@ foreach ($document in $documents) {
         if ($tag -cnotmatch '^(?:[a-z][a-z0-9]{2,23}|T[0-9]{5})$') { Add-Issue "$path : invalid tag $tag"; continue }
         if ($tagOwners.ContainsKey($tag)) { Add-Issue "Duplicate tag: $tag" } else { $tagOwners[$tag] = $path }
     }
+    if ($document.verbatim -eq $true) {
+        if ($document.status -cne "reference") { Add-Issue "$path : verbatim document must have reference status" }
+        $verbatimPaths[$path] = $true
+    }
     if ($path -ceq $mapPath -and $Write) { continue }
     if ($path -cnotin $markdownFiles) { Add-Issue "$path : missing or excluded document"; continue }
 
@@ -184,7 +189,10 @@ foreach ($path in @($contents.Keys)) {
     foreach ($match in [regex]::Matches($body, '(?<image>!)?\[(?<label>[^\]\r\n]*)\]\[(?<id>[^\]\r\n]*)\]')) {
         $id = $match.Groups["id"].Value
         if (-not $id) { $id = $match.Groups["label"].Value }
-        if (-not $definitions.ContainsKey($id.ToLowerInvariant())) { Add-Issue "$path : missing link definition $id" }
+        if (-not $definitions.ContainsKey($id.ToLowerInvariant()) -and
+            -not ($verbatimPaths.ContainsKey($path) -and $id -match '^web_(?:[0-9]+_)+[0-9]+$')) {
+            Add-Issue "$path : missing link definition $id"
+        }
         if ($match.Groups["image"].Success -and -not $match.Groups["label"].Value.Trim()) { Add-Issue "$path : image has no alt text" }
     }
 }

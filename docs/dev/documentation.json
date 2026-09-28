@@ -387,41 +387,6 @@
       "tags": []
     },
     {
-      "path": "chatgpt/originals/script4_analysis_T00017.md",
-      "title": "Разбор транскрипции T00017 (четвёртый скрипт)",
-      "status": "reference",
-      "purpose": "Исходный файл разбора четвёртого скрипта",
-      "tags": []
-    },
-    {
-      "path": "chatgpt/originals/script4_analysis_T00017 (1).md",
-      "title": "Разбор транскрипции T00017 (четвёртый скрипт)",
-      "status": "reference",
-      "purpose": "Повторно приложенный исходный файл разбора четвёртого скрипта",
-      "tags": []
-    },
-    {
-      "path": "chatgpt/originals/script5_PARDES_analysis_T00017.md",
-      "title": "Скрипт T00017 (пятый) — Анализ через ПАРДЕС",
-      "status": "reference",
-      "purpose": "Исходный файл разбора второго отрывка",
-      "tags": []
-    },
-    {
-      "path": "chatgpt/originals/script7_deep_structure_T00019.md",
-      "title": "Скрипт 7 — Глубокий структурный анализ",
-      "status": "reference",
-      "purpose": "Исходный файл структурного разбора скрипта о донатах",
-      "tags": []
-    },
-    {
-      "path": "chatgpt/originals/script7_deep_structure_T00019 (1).md",
-      "title": "Скрипт 7 — Глубокий структурный анализ",
-      "status": "reference",
-      "purpose": "Повторно сохранённый исходный файл разбора скрипта о донатах",
-      "tags": []
-    },
-    {
       "path": "CONTRIBUTING.md",
       "title": "Участие в проекте",
       "status": "process",
@@ -815,9 +780,9 @@
     },
     {
       "path": "docs/transcriptions/T00033/index.md",
-      "title": "§T00033 — Первые два отрывка страницы «Зачем нужен этот сайт»",
+      "title": "§T00033 — Материалы страницы «Зачем нужен этот сайт»",
       "status": "reference",
-      "purpose": "Указатель дословных разборов первых двух отрывков страницы",
+      "purpose": "Указатель дословных разборов отрывков страницы",
       "tags": ["T00033"]
     },
     {
@@ -832,6 +797,43 @@
       "title": "Скрипт T00017 (пятый) — Анализ через ПАРДЕС",
       "status": "reference",
       "purpose": "Дословная копия присланного разбора второго отрывка",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00033/part_3.md",
+      "title": "Скрипт T00018 — Практическая инструкция: «Интернет-сайт»",
+      "status": "reference",
+      "purpose": "Дословная копия присланного разбора третьего отрывка",
+      "verbatim": true,
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00033/part_4.md",
+      "title": "Скрипт 9: «Шалом! Елохим Едро-Фиктим! Едро-ушма! Едро-сетровиноте!»",
+      "status": "reference",
+      "purpose": "Дословная копия присланного разбора четвёртого отрывка",
+      "verbatim": true,
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00034/index.md",
+      "title": "§T00034 — Ответ о донатах на сайте",
+      "status": "reference",
+      "purpose": "Указатель дословного разбора первого абзаца страницы донатов",
+      "tags": ["T00034"]
+    },
+    {
+      "path": "docs/transcriptions/T00034/part_1.md",
+      "title": "Скрипт 7 — Глубокий структурный анализ",
+      "status": "reference",
+      "purpose": "Дословная копия присланного разбора о донатах",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00034/part_2.md",
+      "title": "Рабоафила — анализ (Script 8, T00020)",
+      "status": "reference",
+      "purpose": "Дословная копия присланного разбора второго абзаца страницы донатов",
       "tags": []
     },
     {

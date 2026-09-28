@@ -61,6 +61,18 @@ try {
     Write-Fixture "docs/dev/documentation.json" $registryText
     Assert-Audit -Generate
     Assert-Audit
+    Write-Fixture "docs/T00001.md" "# §T00001 — Пример`n`n[Источник][web_1_2_3]`n"
+    Assert-Audit -ExpectedError "missing link definition"
+    $registry.documents[2]["verbatim"] = $true
+    Write-Fixture "docs/dev/documentation.json" ($registry | ConvertTo-Json -Depth 6)
+    Assert-Audit
+    Write-Fixture "docs/T00001.md" "# §T00001 — Пример`n`n[Ошибка][missing]`n"
+    Assert-Audit -ExpectedError "missing link definition"
+    Write-Fixture "docs/T00001.md" "# §T00001 — Пример`n`nТекст §T00001`n"
+    $registry.documents[2].Remove("verbatim")
+    Write-Fixture "docs/dev/documentation.json" $registryText
+    Assert-Audit
+
     $mapPath = Join-Path $fixtureRoot "docs/dev/tag-map.md"
     $mapText = [IO.File]::ReadAllText($mapPath)
 
