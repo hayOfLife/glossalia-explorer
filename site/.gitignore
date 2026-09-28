@@ -1,2 +1,3 @@
 /database/config.php
 /public_html/data/*.tmp
+/reactions.json

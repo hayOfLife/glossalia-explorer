@@ -1,0 +1,37 @@
+94-232-41-163.sslip.io {
+	tls {
+		issuer acme {
+			disable_http_challenge
+		}
+	}
+
+	header {
+		-Server
+		Cache-Control "no-store"
+		Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+		Cross-Origin-Resource-Policy "same-origin"
+		Permissions-Policy "accelerometer=(), camera=(), geolocation=(), microphone=()"
+		Referrer-Policy "no-referrer"
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+	}
+
+	@glossaliae_reactions path /glossaliae/reactions
+	handle @glossaliae_reactions {
+		request_body {
+			max_size 256
+		}
+		reverse_proxy 127.0.0.1:8791 {
+			header_up X-Glossaliae-Client-IP {remote_host}
+			transport http {
+				dial_timeout 3s
+				response_header_timeout 10s
+			}
+		}
+	}
+
+	handle {
+		respond 404
+	}
+}

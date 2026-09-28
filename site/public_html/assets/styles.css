@@ -119,7 +119,6 @@ a:focus-visible {
 }
 
 .eyebrow,
-.section-number,
 .note-label {
   margin: 0;
   color: var(--accent);
@@ -202,35 +201,42 @@ a:focus-visible {
 
 .section-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
-  overflow-x: auto;
   border-bottom: 1px solid var(--line);
-  scrollbar-width: thin;
 }
 
 .section-link {
   display: inline-flex;
-  flex: 0 0 auto;
+  flex: 1 1 120px;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  min-width: 0;
   min-height: 76px;
   padding: 4px clamp(14px, 2vw, 29px);
   border-bottom: 3px solid transparent;
   color: var(--ink-soft);
   font-size: 15px;
   font-weight: 700;
+  line-height: 1.3;
   text-decoration: none;
-  white-space: nowrap;
 }
 
 .section-link:first-child {
   padding-left: 0;
 }
 
-.section-link span {
-  color: #a9a092;
+.section-link-translation {
+  flex: 2 1 260px;
+}
+
+.section-link small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink-soft);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .section-link:hover,
@@ -240,10 +246,6 @@ a:focus-visible {
 
 .section-link.is-active {
   border-bottom-color: var(--accent);
-}
-
-.section-link.is-active span {
-  color: var(--accent);
 }
 
 .section-content {
@@ -265,6 +267,7 @@ a:focus-visible {
 }
 
 .section-heading h2 {
+  margin-top: 0;
   font-size: clamp(44px, 5vw, 67px);
   line-height: 1.08;
 }
@@ -409,6 +412,180 @@ a:focus-visible {
 
 .help-page li + li {
   margin-top: 12px;
+}
+
+.alice-start-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-width: 212px;
+  padding: 10px 12px 10px 20px;
+  border: 1px solid #8c30e5;
+  border-radius: 14px;
+  background: var(--paper-light);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.alice-start-button:hover {
+  background: #f1e8ff;
+}
+
+.alice-start-button[aria-disabled="true"] {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.alice-start-button img {
+  flex: none;
+  display: block;
+}
+
+.alice-prompt-status {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+.alice-prompt-download {
+  display: inline-block;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-light);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.alice-prompt-download:hover {
+  background: #f1e8ff;
+}
+
+.sos-list {
+  max-width: 850px;
+  margin-top: 42px;
+}
+
+.sos-item {
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+}
+
+.sos-item summary {
+  padding: 20px 24px;
+  cursor: pointer;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22px;
+}
+
+.sos-item summary:focus-visible,
+.sos-actions button:focus-visible,
+.sos-actions a:focus-visible,
+.sos-note-dialog button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.sos-item-body,
+.sos-item > p {
+  margin: 0;
+  padding: 0 24px 24px;
+}
+
+.sos-item-body label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.sos-item-body textarea {
+  width: 100%;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: 18px/1.6 Georgia, "Times New Roman", serif;
+  resize: vertical;
+}
+
+.sos-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.sos-actions button,
+.sos-actions a {
+  display: inline-block;
+  padding: 10px 16px;
+  border: 1px solid var(--accent-dark);
+  background: transparent;
+  color: var(--accent-dark);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sos-actions button:hover:not(:disabled),
+.sos-actions a:hover {
+  background: var(--accent-dark);
+  color: var(--paper-light);
+}
+
+.sos-actions button:disabled {
+  border-color: var(--line);
+  color: var(--ink-soft);
+  cursor: default;
+}
+
+.sos-copy-status {
+  color: var(--moss);
+  font-size: 14px;
+}
+
+.sos-note-dialog {
+  width: min(90vw, 550px);
+  padding: 28px;
+  border: 1px solid var(--line);
+  background: var(--paper-light);
+  color: var(--ink);
+}
+
+.sos-note-dialog::backdrop {
+  background: rgb(20 24 22 / 60%);
+}
+
+.sos-note-dialog h3 {
+  margin: 0 0 16px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 26px;
+}
+
+.sos-note-dialog p {
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.sos-note-dialog button {
+  padding: 10px 16px;
+  border: 1px solid var(--accent-dark);
+  background: var(--accent-dark);
+  color: var(--paper-light);
+  cursor: pointer;
 }
 
 .situation-table-wrap {
@@ -707,6 +884,51 @@ a:focus-visible {
   text-underline-offset: 3px;
 }
 
+.entry-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.entry-reactions-label {
+  width: 100%;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.entry-reactions button {
+  min-width: 72px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-light);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.entry-reactions button[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.entry-reactions button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.entry-reactions button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.entry-reactions-status {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
 .day-empty {
   margin: 0;
   padding: 25px 28px;
@@ -789,18 +1011,19 @@ a:focus-visible {
   }
 
   .section-link {
+    flex-basis: calc(50% - 2px);
     min-height: 66px;
     padding-right: 15px;
     padding-left: 15px;
     font-size: 14px;
   }
 
-  .content-panel {
-    padding: 47px 0 65px;
+  .section-link-translation {
+    flex-basis: 100%;
   }
 
-  .section-heading h2 {
-    margin-top: 18px;
+  .content-panel {
+    padding: 47px 0 65px;
   }
 
   .about-grid,

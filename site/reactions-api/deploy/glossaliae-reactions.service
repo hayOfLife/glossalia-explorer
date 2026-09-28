@@ -1,0 +1,37 @@
+[Unit]
+Description=Glossolalia transcription reactions API
+After=network.target
+
+[Service]
+Type=simple
+User=glossaliae-reactions
+Group=glossaliae-reactions
+WorkingDirectory=/opt/glossaliae-reactions
+Environment=REACTIONS_DATA_FILE=/var/lib/glossaliae-reactions/reactions.json
+Environment=REACTIONS_ALLOWED_ORIGIN=https://glossalia-explorer.tuqo.ru
+ExecStart=/usr/bin/node /opt/glossaliae-reactions/server.mjs
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+StateDirectory=glossaliae-reactions
+StateDirectoryMode=0700
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/glossaliae-reactions
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+IPAddressDeny=any
+IPAddressAllow=localhost
+SocketBindDeny=any
+SocketBindAllow=tcp:8791
+TasksMax=64
+MemoryHigh=96M
+MemoryMax=128M
+LimitCORE=0
+
+[Install]
+WantedBy=multi-user.target

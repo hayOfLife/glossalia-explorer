@@ -12,6 +12,8 @@ __pycache__/
 *.wma
 *.mp4
 *.txt
+!/site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt
+!/site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt
 !/galilean.txt
 !/syr.txt
 !/grc.txt

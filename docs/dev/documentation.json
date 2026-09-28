@@ -55,11 +55,18 @@
       "tags": ["readinglist"]
     },
     {
-      "path": "docs/THEORY.md",
+      "path": "docs/glossaryHypothesis.md",
       "title": "Авторская теория глоссолалии как «протокола»",
       "status": "reference",
       "purpose": "Авторские предпосылки, гипотезы и границы метафор из THEORY.md от 25.09.2026",
       "tags": ["theory"]
+    },
+    {
+      "path": "docs/humanLifeMeaningHypothesis.md",
+      "title": "Гипотеза о смысле жизни человека с точки зрения Бога",
+      "status": "reference",
+      "purpose": "Авторское предположение о Божьем намерении узнать человека по его делам",
+      "tags": ["lifemeaning"]
     },
     {
       "path": "docs/GLOSSOLALIA_HISTORIES.md",
@@ -328,6 +335,90 @@
       "title": "Работа с Glossolalia Explorer",
       "status": "process",
       "purpose": "Ограничения проекта и маршрут чтения для агентов",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/memory.md",
+      "title": "Память ChatGPT для Glossolalia Explorer",
+      "status": "process",
+      "purpose": "Дословное сохранение присланных транскрипций и разборов",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script10_analysis_T00021.md",
+      "title": "Скрипт 10 — Молитва защиты (T00021)",
+      "status": "reference",
+      "purpose": "Дословный исходный файл разбора, приложенный автором",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script1_full_analysis_T00014.md",
+      "title": "§T00014 — B3-F1: Полный разбор первого скрипта",
+      "status": "reference",
+      "purpose": "Исходный файл одной из версий разбора первого скрипта",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script1_full_analysis_T00014 (1).md",
+      "title": "§T00014 — Первый скрипт: Инициализация канала глоссолалии",
+      "status": "reference",
+      "purpose": "Исходный файл следующей версии разбора первого скрипта",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script1_full_analysis_T00014 (2).md",
+      "title": "§T00014 — Первый скрипт. Полный разбор",
+      "status": "reference",
+      "purpose": "Исходный файл варианта разбора первого скрипта",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script1_full_analysis_T00014 (3).md",
+      "title": "§T00014 — Первый скрипт. Полный разбор",
+      "status": "reference",
+      "purpose": "Повторно сохранённый исходный файл того же варианта разбора",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script1_full_analysis_T00014 (4).md",
+      "title": "§T00014 — B3-F1",
+      "status": "reference",
+      "purpose": "Исходный файл последней найденной версии разбора первого скрипта",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script4_analysis_T00017.md",
+      "title": "Разбор транскрипции T00017 (четвёртый скрипт)",
+      "status": "reference",
+      "purpose": "Исходный файл разбора четвёртого скрипта",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script4_analysis_T00017 (1).md",
+      "title": "Разбор транскрипции T00017 (четвёртый скрипт)",
+      "status": "reference",
+      "purpose": "Повторно приложенный исходный файл разбора четвёртого скрипта",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script5_PARDES_analysis_T00017.md",
+      "title": "Скрипт T00017 (пятый) — Анализ через ПАРДЕС",
+      "status": "reference",
+      "purpose": "Исходный файл разбора второго отрывка",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script7_deep_structure_T00019.md",
+      "title": "Скрипт 7 — Глубокий структурный анализ",
+      "status": "reference",
+      "purpose": "Исходный файл структурного разбора скрипта о донатах",
+      "tags": []
+    },
+    {
+      "path": "chatgpt/originals/script7_deep_structure_T00019 (1).md",
+      "title": "Скрипт 7 — Глубокий структурный анализ",
+      "status": "reference",
+      "purpose": "Повторно сохранённый исходный файл разбора скрипта о донатах",
       "tags": []
     },
     {
@@ -720,6 +811,27 @@
       "title": "Пересмотр разбора §T00014 — первый скрипт",
       "status": "reference",
       "purpose": "Предоставленный автором новый разбор первого скрипта и теория миропомазания",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00033/index.md",
+      "title": "§T00033 — Первые два отрывка страницы «Зачем нужен этот сайт»",
+      "status": "reference",
+      "purpose": "Указатель дословных разборов первых двух отрывков страницы",
+      "tags": ["T00033"]
+    },
+    {
+      "path": "docs/transcriptions/T00033/part_1.md",
+      "title": "Разбор транскрипции T00017 (четвёртый скрипт)",
+      "status": "reference",
+      "purpose": "Дословная копия присланного файла без изменения разбора",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00033/part_2.md",
+      "title": "Скрипт T00017 (пятый) — Анализ через ПАРДЕС",
+      "status": "reference",
+      "purpose": "Дословная копия присланного разбора второго отрывка",
       "tags": []
     },
     {

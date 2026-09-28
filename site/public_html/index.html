@@ -9,8 +9,8 @@
     <meta name="theme-color" content="#f5f1e8">
     <title>О глоссалии — Глоссалия</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="stylesheet" href="assets/styles.css">
-    <script src="assets/site.js" defer></script>
+    <link rel="stylesheet" href="assets/styles.css?v=calendar-tab">
+    <script src="assets/site.js?v=alice-prompt-min" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Перейти к содержанию</a>
@@ -40,18 +40,18 @@
         </section>
 
         <nav class="section-nav" aria-label="Разделы сайта">
-          <a class="section-link is-active" href="#about" data-tab-link="about" aria-current="page"><span>01</span>О глоссалии</a>
-          <a class="section-link" href="#news" data-tab-link="news"><span>02</span>Новости</a>
-          <a class="section-link" href="#today" data-tab-link="today"><span>03</span>Сегодня</a>
-          <a class="section-link" href="#situations" data-tab-link="situations"><span>04</span>Каталог ситуаций</a>
-          <a class="section-link" href="#help" data-tab-link="help"><span>05</span>Справка</a>
-          <a class="section-link" href="#donate" data-tab-link="donate"><span>06</span>Донат</a>
+          <a class="section-link is-active" href="#about" data-tab-link="about" aria-current="page">О глоссалии</a>
+          <a class="section-link" href="#news" data-tab-link="news">Новости</a>
+          <a class="section-link" href="#today" data-tab-link="today"><span>Календарь</span><small>(сегодня)</small></a>
+          <a class="section-link" href="#situations" data-tab-link="situations">Каталог ситуаций</a>
+          <a class="section-link section-link-translation" href="#translation" data-tab-link="translation"><span>Как сделать перевод иных языков</span><small>(эксперимент, не даёт гарантии правильного перевода)</small></a>
+          <a class="section-link" href="#help" data-tab-link="help">Справка</a>
+          <a class="section-link" href="#donate" data-tab-link="donate">Донат</a>
         </nav>
 
         <div class="section-content">
           <section class="content-panel is-active" id="about" data-panel data-title="О глоссалии" aria-labelledby="about-title">
             <div class="section-heading">
-              <p class="section-number">Раздел 01 / 06</p>
               <h2 id="about-title">О глоссалии</h2>
               <p class="section-lead">Публичные материалы проекта Glossolalia Explorer в удобном для чтения виде.</p>
             </div>
@@ -70,7 +70,6 @@
 
           <section class="content-panel" id="news" data-panel data-title="Новости" aria-labelledby="news-title">
             <div class="section-heading">
-              <p class="section-number">Раздел 02 / 06</p>
               <h2 id="news-title">Новости</h2>
               <p class="section-lead">Новые материалы и сообщения проекта будут появляться здесь.</p>
             </div>
@@ -79,7 +78,6 @@
 
           <section class="content-panel" id="today" data-panel data-title="Сегодня" aria-labelledby="today-title">
             <div class="section-heading">
-              <p class="section-number">Раздел 03 / 06</p>
               <h2 id="today-title">Сегодня</h2>
               <p class="section-lead">Выберите день в календаре, чтобы увидеть опубликованные записи с этой датой.</p>
             </div>
@@ -103,7 +101,6 @@
 
           <section class="content-panel" id="situations" data-panel data-title="Каталог ситуаций" aria-labelledby="situations-title">
             <div class="section-heading">
-              <p class="section-number">Раздел 04 / 06</p>
               <h2 id="situations-title">Каталог ситуаций</h2>
               <p class="section-lead">Выберите ситуацию, чтобы открыть её страницу.</p>
             </div>
@@ -114,7 +111,7 @@
                 </thead>
                 <tbody>
                   <tr><td>1</td><td><a href="#situation-1">Иные языки / Глоссалия</a></td></tr>
-                  <tr><td>2</td><td><a href="#situation-2">Выход из оккультизма в христианство</a></td></tr>
+                  <tr><td>2</td><td><a href="#sos">Выход из оккультизма в христианство</a></td></tr>
                   <tr><td>3</td><td><a href="#situation-3">Помощь человеку, заблудившемуся в грехах и событиях жизни</a></td></tr>
                 </tbody>
               </table>
@@ -125,7 +122,6 @@
           <section class="content-panel" id="situation-1" data-panel data-title="Иные языки / Глоссалия" aria-labelledby="situation-1-title">
             <a class="help-back" href="#situations">← Каталог ситуаций</a>
             <div class="section-heading">
-              <p class="section-number">Ситуация / 1</p>
               <h2 id="situation-1-title">Иные языки / Глоссалия</h2>
               <p class="section-lead">Материалы о молитве на иных языках и её исследовании в проекте.</p>
             </div>
@@ -135,22 +131,59 @@
             </div>
           </section>
 
-          <section class="content-panel" id="situation-2" data-panel data-title="Выход из оккультизма в христианство" aria-labelledby="situation-2-title">
+          <section class="content-panel" id="sos" data-panel data-title="Выход из оккультизма в христианство" aria-labelledby="sos-title">
             <a class="help-back" href="#situations">← Каталог ситуаций</a>
             <div class="section-heading">
-              <p class="section-number">Ситуация / 2</p>
-              <h2 id="situation-2-title">Выход из оккультизма в христианство</h2>
-              <p class="section-lead">Страница для материалов по этой ситуации.</p>
+              <h2 id="sos-title">Выход из оккультизма в христианство</h2>
+              <p class="section-lead">Материал предназначен тем кто ищет защиты и избавления от злых сил у Бога.</p>
             </div>
-            <div class="help-page">
-              <p>Материал для этой страницы пока готовится.</p>
+            <div class="sos-list">
+              <details class="sos-item">
+                <summary>1. Спасение утопающего</summary>
+                <div class="sos-item-body">
+                  <label for="sos-text-1">Текст для копирования</label>
+                  <textarea id="sos-text-1" readonly rows="6">Ру-вах! Надо! Избавь! Спаси! Измельчи врагов моих и спаси из зла, огради щитом Господа Бога моего — Елохима! Найди и преследуй зло, дай спасение мне! Дай стабильность, избавь и покрый мя! Сотвори щит Твой надо мной! Иисус Христос! Спаси и сохрани! Аминь!</textarea>
+                  <div class="sos-actions">
+                    <button type="button" data-copy-target="sos-text-1">Скопировать</button>
+                    <button type="button" disabled title="Пояснение будет добавлено позже">Подробнее</button>
+                    <button type="button" data-open-dialog="sos-note-1">Примечание</button>
+                    <span class="sos-copy-status" data-copy-status role="status" aria-live="polite"></span>
+                  </div>
+                </div>
+              </details>
+              <details class="sos-item">
+                <summary>2. Избавление от нечистых духов</summary>
+                <div class="sos-item-body">
+                  <label for="sos-text-2">Текст для копирования</label>
+                  <textarea id="sos-text-2" readonly rows="6">Лайя! Елохим, майфкто-ре, фейкай — стеренеденедевелее ртеносекуен-вати, сфайларун-де. Су-равви! Най-ло! Фа! Се-дро, се — Елихосефайф! Тустинередонтенед! Сафектурелистенед. Исса! Едрагони! Су! Дерестикт! Евендилеодентистертенед! ФЕ! Симендерувах! хайя! Иссертенедентовелидеруктедентероселия! Дувиндестоне-д! Иса! Сайданект! Руспектум! Ефиматориум! Серихетроминед! Леее-старед.</textarea>
+                  <div class="sos-actions">
+                    <button type="button" data-copy-target="sos-text-2">Скопировать</button>
+                    <a href="https://github.com/kva4991/glossalia-explorer/blob/main/docs/transcriptions/T00027/part_1.md" target="_blank" rel="noopener noreferrer">Подробнее</a>
+                    <button type="button" data-open-dialog="sos-note-2">Примечание</button>
+                    <span class="sos-copy-status" data-copy-status role="status" aria-live="polite"></span>
+                  </div>
+                </div>
+              </details>
+              <details class="sos-item"><summary>3. Раздел 3</summary><p>Содержание будет добавлено позже.</p></details>
+              <details class="sos-item"><summary>4. Раздел 4</summary><p>Содержание будет добавлено позже.</p></details>
+              <details class="sos-item"><summary>5. Раздел 5</summary><p>Содержание будет добавлено позже.</p></details>
+              <details class="sos-item"><summary>6. Раздел 6</summary><p>Содержание будет добавлено позже.</p></details>
             </div>
+            <dialog class="sos-note-dialog" id="sos-note-1" aria-labelledby="sos-note-title-1">
+              <h3 id="sos-note-title-1">Примечание</h3>
+              <p>Текст примечания будет добавлен позже.</p>
+              <form method="dialog"><button type="submit">Закрыть</button></form>
+            </dialog>
+            <dialog class="sos-note-dialog" id="sos-note-2" aria-labelledby="sos-note-title-2">
+              <h3 id="sos-note-title-2">Примечание</h3>
+              <p>По словам автора, работает на протяжении длительного времени, в зависимости от количества зла.</p>
+              <form method="dialog"><button type="submit">Закрыть</button></form>
+            </dialog>
           </section>
 
           <section class="content-panel" id="situation-3" data-panel data-title="Помощь человеку, заблудившемуся в грехах и событиях жизни" aria-labelledby="situation-3-title">
             <a class="help-back" href="#situations">← Каталог ситуаций</a>
             <div class="section-heading">
-              <p class="section-number">Ситуация / 3</p>
               <h2 id="situation-3-title">Помощь человеку, заблудившемуся в грехах и событиях жизни</h2>
               <p class="section-lead">Страница для материалов по этой ситуации.</p>
             </div>
@@ -159,9 +192,20 @@
             </div>
           </section>
 
+          <section class="content-panel" id="translation" data-panel data-title="Как сделать перевод иных языков" aria-labelledby="translation-title">
+            <div class="section-heading">
+              <h2 id="translation-title">Как сделать перевод иных языков</h2>
+              <p class="section-lead">Уважаемый Христианин, алгоритмы расшифровки несовершенны, и порой выдают совсем не то. Это только эксперимент, старайтесь не запутаться.</p>
+            </div>
+            <div class="help-page">
+              <p>Кнопка откроет Алису AI и отправит ей промпт. После её первого ответа - отправьте ручную транскрипцию глоссарии для разбора.</p>
+              <p><a class="alice-start-button" id="alice-translation-link" target="_blank" rel="noopener noreferrer" aria-label="Начать разбор с Алисой AI" aria-disabled="true" tabindex="-1"><span>Начать&gt;</span><img src="assets/alice-mark.svg" alt="" aria-hidden="true" width="42" height="42"></a><span class="alice-prompt-status" id="alice-prompt-status" role="status" aria-live="polite">Загрузка промпта…</span></p>
+              <p>Если чат не открылся с отправленным промптом, <a href="https://alice.yandex.ru/" target="_blank" rel="noopener noreferrer">откройте Алису AI</a> и вставьте файл промпта вручную (<a class="alice-prompt-download" href="data/promptForAlice_guessingTheMeaningOfTheGlossary.txt" download="promptForAlice_guessingTheMeaningOfTheGlossary.txt">Скачать файл промпта</a>).</p>
+            </div>
+          </section>
+
           <section class="content-panel" id="help" data-panel data-title="Справка" aria-labelledby="help-title">
             <div class="section-heading">
-              <p class="section-number">Раздел 05 / 06</p>
               <h2 id="help-title">Справка</h2>
               <p class="section-lead">Пять тем о глоссалии, материалах сайта и границах их толкования.</p>
             </div>
@@ -202,7 +246,6 @@
           <section class="content-panel" id="help-glossolalia" data-panel data-title="Что такое глоссалия" aria-labelledby="help-glossolalia-title">
             <a class="help-back" href="#help">← Все темы справки</a>
             <div class="section-heading">
-              <p class="section-number">Справка / 01</p>
               <h2 id="help-glossolalia-title">Что такое глоссалия, или «иные языки»</h2>
               <p class="section-lead">О молитвенной речи и о том, какие языковые сопоставления встречаются в материалах проекта.</p>
             </div>
@@ -223,20 +266,75 @@
           <section class="content-panel" id="help-purpose" data-panel data-title="Зачем нужен этот сайт" aria-labelledby="help-purpose-title">
             <a class="help-back" href="#help">← Все темы справки</a>
             <div class="section-heading">
-              <p class="section-number">Справка / 02</p>
               <h2 id="help-purpose-title">Зачем нужен этот сайт</h2>
-              <p class="section-lead">Публичное место для чтения и проверки материалов проекта.</p>
             </div>
             <div class="help-page">
-              <p>Сайт собирает выбранные ручные транскрипции автора в одном месте. Календарь помогает найти записи по дате получения текста; у каждой опубликованной транскрипции есть ссылка на исходную карточку.</p>
-              <p>Здесь важно сохранять разницу между тем, что услышано и записано, предположением о слове или языке и личным религиозным толкованием. Новые материалы можно добавлять без изменения уже опубликованных источников.</p>
+              <p>Автор думает что следующее 5 отрывков отвечают на заданный выше вопрос</p>
+            </div>
+            <div class="sos-list">
+              <details class="sos-item">
+                <summary>1. Абзац</summary>
+                <div class="sos-item-body">
+                  <label for="purpose-text-1">Текст для копирования</label>
+                  <textarea id="purpose-text-1" readonly rows="3">Ру! Вахи! Ирдренед! Фа! Лу! Ектимен, тервектитед! Ис-ша! Нави-те! Руска!</textarea>
+                  <div class="sos-actions">
+                    <button type="button" data-copy-target="purpose-text-1">Скопировать</button>
+                    <a href="https://github.com/kva4991/glossalia-explorer/blob/main/docs/transcriptions/T00033/part_1.md" target="_blank" rel="noopener noreferrer">Подробно</a>
+                    <span class="sos-copy-status" data-copy-status role="status" aria-live="polite"></span>
+                  </div>
+                </div>
+              </details>
+              <details class="sos-item">
+                <summary>2. Абзац</summary>
+                <div class="sos-item-body">
+                  <label for="purpose-text-2">Текст для копирования</label>
+                  <textarea id="purpose-text-2" readonly rows="3">Рувик-тим эфферидентимед-недореактион ру-едро! Варриант, ерректиктлене-видь! Ис-шаедорумфей! Се! (Это) ерогинед!</textarea>
+                  <div class="sos-actions">
+                    <button type="button" data-copy-target="purpose-text-2">Скопировать</button>
+                    <a href="https://github.com/kva4991/glossalia-explorer/blob/main/docs/transcriptions/T00033/part_2.md" target="_blank" rel="noopener noreferrer">Подробно</a>
+                    <span class="sos-copy-status" data-copy-status role="status" aria-live="polite"></span>
+                  </div>
+                </div>
+              </details>
+              <details class="sos-item">
+                <summary>3. Абзац</summary>
+                <div class="sos-item-body">
+                  <label for="purpose-text-3">Текст для копирования</label>
+                  <textarea id="purpose-text-3" readonly rows="6">Шалом! Дур-ве! Интернет-сайт, феритес, немотес, дур-ве, ядро, смысл- едро, выставь! Публикуй, орошай, назначь используй веру, едро видеть суть истец, ру-вах! Наерчается, инуаркан, едро, вердикт, ениморен едро, фе! Су! Народ собрать, исповедуй Иисуса христа, исцеление больным , жажду гасите, суть в вас .</textarea>
+                  <div class="sos-actions">
+                    <button type="button" data-copy-target="purpose-text-3">Скопировать</button>
+                    <span class="sos-copy-status" data-copy-status role="status" aria-live="polite"></span>
+                  </div>
+                </div>
+              </details>
+              <details class="sos-item">
+                <summary>4. Абзац</summary>
+                <div class="sos-item-body">
+                  <label for="purpose-text-4">Текст для копирования</label>
+                  <textarea id="purpose-text-4" readonly rows="3">Шалом! Елохим Едро-Фиктим! Едро-ушма! Едро-сетровиноте!</textarea>
+                  <div class="sos-actions">
+                    <button type="button" data-copy-target="purpose-text-4">Скопировать</button>
+                    <span class="sos-copy-status" data-copy-status role="status" aria-live="polite"></span>
+                  </div>
+                </div>
+              </details>
+              <details class="sos-item">
+                <summary>5. Абзац</summary>
+                <div class="sos-item-body">
+                  <label for="purpose-text-5">Текст для копирования</label>
+                  <textarea id="purpose-text-5" readonly rows="3">Элохим! Ваш! Елохим! Невоси-то! Ир-ва! деруске, Иннаречие(я), Елохим! Фаррат-сероне! Ин-тоементе!</textarea>
+                  <div class="sos-actions">
+                    <button type="button" data-copy-target="purpose-text-5">Скопировать</button>
+                    <span class="sos-copy-status" data-copy-status role="status" aria-live="polite"></span>
+                  </div>
+                </div>
+              </details>
             </div>
           </section>
 
           <section class="content-panel" id="help-churches" data-panel data-title="Взаимные претензии православных и протестантов" aria-labelledby="help-churches-title">
             <a class="help-back" href="#help">← Все темы справки</a>
             <div class="section-heading">
-              <p class="section-number">Справка / 03</p>
               <h2 id="help-churches-title">Взаимные претензии православных и протестантов</h2>
               <p class="section-lead">Различия в подходах к молитве на языках следует обсуждать по конкретным источникам.</p>
             </div>
@@ -249,7 +347,6 @@
           <section class="content-panel" id="help-theories" data-panel data-title="Теории автора сайта" aria-labelledby="help-theories-title">
             <a class="help-back" href="#help">← Все темы справки</a>
             <div class="section-heading">
-              <p class="section-number">Справка / 04</p>
               <h2 id="help-theories-title">Теории автора сайта</h2>
               <p class="section-lead">Авторские объяснения публикуются как гипотезы с обозначенными пределами проверки.</p>
             </div>
@@ -262,7 +359,6 @@
           <section class="content-panel" id="help-ai" data-panel data-title="Глоссалия об ИИ" aria-labelledby="help-ai-title">
             <a class="help-back" href="#help">← Все темы справки</a>
             <div class="section-heading">
-              <p class="section-number">Справка / 05</p>
               <h2 id="help-ai-title">Глоссалия об ИИ (нейронках)</h2>
               <p class="section-lead">Нейросети помогают исследовать звучание, но их ответы требуют проверки.</p>
             </div>
@@ -274,7 +370,6 @@
 
           <section class="content-panel" id="donate" data-panel data-title="Донат" aria-labelledby="donate-title">
             <div class="section-heading">
-              <p class="section-number">Раздел 06 / 06</p>
               <h2 id="donate-title">Поддержать проект</h2>
               <p class="section-lead">Донаты/пожертвования принимаются с благодарностью.</p>
             </div>

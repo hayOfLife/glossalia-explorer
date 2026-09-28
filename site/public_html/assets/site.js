@@ -20,6 +20,182 @@
   let calendarMonth = Number(todayParts.month);
   let entries = [];
   let loadFailed = false;
+  const reactionApiUrl = "https://94-232-41-163.sslip.io/glossaliae/reactions";
+  const reactionCounts = new Map();
+  let reactionsAvailable = false;
+  let sessionVoterId = null;
+  const voterStorageKey = "glossaliae-voter-id";
+  const voteStorageKey = "glossaliae-votes";
+  const aliceLink = document.getElementById("alice-translation-link");
+  const alicePromptStatus = document.getElementById("alice-prompt-status");
+
+  async function prepareAliceLink() {
+    try {
+      const response = await fetch("data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt", { cache: "no-store" });
+      if (!response.ok) throw new Error("Prompt unavailable");
+
+      const prompt = (await response.text()).trim();
+      if (!prompt) throw new Error("Prompt empty");
+
+      aliceLink.href = `https://alice.yandex.ru/?alice_deeplink=${encodeURIComponent(JSON.stringify({ text: prompt }))}`;
+      aliceLink.removeAttribute("aria-disabled");
+      aliceLink.removeAttribute("tabindex");
+      alicePromptStatus.textContent = "";
+    } catch {
+      alicePromptStatus.textContent = "Не удалось загрузить промпт. Скачайте полный файл ниже и вставьте его вручную.";
+    }
+  }
+
+  prepareAliceLink();
+
+  function readStoredVotes() {
+    try {
+      const votes = JSON.parse(localStorage.getItem(voteStorageKey) || "{}");
+      return votes && typeof votes === "object" && !Array.isArray(votes) ? votes : {};
+    } catch {
+      return {};
+    }
+  }
+
+  const ownVotes = readStoredVotes();
+
+  function getVoterId() {
+    let voterId;
+
+    try {
+      voterId = localStorage.getItem(voterStorageKey) || sessionVoterId;
+    } catch {
+      voterId = sessionVoterId;
+    }
+
+    if (!/^[0-9a-f]{32}$/.test(voterId || "")) {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      voterId = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+      sessionVoterId = voterId;
+      try {
+        localStorage.setItem(voterStorageKey, voterId);
+      } catch {
+        // Без локального хранилища голос действует только в текущем сеансе
+      }
+    }
+
+    return voterId;
+  }
+
+  function updateOneReactionControl(controls, key) {
+    const counts = reactionCounts.get(key) || { likes: 0, dislikes: 0 };
+
+    for (const button of controls.querySelectorAll("button")) {
+      const vote = Number(button.dataset.vote);
+      const count = vote === 1 ? counts.likes : counts.dislikes;
+      button.disabled = !reactionsAvailable;
+      button.setAttribute("aria-pressed", String(ownVotes[key] === vote));
+      button.setAttribute("aria-label", `${vote === 1 ? "Нравится" : "Не нравится"}: ${controls.dataset.reactionTitle}, голосов: ${reactionsAvailable ? count : "недоступно"}`);
+      button.querySelector("span").textContent = reactionsAvailable ? String(count) : "—";
+    }
+
+    controls.querySelector("[data-reaction-status]").textContent = reactionsAvailable
+      ? ""
+      : "Оценки временно недоступны";
+  }
+
+  function updateReactionControls(key) {
+    for (const controls of document.querySelectorAll("[data-reaction-key]")) {
+      if (controls.dataset.reactionKey === key) {
+        updateOneReactionControl(controls, key);
+      }
+    }
+  }
+
+  async function submitReaction(key, vote, controls) {
+    const nextVote = ownVotes[key] === vote ? 0 : vote;
+    const buttons = controls.querySelectorAll("button");
+    buttons.forEach((button) => { button.disabled = true; });
+    controls.querySelector("[data-reaction-status]").textContent = "Сохраняем оценку…";
+
+    try {
+      const response = await fetch(reactionApiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        body: JSON.stringify({ key, vote: nextVote, voterId: getVoterId() }),
+        credentials: "omit",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        const error = new Error("Reaction request failed");
+        error.rateLimited = response.status === 429;
+        throw error;
+      }
+
+      const result = await response.json();
+      reactionCounts.set(key, { likes: result.likes, dislikes: result.dislikes });
+      ownVotes[key] = nextVote;
+      try {
+        localStorage.setItem(voteStorageKey, JSON.stringify(ownVotes));
+      } catch {
+        // Оценка сохранена на сервере и останется отмеченной до закрытия страницы
+      }
+      updateReactionControls(key);
+    } catch (error) {
+      buttons.forEach((button) => { button.disabled = false; });
+      controls.querySelector("[data-reaction-status]").textContent = error.rateLimited
+        ? "Слишком много оценок. Подождите до 10 минут."
+        : "Не удалось сохранить оценку. Попробуйте ещё раз.";
+    }
+  }
+
+  function addReactionControls(card, entry) {
+    const controls = document.createElement("div");
+    controls.className = "entry-reactions";
+    controls.dataset.reactionKey = entry.externalKey;
+    controls.dataset.reactionTitle = entry.title;
+    addText(controls, "span", "entry-reactions-label", "Оцените транскрипцию");
+
+    for (const [vote, symbol] of [[1, "👍"], [-1, "👎"]]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.vote = String(vote);
+      button.setAttribute("aria-pressed", "false");
+      button.append(document.createTextNode(`${symbol} `), document.createElement("span"));
+      button.addEventListener("click", () => submitReaction(entry.externalKey, vote, controls));
+      controls.append(button);
+    }
+
+    const status = addText(controls, "span", "entry-reactions-status", "");
+    status.dataset.reactionStatus = "";
+    status.setAttribute("role", "status");
+    card.append(controls);
+    updateOneReactionControl(controls, entry.externalKey);
+  }
+
+  async function loadReactions() {
+    if (!reactionApiUrl) {
+      return;
+    }
+
+    try {
+      const response = await fetch(reactionApiUrl, { credentials: "omit", cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error("Reaction counts request failed");
+      }
+
+      const counts = await response.json();
+      for (const [key, value] of Object.entries(counts)) {
+        reactionCounts.set(key, value);
+      }
+
+      reactionsAvailable = true;
+    } catch {
+      reactionsAvailable = false;
+    }
+
+    for (const controls of document.querySelectorAll("[data-reaction-key]")) {
+      updateOneReactionControl(controls, controls.dataset.reactionKey);
+    }
+  }
 
   function formatCalendarDate(date) {
     return new Intl.DateTimeFormat("ru-RU", {
@@ -70,6 +246,10 @@
       }
     } catch {
       // Некорректный адрес источника не влияет на показ самой записи
+    }
+
+    if (entry.type === "manual_transcription") {
+      addReactionControls(card, entry);
     }
 
     return card;
@@ -178,7 +358,7 @@
     for (const link of links) {
       const isCurrent = link.dataset.tabLink === currentId
         || (link.dataset.tabLink === "help" && currentId.startsWith("help-"))
-        || (link.dataset.tabLink === "situations" && currentId.startsWith("situation-"));
+        || (link.dataset.tabLink === "situations" && (currentId.startsWith("situation-") || currentId === "sos"));
       link.classList.toggle("is-active", isCurrent);
 
       if (isCurrent) {
@@ -198,6 +378,32 @@
   }
 
   window.addEventListener("hashchange", showCurrentSection);
+  for (const button of document.querySelectorAll("[data-copy-target]")) {
+    button.addEventListener("click", async () => {
+      const field = document.getElementById(button.dataset.copyTarget);
+      const status = button.parentElement.querySelector("[data-copy-status]");
+
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(field.value);
+        } else {
+          field.select();
+          if (!document.execCommand("copy")) {
+            throw new Error("Copy unavailable");
+          }
+        }
+        status.textContent = "Скопировано";
+      } catch {
+        field.select();
+        status.textContent = "Скопируйте выделенный текст вручную";
+      }
+    });
+  }
+  for (const button of document.querySelectorAll("[data-open-dialog]")) {
+    button.addEventListener("click", () => {
+      document.getElementById(button.dataset.openDialog).showModal();
+    });
+  }
   document.getElementById("calendar-previous").addEventListener("click", () => shiftMonth(-1));
   document.getElementById("calendar-next").addEventListener("click", () => shiftMonth(1));
   showCurrentSection();
@@ -220,6 +426,7 @@
       entries = data;
       renderCalendar();
       renderCollections();
+      loadReactions();
     })
     .catch(() => {
       loadFailed = true;
