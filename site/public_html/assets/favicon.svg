@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="32" fill="#aa4636"/>
+  <text x="16" y="45" fill="#fffdf8" font-family="Georgia, serif" font-size="42">г</text>
+  <circle cx="46" cy="42" r="4" fill="#fffdf8"/>
+</svg>

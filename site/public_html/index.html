@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Глоссалия — тексты, новости, материалы дня и каталог ситуаций.">
+    <meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; connect-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'">
+    <meta name="theme-color" content="#f5f1e8">
+    <title>О глоссалии — Глоссалия</title>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="assets/styles.css">
+    <script src="assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Перейти к содержанию</a>
+
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="#about" aria-label="Глоссалия — на главную">
+          <span class="brand-symbol" aria-hidden="true">г<span>•</span></span>
+          <span class="brand-name">Глоссалия</span>
+        </a>
+        <p class="header-caption">Текстовый проект</p>
+      </header>
+
+      <main id="main">
+        <section class="hero" aria-label="О проекте">
+          <div class="hero-copy">
+            <p class="eyebrow">Пространство для чтения</p>
+            <h1>У каждого текста<br>есть своё место.</h1>
+            <p class="hero-description">Материалы Glossolalia Explorer, ручные транскрипции и записи, расположенные по датам получения текста.</p>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <span class="hero-art-ring hero-art-ring-one"></span>
+            <span class="hero-art-ring hero-art-ring-two"></span>
+            <span class="hero-art-dot"></span>
+            <span class="hero-art-word">г</span>
+          </div>
+        </section>
+
+        <nav class="section-nav" aria-label="Разделы сайта">
+          <a class="section-link is-active" href="#about" data-tab-link="about" aria-current="page"><span>01</span>О глоссалии</a>
+          <a class="section-link" href="#news" data-tab-link="news"><span>02</span>Новости</a>
+          <a class="section-link" href="#today" data-tab-link="today"><span>03</span>Сегодня</a>
+          <a class="section-link" href="#situations" data-tab-link="situations"><span>04</span>Каталог ситуаций</a>
+          <a class="section-link" href="#donate" data-tab-link="donate"><span>05</span>Донат</a>
+        </nav>
+
+        <div class="section-content">
+          <section class="content-panel is-active" id="about" data-panel data-title="О глоссалии" aria-labelledby="about-title">
+            <div class="section-heading">
+              <p class="section-number">Раздел 01 / 05</p>
+              <h2 id="about-title">О глоссалии</h2>
+              <p class="section-lead">Публичные материалы проекта Glossolalia Explorer в удобном для чтения виде.</p>
+            </div>
+            <div class="about-grid">
+              <div class="body-copy">
+                <p>Автор проекта изучает звуковые сочетания в собственных записях молитвы на иных языках. Здесь показываются материалы с ручной транскрипцией автора и ссылкой на исходную карточку.</p>
+                <p>Фонетические метки и сходство со словами других языков помогают формулировать вопросы для проверки, но сами по себе не устанавливают язык, перевод или духовное происхождение записи.</p>
+              </div>
+              <aside class="note-card" aria-label="Как устроен сайт">
+                <span class="note-mark" aria-hidden="true">✳</span>
+                <p class="note-label">Первоисточник</p>
+                <p>Методика, история изменений и подробные разборы доступны в <a href="https://github.com/kva4991/glossolalia-explorer" target="_blank" rel="noopener noreferrer">репозитории проекта</a>.</p>
+              </aside>
+            </div>
+          </section>
+
+          <section class="content-panel" id="news" data-panel data-title="Новости" aria-labelledby="news-title">
+            <div class="section-heading">
+              <p class="section-number">Раздел 02 / 05</p>
+              <h2 id="news-title">Новости</h2>
+              <p class="section-lead">Новые материалы и сообщения проекта будут появляться здесь.</p>
+            </div>
+            <div class="collection-results" id="news-results"></div>
+          </section>
+
+          <section class="content-panel" id="today" data-panel data-title="Сегодня" aria-labelledby="today-title">
+            <div class="section-heading">
+              <p class="section-number">Раздел 03 / 05</p>
+              <h2 id="today-title">Сегодня</h2>
+              <p class="section-lead">Выберите день в календаре, чтобы увидеть опубликованные записи с этой датой.</p>
+            </div>
+            <div class="calendar" aria-label="Выбор даты">
+              <div class="calendar-toolbar">
+                <div>
+                  <p class="calendar-caption">Календарь материалов</p>
+                  <h3 id="calendar-month" aria-live="polite"></h3>
+                </div>
+                <div class="calendar-controls">
+                  <button type="button" id="calendar-previous" aria-label="Предыдущий месяц">←</button>
+                  <button type="button" id="calendar-next" aria-label="Следующий месяц">→</button>
+                </div>
+              </div>
+              <div class="calendar-weekdays" aria-hidden="true"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+              <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+            <p class="calendar-note">У транскрипций календарная дата означает день получения текста, а не день аудиозаписи.</p>
+            <div class="day-results" id="today-results" aria-live="polite"></div>
+          </section>
+
+          <section class="content-panel" id="situations" data-panel data-title="Каталог ситуаций" aria-labelledby="situations-title">
+            <div class="section-heading">
+              <p class="section-number">Раздел 04 / 05</p>
+              <h2 id="situations-title">Каталог ситуаций</h2>
+              <p class="section-lead">Материалы, собранные по ситуациям, будут доступны в одном месте.</p>
+            </div>
+            <div class="collection-results" id="situations-results"></div>
+          </section>
+
+          <section class="content-panel" id="donate" data-panel data-title="Донат" aria-labelledby="donate-title">
+            <div class="section-heading">
+              <p class="section-number">Раздел 05 / 05</p>
+              <h2 id="donate-title">Поддержать проект</h2>
+              <p class="section-lead">Если вам близка «Глоссалия», здесь можно будет поддержать её развитие.</p>
+            </div>
+            <div class="donate-card">
+              <span class="donate-star" aria-hidden="true">✳</span>
+              <div>
+                <h3>Способ поддержки появится позже</h3>
+                <p>Ссылка или реквизиты будут опубликованы после согласования.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <footer class="site-footer">
+        <span>Глоссалия</span>
+        <span>Тексты · Новости · Ситуации</span>
+      </footer>
+    </div>
+  </body>
+</html>
