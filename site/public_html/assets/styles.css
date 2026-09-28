@@ -352,6 +352,10 @@ a:focus-visible {
   line-height: 1.6;
 }
 
+.donate-card p + p {
+  margin-top: 12px;
+}
+
 .donate-card {
   border-color: #d7c5b8;
   background: #f0e5da;
