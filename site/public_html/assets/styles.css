@@ -357,6 +357,22 @@ a:focus-visible {
   background: #f0e5da;
 }
 
+.donate-button {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 12px 18px;
+  border: 1px solid var(--accent-dark);
+  color: var(--accent-dark);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.donate-button:hover {
+  background: var(--accent-dark);
+  color: var(--paper-light);
+}
+
 .calendar {
   max-width: 760px;
   margin-top: 48px;
