@@ -15,6 +15,15 @@ SNAPSHOT = REPOSITORY / "site" / "public_html" / "data" / "entries.json"
 INDEX = REPOSITORY / "site" / "calendar-index.json"
 SOURCE_BASE = "https://github.com/hayOfLife/glossalia-explorer/blob/main/"
 DATE_RE = re.compile(r"(?<!\d)(\d{2})\.(\d{2})\.(\d{4})(?!\d)")
+RUSSIAN_MONTH_NAMES = (
+    "января", "февраля", "марта", "апреля", "мая", "июня",
+    "июля", "августа", "сентября", "октября", "ноября", "декабря",
+)
+RUSSIAN_DATE_RE = re.compile(
+    rf"(?<!\d)(\d{{1,2}})\s+({'|'.join(RUSSIAN_MONTH_NAMES)})\s+(\d{{4}})(?!\d)",
+    re.IGNORECASE,
+)
+RUSSIAN_MONTHS = {name: number for number, name in enumerate(RUSSIAN_MONTH_NAMES, 1)}
 TIME_RE = re.compile(r"(?<!\d)(\d{1,2}):(\d{2})(?!\d)")
 
 
@@ -23,9 +32,9 @@ def transcription_paths() -> list[str]:
 
 
 def source_section(text: str) -> str:
-    match = re.search(r"^## Необработанная транскрипция\s*$", text, re.MULTILINE)
+    match = re.search(r"^## (?:Необработанная транскрипция|Исходная строка)\s*$", text, re.MULTILINE)
     if not match:
-        raise ValueError("нет раздела «Необработанная транскрипция»")
+        raise ValueError("нет раздела «Необработанная транскрипция» или «Исходная строка»")
 
     section = re.split(r"^##\s", text[match.end():], maxsplit=1, flags=re.MULTILINE)[0].strip()
     fenced = re.search(r"^```[^\n]*\n(.*?)^```", section, re.MULTILINE | re.DOTALL)
@@ -48,15 +57,24 @@ def entry_from_file(relative_path: str) -> dict:
     text = path.read_text(encoding="utf-8-sig")
     heading = re.search(r"^# (.+)$", text, re.MULTILINE)
     metadata = re.search(r"^[-*]?\s*Дата и время получения транскрипции:\s*(.+)$", text, re.MULTILINE)
+    analysis_date = metadata is None
+    if analysis_date:
+        metadata = re.search(r"^\*\*Дата:\*\*\s*(.+)$", text, re.MULTILINE)
     if not heading or not metadata:
-        raise ValueError(f"{relative_path}: нужны заголовок и поле «Дата и время получения транскрипции»")
+        raise ValueError(f"{relative_path}: нужны заголовок и дата")
 
     appearance_note = re.split(r"файл предоставлен|загружен|дата разбора|анализ выполнен", metadata.group(1), maxsplit=1, flags=re.IGNORECASE)[0]
     date = DATE_RE.search(appearance_note)
-    if not date:
+    russian_date = RUSSIAN_DATE_RE.search(appearance_note) if not date else None
+    if not date and not russian_date:
         raise ValueError(f"{relative_path}: дата появления не установлена; запись нельзя поставить в календарь")
 
-    day, month, year = map(int, date.groups())
+    if date:
+        day, month, year = map(int, date.groups())
+    else:
+        day = int(russian_date.group(1))
+        month = RUSSIAN_MONTHS[russian_date.group(2).lower()]
+        year = int(russian_date.group(3))
     from datetime import date as calendar_date
 
     calendar_day = calendar_date(year, month, day).isoformat()
@@ -74,12 +92,12 @@ def entry_from_file(relative_path: str) -> dict:
 
     title = re.sub(r"^§?T\d{5}\s*[—:-]?\s*", "", heading.group(1)).strip()
     entry = {
-        "externalKey": f"{tag.group(0)}-{path.stem}" if path.stem.startswith("part_") else tag.group(0),
+        "externalKey": f"{tag.group(0)}-{path.stem}" if path.parent != TRANSCRIPTIONS else tag.group(0),
         "type": "analysis",
         "title": title,
         "group": "Разбор транскрипции",
         "calendarDate": calendar_day,
-        "dateNote": metadata.group(1).strip(),
+        "dateNote": ("Дата в разборе: " if analysis_date else "") + metadata.group(1).strip() + ("; время получения транскрипции не указано." if analysis_date else ""),
         "bodyText": body,
         "sourceUrl": SOURCE_BASE + quote(path.relative_to(REPOSITORY).as_posix(), safe="/"),
         "statusNote": "Предложенный разбор не является подтверждённым переводом.",

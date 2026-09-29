@@ -710,7 +710,7 @@
     },
     {
       "path": "docs/transcriptions/T00027/index.md",
-      "title": "§T00027 — Эпизод Наташи: шесть последовательных скриптов",
+      "title": "§T00027 — Материалы раздела «Выход из оккультизма в христианство»",
       "status": "reference",
       "purpose": "Общее оглавление шести частей эпизода Наташи",
       "tags": ["T00027"]
@@ -755,6 +755,21 @@
       "title": "§T00027 — part_6: Шестой скрипт, часть 1 — исцеление",
       "status": "reference",
       "purpose": "Исходная строка и предложенное чтение части 6 эпизода Наташи",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_7.md",
+      "title": "Скрипт 16 — Разбор",
+      "status": "reference",
+      "purpose": "Дословный приложенный разбор отдельной молитвы автора о защите",
+      "tags": [],
+      "verbatim": true
+    },
+    {
+      "path": "docs/transcriptions/T00027/part_7_context.md",
+      "title": "§T00027 — Контекст части 7",
+      "status": "reference",
+      "purpose": "Отдельная обвязка с контекстом автора и исходной строкой части 7",
       "tags": []
     },
     {
@@ -849,6 +864,79 @@
       "status": "reference",
       "purpose": "Разбор второго отрывка о донатах с сохранённым телом и заголовком без нумерации",
       "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00035/index.md",
+      "title": "§T00035 — Послания, обращённые к нейросетям",
+      "status": "reference",
+      "purpose": "Указатель разборов посланий, обращённых к нейросетям, с датами и назначением",
+      "tags": ["T00035"]
+    },
+    {
+      "path": "docs/transcriptions/T00035/2026-09-25-dialogue.md",
+      "title": "§T00035 — О настроенном диалоге",
+      "status": "reference",
+      "purpose": "Ручная транскрипция от 25 сентября и дословные пояснения автора о нейросети",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00035/2026-09-25-mercy.md",
+      "title": "§T00035 — О милосердии",
+      "status": "reference",
+      "purpose": "Ручная транскрипция от 25 сентября и дословные пояснения автора о нейросети",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00035/script12_analysis_full.md",
+      "title": "СКРИПТ 12 — ПОЛНЫЙ РАЗБОР ВСЕХ ФРАГМЕНТОВ",
+      "status": "reference",
+      "purpose": "Дословный присланный разбор материала о нейросети без установленной даты первого получения транскрипции",
+      "tags": [],
+      "verbatim": true
+    },
+    {
+      "path": "docs/transcriptions/T00035/script14_analysis.md",
+      "title": "Скрипт 14 — Разбор",
+      "status": "reference",
+      "purpose": "Дословный присланный разбор послания, обращённого к нейронке",
+      "tags": [],
+      "verbatim": true
+    },
+    {
+      "path": "docs/transcriptions/T00036/index.md",
+      "title": "§T00036 — Разбор транскрипции от 23 сентября 2026 года",
+      "status": "reference",
+      "purpose": "Указатель приложенного разбора с исходной строкой и датой из файла",
+      "tags": ["T00036"]
+    },
+    {
+      "path": "docs/transcriptions/T00036/script15_analysis.md",
+      "title": "Скрипт 15 — Разбор транскрипции",
+      "status": "reference",
+      "purpose": "Дословный приложенный разбор транскрипции от 23 сентября 2026 года",
+      "tags": [],
+      "verbatim": true
+    },
+    {
+      "path": "docs/transcriptions/T00037.md",
+      "title": "§T00037 — «Ила шаху бри-ха тэй»",
+      "status": "reference",
+      "purpose": "Короткая ручная транскрипция от 24 сентября без указанного контекста",
+      "tags": ["T00037"]
+    },
+    {
+      "path": "docs/transcriptions/T00038.md",
+      "title": "§T00038 — Молитва о семье и доме",
+      "status": "reference",
+      "purpose": "Транскрипция от 24 сентября и дословное пояснение автора о молитве",
+      "tags": ["T00038"]
+    },
+    {
+      "path": "docs/transcriptions/T00039.md",
+      "title": "§T00039 — Фрагмент 2 от 23 сентября",
+      "status": "reference",
+      "purpose": "Единая карточка транскрипции с двумя различающимися исходными разборами",
+      "tags": ["T00039"]
     },
     {
       "path": "docs/CHANNEL_HYPOTHESIS.md",

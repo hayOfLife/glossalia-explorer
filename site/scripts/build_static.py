@@ -32,6 +32,7 @@ ROUTES = {
     "help-ai": "/help/ai/",
     "help-author": "/help/author/",
     "donate": "/donate/",
+    "for-ai": "/for-ai/",
 }
 PANEL = re.compile(r'<section class="content-panel[^\"]*" id="([^\"]+)"[^>]*>.*?</section>', re.S)
 LOCAL_LINK = re.compile(r'href="#([a-z0-9-]+)"')
@@ -240,7 +241,7 @@ def original_transcription(markdown: str) -> str:
 
 
 def author_translation_html(markdown: str, source_url: str) -> str:
-    for heading in ("Перевод автора", "Авторский перевод", "Итоговый перевод", "Связный перевод"):
+    for heading in ("Перевод автора", "Авторский перевод", "Итоговый перевод", "Связный перевод", "Перевод (гипотеза)"):
         section = re.search(rf'^## {re.escape(heading)}(?:\s*\([^\n]*\))?\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
         if section:
             content = section.group(1).strip().removesuffix("---").strip()
@@ -269,13 +270,20 @@ def main() -> None:
     published_paths = set(by_source) | set(text_for_copy)
     translations = {}
     purposes = {}
+    sources_for_purposes: set[Path] = set()
     for relative in sorted(published_paths | translation_sources | purpose_sources):
         source_path = ROOT / relative
         if not relative.startswith("docs/transcriptions/") or not source_path.is_file() or not source_path.is_relative_to(ROOT / "docs" / "transcriptions"):
             raise ValueError(f"Нет исходника перевода: {relative}")
         markdown = source_path.read_text(encoding="utf-8")
         translations[relative] = author_translation_html(markdown, SOURCE_URL + relative)
-        purposes[relative] = purpose_html(source_path)
+        purpose_relative = by_source.get(relative, {}).get("purposeSource", relative)
+        purpose_path = ROOT / purpose_relative
+        if not purpose_relative.startswith("docs/transcriptions/") or not purpose_path.is_file() or not purpose_path.is_relative_to(ROOT / "docs" / "transcriptions"):
+            raise ValueError(f"Нет источника назначения: {purpose_relative}")
+        purposes[relative] = purpose_html(purpose_path)
+        if purpose_relative != relative:
+            sources_for_purposes.add(purpose_path)
 
     def insert_translation(match: re.Match[str]) -> str:
         relative = match.group(1)
@@ -302,6 +310,7 @@ def main() -> None:
     verification_file = SOURCE / "yandex_1195bbe61e0c2002.html"
     shutil.copyfile(verification_file, OUTPUT / verification_file.name)
     sources = [SOURCE / "index.html", verification_file, Path(__file__)]
+    sources.extend(sources_for_purposes)
     sources.extend(path for folder in ("assets", "data") for path in (SOURCE / folder).rglob("*") if path.is_file())
     urls = []
     for panel_id, route in ROUTES.items():

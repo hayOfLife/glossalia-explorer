@@ -65,6 +65,27 @@ class CalendarUpdateTest(unittest.TestCase):
             self.assertEqual(snapshot.read_text(encoding="utf-8"), "[]\n")
             self.assertEqual(json.loads(index.read_text(encoding="utf-8")), {"knownFiles": []})
 
+    def test_dated_analysis_keeps_distinct_identity_and_source_text(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            transcripts = root / "docs" / "transcriptions"
+            folder = transcripts / "T99999"
+            folder.mkdir(parents=True)
+            source = folder / "script14_analysis.md"
+            source.write_text(
+                "# Скрипт 14 — Разбор\n\n**Дата:** 29 сентября 2026, 18 тишрея 5787\n\n"
+                "## Исходная строка\n\nЕлохим! Фа!\n\n## Перевод (гипотеза)\n\nТекст разбора.\n",
+                encoding="utf-8",
+            )
+
+            with patch.multiple(calendar, REPOSITORY=root, TRANSCRIPTIONS=transcripts):
+                entry = calendar.entry_from_file("docs/transcriptions/T99999/script14_analysis.md")
+
+            self.assertEqual(entry["calendarDate"], "2026-09-29")
+            self.assertEqual(entry["externalKey"], "T99999-script14_analysis")
+            self.assertEqual(entry["bodyText"], "Елохим! Фа!")
+            self.assertIn("время получения транскрипции не указано", entry["dateNote"])
+
 
 if __name__ == "__main__":
     unittest.main()

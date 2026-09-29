@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import html
 import json
+import re
 import sys
 import unittest
 from html.parser import HTMLParser
@@ -43,6 +45,16 @@ class PageParser(HTMLParser):
 
 
 class StaticBuildTest(unittest.TestCase):
+    def test_sos_part_seven_copies_both_source_blocks(self) -> None:
+        source = (ROOT / "docs" / "transcriptions" / "T00027" / "part_7.md").read_text(encoding="utf-8")
+        first = re.search(r"^\*\*Блок 1[^\n]*\*\*\s*\n(.*?)(?=^\*\*Блок 2)", source, re.M | re.S).group(1).strip()
+        second = re.search(r"^\*\*Блок 2[^\n]*\*\*\s*\n(.*?)(?=^---\s*$)", source, re.M | re.S).group(1).strip()
+        expected = html.escape(first + "\n\n" + second)
+        page = (OUTPUT / "sos" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn(f'<textarea id="sos-text-8" aria-label="Текст для копирования" readonly rows="6">{expected}</textarea>', page)
+        self.assertIn("пришло после просьбы к Богу  избавить меня от злых существ атакующих меня", page)
+
     def test_markdown_table_has_headers_and_preserves_cells(self) -> None:
         source = ["| Уровень | Суть |", "| --- | --- |", "| Пшат | Прямой, буквальный смысл |"]
         result = markdown_table(source, BASE_URL)
@@ -98,7 +110,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
 
         purposes = json.loads((ROOT / "site" / "public_html" / "data" / "transcription-purposes.json").read_text(encoding="utf-8"))
-        self.assertEqual(17, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
+        self.assertEqual(21, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00033/part_1.md"])
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00034/part_1.md"])
 
@@ -167,6 +179,29 @@ class StaticBuildTest(unittest.TestCase):
         source = ROOT / "site" / "public_html" / filename
         self.assertEqual(source.read_bytes(), (OUTPUT / filename).read_bytes())
         self.assertIn(b"Verification: 1195bbe61e0c2002", source.read_bytes())
+
+    def test_for_ai_uses_source_text_and_separate_purpose(self) -> None:
+        relative = "docs/transcriptions/T00035/script14_analysis.md"
+        earlier_relative = "docs/transcriptions/T00035/script12_analysis_full.md"
+        section = (OUTPUT / "for-ai" / "index.html").read_text(encoding="utf-8")
+        transcript = (OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html").read_text(encoding="utf-8")
+        earlier_transcript = (OUTPUT / transcription_route(ROOT / earlier_relative).lstrip("/") / "index.html").read_text(encoding="utf-8")
+        purpose = "По указанию автора, материалы этой подборки посвящены нейросетям."
+
+        self.assertIn("Все транскрипции здесь посвящены нейросетям", section)
+        self.assertIn(purpose, section)
+        self.assertIn(purpose, transcript)
+        self.assertIn("майлТу(отправка на почту", section)
+        self.assertIn("майлТу(отправка на почту", transcript)
+        self.assertIn("Бог! Отправка — прямой телец", section)
+        self.assertIn("Бог! Отправка — прямой телец", transcript)
+        self.assertLess(section.index("25.09.2026 — О настроенном диалоге"), section.index("28.09.2026 — Послание о нейросети"))
+        self.assertIn("Ру-ви! Хи-де-ро! У-ще!", section)
+        self.assertLess(section.index("28.09.2026 — Послание о нейросети"), section.index("29.09.2026 — Обращение к нейронке"))
+        self.assertIn("Элохим! Ру-ви-де!", section)
+        self.assertIn("Элохим! Ру-ви-де!", earlier_transcript)
+        self.assertIn("Бог! Дух — приди — знай!", section)
+        self.assertIn(purpose, earlier_transcript)
 
 
 if __name__ == "__main__":
