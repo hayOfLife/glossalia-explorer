@@ -162,6 +162,12 @@ class StaticBuildTest(unittest.TestCase):
             route = "/" if route == "/." else route.rstrip("/") + "/"
             self.assertIn(f"<loc>{BASE_URL}{route}</loc>", sitemap)
 
+    def test_yandex_verification_is_copied_to_site_root(self) -> None:
+        filename = "yandex_1195bbe61e0c2002.html"
+        source = ROOT / "site" / "public_html" / filename
+        self.assertEqual(source.read_bytes(), (OUTPUT / filename).read_bytes())
+        self.assertIn(b"Verification: 1195bbe61e0c2002", source.read_bytes())
+
 
 if __name__ == "__main__":
     unittest.main()

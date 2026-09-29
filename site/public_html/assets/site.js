@@ -232,7 +232,7 @@
     try {
       const sourceUrl = new URL(entry.sourceUrl);
       transcriptionPath = sourceUrl.hostname === "github.com"
-        ? sourceUrl.pathname.match(/^\/kva4991\/glossolalia-explorer\/blob\/main\/docs\/transcriptions\/(.+)\.md$/)
+        ? sourceUrl.pathname.match(/^\/hayOfLife\/glossalia-explorer\/blob\/main\/docs\/transcriptions\/(.+)\.md$/)
         : null;
     } catch {
       transcriptionPath = null;

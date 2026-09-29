@@ -2,7 +2,7 @@
 
 ## Основа и область применения
 
-Подход адаптирован из [Sheepfold](https://github.com/kva4991/luci-app-sheepfold-family-internet-control/tree/0f2f00f775fd657d74cb0f9159314b1881e4ba35): тематические документы, устойчивые метки, ADR, сопутствующие изменения и автоматический аудит. Основа — [стандарт документации](https://github.com/kva4991/luci-app-sheepfold-family-internet-control/blob/0f2f00f775fd657d74cb0f9159314b1881e4ba35/docs/documentation-writing-standard.ru.md), [карта меток](https://github.com/kva4991/luci-app-sheepfold-family-internet-control/blob/0f2f00f775fd657d74cb0f9159314b1881e4ba35/docs/dev/tag-map.md) и [порядок ADR](https://github.com/kva4991/luci-app-sheepfold-family-internet-control/blob/0f2f00f775fd657d74cb0f9159314b1881e4ba35/docs/architecture/decisions/README.ru.md).
+Подход адаптирован из [Sheepfold](https://github.com/hayOfLife/luci-app-sheepfold-family-internet-control/tree/0f2f00f775fd657d74cb0f9159314b1881e4ba35): тематические документы, устойчивые метки, ADR, сопутствующие изменения и автоматический аудит. Основа — [стандарт документации](https://github.com/hayOfLife/luci-app-sheepfold-family-internet-control/blob/0f2f00f775fd657d74cb0f9159314b1881e4ba35/docs/documentation-writing-standard.ru.md), [карта меток](https://github.com/hayOfLife/luci-app-sheepfold-family-internet-control/blob/0f2f00f775fd657d74cb0f9159314b1881e4ba35/docs/dev/tag-map.md) и [порядок ADR](https://github.com/hayOfLife/luci-app-sheepfold-family-internet-control/blob/0f2f00f775fd657d74cb0f9159314b1881e4ba35/docs/architecture/decisions/README.ru.md).
 
 Адаптация выполнена 22.09.2026. Правила предметной области Sheepfold и его зависимости не переносятся. Проверка написана для PowerShell 5.1/7, уже используемого проектом; Node.js не требуется.
 

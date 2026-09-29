@@ -55,8 +55,8 @@ Android-модуль и APK пока не реализованы. Доступн
 Windows, PowerShell 5.1 или 7, Python 3.12, FFmpeg в PATH. Рабочая связка проверена с Allosaurus 1.0.2 и моделью uni2005. Другие версии Python не проверены.
 
 ```powershell
-git clone https://github.com/kva4991/glossolalia-explorer.git
-cd glossolalia-explorer
+git clone https://github.com/hayOfLife/glossalia-explorer.git
+cd glossalia-explorer
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Setup.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\Start-Glossolalia.ps1 -CheckOnly
 ```

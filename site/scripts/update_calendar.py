@@ -13,7 +13,7 @@ REPOSITORY = Path(__file__).resolve().parents[2]
 TRANSCRIPTIONS = REPOSITORY / "docs" / "transcriptions"
 SNAPSHOT = REPOSITORY / "site" / "public_html" / "data" / "entries.json"
 INDEX = REPOSITORY / "site" / "calendar-index.json"
-SOURCE_BASE = "https://github.com/kva4991/glossolalia-explorer/blob/main/"
+SOURCE_BASE = "https://github.com/hayOfLife/glossalia-explorer/blob/main/"
 DATE_RE = re.compile(r"(?<!\d)(\d{2})\.(\d{2})\.(\d{4})(?!\d)")
 TIME_RE = re.compile(r"(?<!\d)(\d{1,2}):(\d{2})(?!\d)")
 

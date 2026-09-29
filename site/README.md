@@ -1,6 +1,6 @@
 # Сайт «Глоссалия»
 
-Сайт показывает выбранные материалы [Glossolalia Explorer](https://github.com/kva4991/glossolalia-explorer). Основной адрес — [glossalia-explorer.tuqo.ru](https://glossalia-explorer.tuqo.ru/). Исходная оболочка находится в `site/public_html/`, готовые для Tuqo статические страницы собираются в `site/build/`; записи для календаря находятся в `site/public_html/data/entries.json`.
+Сайт показывает выбранные материалы [Glossolalia Explorer](https://github.com/hayOfLife/glossalia-explorer). Основной адрес — [glossalia-explorer.tuqo.ru](https://glossalia-explorer.tuqo.ru/). Исходная оболочка находится в `site/public_html/`, готовые для Tuqo статические страницы собираются в `site/build/`; записи для календаря находятся в `site/public_html/data/entries.json`.
 
 ## Состояние на 29.09.2026
 

@@ -1127,6 +1127,11 @@ a:focus-visible {
 }
 
 @media (max-width: 600px) {
+  .site-shell {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
   .site-header {
     min-height: 76px;
   }
@@ -1144,17 +1149,22 @@ a:focus-visible {
     min-height: auto;
   }
 
+  body[data-page-id]:not([data-page-id="about"]) .hero {
+    display: none;
+  }
+
   .hero-copy {
-    padding: 63px 0 65px;
+    padding: 32px 0 36px;
   }
 
   .hero h1 {
     margin-top: 0;
-    font-size: clamp(44px, 11.5vw, 64px);
+    font-size: clamp(36px, 9.5vw, 48px);
   }
 
   .hero-description {
-    font-size: 16px;
+    font-size: 15px;
+    line-height: 1.55;
   }
 
   .hero-art {
@@ -1163,14 +1173,15 @@ a:focus-visible {
 
   .section-link {
     flex-basis: calc(50% - 2px);
-    min-height: 66px;
-    padding-right: 15px;
-    padding-left: 15px;
+    min-height: 56px;
+    padding-right: 10px;
+    padding-left: 10px;
     font-size: 14px;
   }
 
   .section-link-translation {
     flex-basis: 100%;
+    min-height: 66px;
   }
 
   .content-panel {
@@ -1236,7 +1247,13 @@ a:focus-visible {
   }
 
   .calendar {
-    padding: 20px 15px;
+    margin-top: 32px;
+    padding: 16px 12px;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    gap: 3px;
   }
 
   .calendar-toolbar h3 {
@@ -1245,11 +1262,37 @@ a:focus-visible {
 
   .calendar-day,
   .calendar-blank {
-    min-height: 45px;
+    min-height: 48px;
   }
 
   .entry-body {
     font-size: 18px;
+  }
+}
+
+@media (max-width: 360px) {
+  .site-shell {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .calendar {
+    padding-right: 5px;
+    padding-left: 5px;
+  }
+
+  .calendar-toolbar {
+    display: block;
+  }
+
+  .calendar-controls {
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    gap: 2px;
   }
 }
 

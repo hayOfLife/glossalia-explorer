@@ -35,8 +35,8 @@ ROUTES = {
 }
 PANEL = re.compile(r'<section class="content-panel[^\"]*" id="([^\"]+)"[^>]*>.*?</section>', re.S)
 LOCAL_LINK = re.compile(r'href="#([a-z0-9-]+)"')
-SOURCE_URL = "https://github.com/kva4991/glossolalia-explorer/blob/main/"
-PUBLISHED_LINK = re.compile(r'href="https://github\.com/kva4991/(?:glossalia|glossolalia)-explorer/blob/main/(docs/transcriptions/[^"]+\.md)"')
+SOURCE_URL = "https://github.com/hayOfLife/glossalia-explorer/blob/main/"
+PUBLISHED_LINK = re.compile(r'href="https://github\.com/hayOfLife/glossalia-explorer/blob/main/(docs/transcriptions/[^"]+\.md)"')
 AUTHOR_TRANSLATION = re.compile(r'<div class="author-translation-body" data-author-translation="([^"]*)"></div>')
 PURPOSE_PLACEHOLDER = re.compile(r'<div class="transcription-purpose-body" data-purpose-source="([^"]*)"></div>')
 
@@ -62,6 +62,9 @@ def html_document(source: str, panel: str, panel_id: str, title: str, descriptio
     page = re.sub(r'<title>.*?</title>', f'<title>{html.escape(title)} — Глоссалия</title>', page, count=1)
     page = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{html.escape(description, quote=True)}">', page, count=1)
     canonical = f'{BASE_URL}{route}'
+    page = re.sub(r'<meta property="og:title" content="[^"]*">', f'<meta property="og:title" content="{html.escape(title, quote=True)} — Глоссалия">', page, count=1)
+    page = re.sub(r'<meta property="og:description" content="[^"]*">', f'<meta property="og:description" content="{html.escape(description, quote=True)}">', page, count=1)
+    page = re.sub(r'<meta property="og:url" content="[^"]*">', f'<meta property="og:url" content="{canonical}">', page, count=1)
     page = page.replace('</head>', f'    <link rel="canonical" href="{canonical}">\n  </head>', 1)
     page = LOCAL_LINK.sub(lambda match: f'href="{ROUTES[match.group(1)]}"' if match.group(1) in ROUTES else match.group(0), page)
     page = re.sub(r'(?<=[=" ])(assets/|data/)', r'/\1', page)
@@ -296,7 +299,9 @@ def main() -> None:
     purpose_data.write_text(json.dumps(purposes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     shutil.copytree(SOURCE / "assets", OUTPUT / "assets", dirs_exist_ok=True)
     shutil.copytree(SOURCE / "data", OUTPUT / "data", dirs_exist_ok=True)
-    sources = [SOURCE / "index.html", Path(__file__)]
+    verification_file = SOURCE / "yandex_1195bbe61e0c2002.html"
+    shutil.copyfile(verification_file, OUTPUT / verification_file.name)
+    sources = [SOURCE / "index.html", verification_file, Path(__file__)]
     sources.extend(path for folder in ("assets", "data") for path in (SOURCE / folder).rglob("*") if path.is_file())
     urls = []
     for panel_id, route in ROUTES.items():

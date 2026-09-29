@@ -23,17 +23,19 @@
     "docs/transcriptions/T00034/part_1.md": "a13e974e27e0e53f2a8bdb8e25a8e5bb8464997e517a62bdef4129c65e414f8a",
     "docs/transcriptions/T00034/part_2.md": "2df73e71b858dc26c0feb53bbe0f0810d07bd375552db020f2d8250ad5600db5",
     "site/public_html/assets/alice-mark.svg": "72ed60cc51373b4dc95a8aa3000f980e671a59ffb7aa1d8a2b1be880ca8d728a",
-    "site/public_html/assets/favicon.svg": "d9932bc9f4563a872da56f124cd3ba78af096be858577aa1afd034339154b8e9",
+    "site/public_html/assets/favicon.svg": "b7f3b24817e852ac7a29d8fbcfcd2f09df590e2a4a2209f903803493b019354b",
     "site/public_html/assets/header-cross.png": "bb7abf1f341d3d30f506f6e5303d6f36388cc8e1db4c207568261229d06d2ae6",
-    "site/public_html/assets/site.js": "8a86ee5e49e4f89db2213e9bc921f08339bb26cc3d7d11d4ca513c6e99dd754c",
-    "site/public_html/assets/styles.css": "376764942b54e4c09f4bf8f66adc99363f6645d060e69dc279c9b794aece7cea",
+    "site/public_html/assets/site.js": "03a25d8858814c8d544b38b6384cedfece4a8dc52c4f08ef4ad011731e62c13a",
+    "site/public_html/assets/social-preview.png": "41a6707477cf8235adfba6a8053da86479606d82af16c2f8e22a057a55098d9d",
+    "site/public_html/assets/styles.css": "d21b1a071609092f99d3675378416c27ebc3a619fd404133b1559f2a91183752",
     "site/public_html/assets/yoomoney-mark.svg": "56cfb7841e16551c28d49e77d6bf6c8bc018ef3b979901bd6b07456457fd43b2",
     "site/public_html/data/author-translations.json": "5c2e1614d1fe6701ba690a456944a739dd487b06b9cedf9a4fbb760a7857e882",
-    "site/public_html/data/entries.json": "50036ff6a1f08d2d9e93416ff1d6005634c75e73f6e589378e57dd712f10060f",
-    "site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt": "0a3ad2d561762a6b0240b29642968dd670bc1d4b1063afedc563d0508e4bfb25",
-    "site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt": "8a3c407b32fdc9a6cd173582f32d263529c29534156f8dc8541bdab3d8b54345",
+    "site/public_html/data/entries.json": "ddce8e67720f5a55f68d00a6711368e82c902f0d93a62d5e40f911b202b68f01",
+    "site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt": "f2d9cec5e32bd01dc83fd43d75296e6e46fd266faea0f77d52a0a266d73b5fd7",
+    "site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt": "179e9edfad0e0aaa80cb726f8ec9235f349df29336ced9fefac574e488c0219f",
     "site/public_html/data/transcription-purposes.json": "c74b9be8e9b5d500fdce26de20f4706499c876153cd046438e4c1c883b157f44",
-    "site/public_html/index.html": "888cd80472a2b9991665177849a4ef8ace1450d5f7e540d219b1f0bb7d1519da",
-    "site/scripts/build_static.py": "f4b5076a3e567611dee24094dc546cf300ef34fd1dfcaf4d71bd82e28e6f427e"
+    "site/public_html/index.html": "1f5c766662a7a07bcdbf66887d4ca3af811c69fb0234bec01d982567139d6e4b",
+    "site/public_html/yandex_1195bbe61e0c2002.html": "b7263ea1a408e11778e26611c17ee7ad1d7e573c91681dc01811d4ece68b93d1",
+    "site/scripts/build_static.py": "59471f927b297b06269a1bc9354e42c5105dab49903394a28eb5ccc5fa44fdb6"
   }
 }

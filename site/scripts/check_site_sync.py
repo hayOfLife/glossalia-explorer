@@ -8,7 +8,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 
 
-GITHUB = "https://raw.githubusercontent.com/kva4991/glossolalia-explorer/main/site/content-manifest.json"
+GITHUB = "https://raw.githubusercontent.com/hayOfLife/glossalia-explorer/main/site/content-manifest.json"
 SITE = "https://glossalia-explorer.tuqo.ru/content-manifest.json"
 
 
