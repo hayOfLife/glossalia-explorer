@@ -72,22 +72,10 @@ a:focus-visible {
 }
 
 .brand-symbol {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--paper-light);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 29px;
-  line-height: 1;
-}
-
-.brand-symbol span {
-  margin-left: -4px;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 13px;
+  height: 48px;
+  object-fit: cover;
 }
 
 .brand-name {
@@ -101,8 +89,8 @@ a:focus-visible {
   margin: 0;
   color: var(--ink-soft);
   font-size: 13px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .hero {

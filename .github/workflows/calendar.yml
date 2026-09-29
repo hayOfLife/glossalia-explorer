@@ -1,0 +1,40 @@
+name: Update site calendar
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/transcriptions/**'
+
+permissions:
+  contents: write
+
+jobs:
+  update-calendar:
+    runs-on: ubuntu-latest
+    env:
+      TUQO_API_KEY: ${{ secrets.TUQO_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Add new transcriptions to calendar
+        run: python site/scripts/update_calendar.py
+      - name: Commit updated calendar
+        run: |
+          git add site/calendar-index.json site/public_html/data/entries.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update calendar from new transcriptions'
+          git push
+      - name: Deploy static site to Tuqo
+        if: env.TUQO_API_KEY != ''
+        run: |
+          tar -czf "$RUNNER_TEMP/glossaliae-site.tar.gz" -C site/public_html index.html assets data
+          curl --fail-with-body --silent --show-error \
+            -X POST 'https://api.tuqo.ru/api/v1/sites/f75f0858-5e21-483c-af98-5efa46b96047/deploys' \
+            -H "Authorization: Bearer $TUQO_API_KEY" \
+            -H 'Content-Type: application/gzip' \
+            --data-binary "@$RUNNER_TEMP/glossaliae-site.tar.gz"

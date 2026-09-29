@@ -225,7 +225,7 @@
     addText(card, "p", "entry-tag", entryLabel);
     addText(card, headingTag, "", entry.title);
     addText(card, "p", "entry-body", entry.bodyText);
-    addText(card, "p", "entry-meta", `${entry.type === "manual_transcription" ? "Получение текста" : "Дата"}: ${entry.dateNote}`);
+    addText(card, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote}`);
 
     if (entry.method) {
       addText(card, "p", "entry-meta", `Способ: ${entry.method}`);
@@ -264,7 +264,14 @@
       return;
     }
 
-    const selectedEntries = entries.filter((entry) => entry.published && entry.calendarDate === selectedDate);
+    const selectedEntries = entries
+      .filter((entry) => entry.published && entry.calendarDate === selectedDate)
+      .sort((left, right) => {
+        if (!left.appearanceTime && !right.appearanceTime) return 0;
+        if (!left.appearanceTime) return 1;
+        if (!right.appearanceTime) return -1;
+        return left.appearanceTime.localeCompare(right.appearanceTime);
+      });
 
     if (selectedEntries.length === 0) {
       addText(todayResults, "p", "day-empty", "На эту дату опубликованных записей пока нет.");
@@ -410,7 +417,7 @@
   renderCalendar();
   renderCollections();
 
-  fetch("data/entries.json", { credentials: "omit" })
+  fetch("data/entries.json", { credentials: "omit", cache: "no-store" })
     .then((response) => {
       if (!response.ok) {
         throw new Error("Data request failed");
