@@ -1,5 +1,7 @@
 (() => {
   const links = Array.from(document.querySelectorAll("[data-tab-link]"));
+  const sectionNav = document.querySelector(".section-nav");
+  const tabScrollKey = "glossaliae-scroll-to-tabs";
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
   const panelIds = new Set(panels.map((panel) => panel.id));
   const calendarGrid = document.getElementById("calendar-grid");
@@ -30,8 +32,10 @@
   const alicePromptStatus = document.getElementById("alice-prompt-status");
 
   async function prepareAliceLink() {
+    if (!aliceLink || !alicePromptStatus) return;
+
     try {
-      const response = await fetch("data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt", { cache: "no-store" });
+      const response = await fetch("/data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt", { cache: "no-store" });
       if (!response.ok) throw new Error("Prompt unavailable");
 
       const prompt = (await response.text()).trim();
@@ -223,7 +227,24 @@
     card.className = "entry-card";
     const entryLabel = entry.type === "manual_transcription" ? `§${entry.externalKey} · ${entry.group}` : entry.group;
     addText(card, "p", "entry-tag", entryLabel);
-    addText(card, headingTag, "", entry.title);
+    const heading = addText(card, headingTag, "", "");
+    let transcriptionPath;
+    try {
+      const sourceUrl = new URL(entry.sourceUrl);
+      transcriptionPath = sourceUrl.hostname === "github.com"
+        ? sourceUrl.pathname.match(/^\/kva4991\/glossolalia-explorer\/blob\/main\/docs\/transcriptions\/(.+)\.md$/)
+        : null;
+    } catch {
+      transcriptionPath = null;
+    }
+    if (transcriptionPath) {
+      const pageLink = document.createElement("a");
+      pageLink.href = `/transcriptions/${transcriptionPath[1]}/`;
+      pageLink.textContent = entry.title;
+      heading.append(pageLink);
+    } else {
+      heading.textContent = entry.title;
+    }
     addText(card, "p", "entry-body", entry.bodyText);
     addText(card, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote}`);
 
@@ -256,6 +277,8 @@
   }
 
   function renderDayResults() {
+    if (!todayResults) return;
+
     todayResults.replaceChildren();
     addText(todayResults, "h3", "day-results-heading", formatCalendarDate(selectedDate));
 
@@ -284,6 +307,8 @@
   }
 
   function renderCollection(container, type, emptyMessage) {
+    if (!container) return;
+
     container.replaceChildren();
 
     if (loadFailed) {
@@ -311,6 +336,8 @@
   }
 
   function renderCalendar() {
+    if (!calendarGrid || !calendarMonthLabel) return;
+
     calendarGrid.replaceChildren();
     const monthName = new Intl.DateTimeFormat("ru-RU", {
       month: "long",
@@ -360,7 +387,7 @@
 
   function showCurrentSection() {
     const hash = window.location.hash.slice(1);
-    const currentId = panelIds.has(hash) ? hash : "about";
+    const currentId = document.body.dataset.pageId || (panelIds.has(hash) ? hash : "about");
 
     for (const link of links) {
       const isCurrent = link.dataset.tabLink === currentId
@@ -380,11 +407,48 @@
     }
 
     const currentPanel = document.getElementById(currentId);
-    document.title = `${currentPanel.dataset.title} — Глоссалия`;
+    if (currentPanel) document.title = `${currentPanel.dataset.title} — Глоссалия`;
     document.documentElement.classList.add("site-ready");
   }
 
-  window.addEventListener("hashchange", showCurrentSection);
+  function scrollToTabs() {
+    sectionNav?.scrollIntoView({ block: "start", behavior: "instant" });
+  }
+
+  for (const link of links) {
+    link.addEventListener("click", (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+      const destination = new URL(link.href, window.location.href);
+      if (destination.pathname === window.location.pathname) {
+        requestAnimationFrame(scrollToTabs);
+      } else {
+        try {
+          sessionStorage.setItem(tabScrollKey, "1");
+        } catch {
+          // Прокрутка недоступна, если браузер запрещает хранилище сеанса
+        }
+      }
+    });
+  }
+
+  window.addEventListener("pageshow", () => {
+    try {
+      if (sessionStorage.getItem(tabScrollKey) === "1") {
+        sessionStorage.removeItem(tabScrollKey);
+        requestAnimationFrame(scrollToTabs);
+      }
+    } catch {
+      // Прокрутка недоступна, если браузер запрещает хранилище сеанса
+    }
+  });
+
+  if (!document.body.dataset.pageId) {
+    window.addEventListener("hashchange", () => {
+      showCurrentSection();
+      requestAnimationFrame(scrollToTabs);
+    });
+  }
   for (const button of document.querySelectorAll("[data-copy-target]")) {
     button.addEventListener("click", async () => {
       const field = document.getElementById(button.dataset.copyTarget);
@@ -411,13 +475,45 @@
       document.getElementById(button.dataset.openDialog).showModal();
     });
   }
-  document.getElementById("calendar-previous").addEventListener("click", () => shiftMonth(-1));
-  document.getElementById("calendar-next").addEventListener("click", () => shiftMonth(1));
+  document.getElementById("calendar-previous")?.addEventListener("click", () => shiftMonth(-1));
+  document.getElementById("calendar-next")?.addEventListener("click", () => shiftMonth(1));
   showCurrentSection();
   renderCalendar();
   renderCollections();
 
-  fetch("data/entries.json", { credentials: "omit", cache: "no-store" })
+  const translationFields = Array.from(document.querySelectorAll("[data-author-translation]"));
+  if (translationFields.length) fetch("data/author-translations.json", { credentials: "omit", cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error("Translations unavailable");
+      return response.json();
+    })
+    .then((translations) => {
+      for (const field of translationFields) {
+        field.innerHTML = translations[field.dataset.authorTranslation]
+          || "<p>Пока не заполнено</p>";
+      }
+    })
+    .catch(() => {
+      for (const field of translationFields) field.textContent = "Пока не заполнено";
+    });
+
+  const purposeFields = Array.from(document.querySelectorAll("[data-purpose-source]"));
+  if (purposeFields.length) fetch("data/transcription-purposes.json", { credentials: "omit", cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error("Purposes unavailable");
+      return response.json();
+    })
+    .then((purposes) => {
+      for (const field of purposeFields) {
+        field.innerHTML = purposes[field.dataset.purposeSource]
+          || "<p>Пока не заполнено</p>";
+      }
+    })
+    .catch(() => {
+      for (const field of purposeFields) field.textContent = "Пока не заполнено";
+    });
+
+  if (calendarGrid || newsResults || situationsResults) fetch("/data/entries.json", { credentials: "omit", cache: "no-store" })
     .then((response) => {
       if (!response.ok) {
         throw new Error("Data request failed");

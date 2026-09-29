@@ -27,6 +27,8 @@ __pycache__/
 /results/
 /models/
 /local/
+/site/build/
+/site/.build-deps/
 skill_glossolalia*.md
 .env
 .env.*

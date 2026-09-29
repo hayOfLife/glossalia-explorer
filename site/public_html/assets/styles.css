@@ -126,16 +126,21 @@ a:focus-visible {
 
 .hero h1 {
   max-width: 830px;
+  margin-top: 0;
   font-size: clamp(48px, 6.2vw, 86px);
   line-height: 1.04;
 }
 
 .hero-description {
-  max-width: 540px;
+  max-width: 830px;
   margin: 0;
   color: var(--ink-soft);
   font-size: 17px;
   line-height: 1.7;
+}
+
+.hero-verse {
+  margin-top: 12px;
 }
 
 .hero-art {
@@ -393,13 +398,40 @@ a:focus-visible {
   line-height: 1.2;
 }
 
-.help-page ul {
+.help-page ul,
+.help-page ol {
   margin: 0 0 26px;
   padding-left: 30px;
 }
 
 .help-page li + li {
   margin-top: 12px;
+}
+
+.help-page li p:last-child {
+  margin-bottom: 0;
+}
+
+.church-claim-details {
+  margin-top: 10px;
+}
+
+.church-claim-details summary {
+  width: fit-content;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  color: var(--accent-dark);
+  cursor: pointer;
+  font: 700 14px/1.4 Arial, sans-serif;
+}
+
+.church-claim-details summary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.church-claim-details[open] summary {
+  margin-bottom: 14px;
 }
 
 .alice-start-button {
@@ -505,6 +537,90 @@ a:focus-visible {
   color: var(--ink);
   font: 18px/1.6 Georgia, "Times New Roman", serif;
   resize: vertical;
+}
+
+.author-translation {
+  margin-top: 10px;
+}
+
+.transcription-purpose {
+  margin-bottom: 10px;
+}
+
+.author-translation > summary,
+.transcription-purpose > summary {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 14px;
+  border: 1px solid #a9d3a3;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f4faef 0%, #d8eccc 46%, #c2e2b7 100%);
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.9), 0 2px 5px rgba(81, 125, 74, 0.16);
+  color: #28543a;
+  cursor: pointer;
+  font: 700 12px/1.15 Arial, sans-serif;
+  list-style: none;
+}
+
+.author-translation > summary::-webkit-details-marker,
+.transcription-purpose > summary::-webkit-details-marker {
+  display: none;
+}
+
+.author-translation > summary::before,
+.transcription-purpose > summary::before {
+  content: "";
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 5px solid #28543a;
+}
+
+.author-translation[open] > summary::before,
+.transcription-purpose[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.author-translation > summary:hover,
+.transcription-purpose > summary:hover {
+  border-color: #82b77c;
+}
+
+.author-translation > summary:focus-visible,
+.transcription-purpose > summary:focus-visible {
+  outline: 3px solid #528a53;
+  outline-offset: 3px;
+}
+
+.author-translation-body,
+.transcription-purpose-body {
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font: 18px/1.6 Georgia, "Times New Roman", serif;
+}
+
+.author-translation-body > :first-child {
+  margin-top: 0;
+}
+
+.transcription-purpose-body > :first-child {
+  margin-top: 0;
+}
+
+.author-translation-body > :last-child,
+.transcription-purpose-body > :last-child {
+  margin-bottom: 0;
+}
+
+.transcription-purpose-body {
+  margin-bottom: 12px;
 }
 
 .sos-actions {
@@ -638,13 +754,18 @@ a:focus-visible {
   background: var(--paper-light);
 }
 
-.empty-icon,
-.donate-star {
+.empty-icon {
   flex: 0 0 auto;
   color: var(--accent);
   font-family: Georgia, "Times New Roman", serif;
   font-size: 55px;
   line-height: 1;
+}
+
+.donate-logo {
+  flex: 0 0 68px;
+  width: 68px;
+  height: auto;
 }
 
 .empty-state h3,
@@ -830,6 +951,48 @@ a:focus-visible {
   border-bottom: 1px solid var(--line);
 }
 
+.transcription-analysis pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.source-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.source-table-wrap table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.source-table-wrap th,
+.source-table-wrap td {
+  border: 1px solid var(--line);
+  padding: 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.transcription-analysis p,
+.transcription-analysis li,
+.transcription-analysis blockquote {
+  overflow-wrap: anywhere;
+}
+
+.entry-card h3 a,
+.entry-card h4 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.entry-card h3 a:hover,
+.entry-card h4 a:hover {
+  text-decoration: underline;
+}
+
 .entry-tag {
   margin: 0 0 11px;
   color: var(--accent);
@@ -986,7 +1149,7 @@ a:focus-visible {
   }
 
   .hero h1 {
-    margin-top: 20px;
+    margin-top: 0;
     font-size: clamp(44px, 11.5vw, 64px);
   }
 
@@ -1061,8 +1224,7 @@ a:focus-visible {
     padding: 24px;
   }
 
-  .empty-icon,
-  .donate-star {
+  .empty-icon {
     font-size: 36px;
   }
 
