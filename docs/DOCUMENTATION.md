@@ -27,7 +27,7 @@
 | Предложенная типология и разбор ручного бундла B3 | [GLOSSOLALIA_AS_KEY](GLOSSOLALIA_AS_KEY.md) |
 | Авторская теория глоссолалии как «протокола» и её границы | [glossaryHypothesis](glossaryHypothesis.md) |
 | Гипотеза о смысле жизни человека с точки зрения Бога | [humanLifeMeaningHypothesis](humanLifeMeaningHypothesis.md) |
-| Семь гипотез о «канале» по скрипту Василия | [CHANNEL_HYPOTHESIS](CHANNEL_HYPOTHESIS.md) |
+| Семь гипотез о «канале» по скрипту Автор№1 | [CHANNEL_HYPOTHESIS](CHANNEL_HYPOTHESIS.md) |
 | Личные гипотезы и сведения для справки | [Для справки (от разработчика)](<для справки (от разработчика).md>) |
 | Будущее Android-приложение | [ANDROID](ANDROID.md) |
 | Причины устойчивых решений | [ADR](architecture/decisions/README.md) |

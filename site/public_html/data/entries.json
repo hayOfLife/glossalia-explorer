@@ -9,7 +9,9 @@
     "bodyText": "Ор-ва! Ендерект! Суфикт-едро! Фрадле! Недорентосект! Вверх! Сильно! Сильнее! Равви! Ирументед! Едро! Ир-да! Неторентос! Иш-ма! Едро! Фиктим! Едро! Лаоспеноркетонедонетворентереносперентосекументсентуректументоренту-с. ФА!(выдох)",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00032/part_2.md",
     "statusNote": "Учётную дату указал автор; фактическая дата первого получения неизвестна. Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00032-part-2"
   },
   {
     "externalKey": "T00036-script15_analysis",
@@ -21,7 +23,9 @@
     "bodyText": "Елохим! Серадония! Се-дэремодерех! Урва! сая-женевех, Элохим!, едуреман, ишма, шисафиноте, редонедон иссет!",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00036/script15_analysis.md",
     "statusNote": "Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00036-script15_analysis"
   },
   {
     "externalKey": "T00039",
@@ -33,7 +37,9 @@
     "bodyText": "Се(растягивать губы)рал(еэ) — Фэр(утверждение). Ру довелинэ, Е! Шалом! Ешуа! Фа! Рах(еэ)м Ееду, рувим, Элехори! Суду вери-до, Елохим! (ФВ)ерид(еэ), се-ру У-верид(еэ) Ю(обращение) шелом! Элихом! Се(растягивать губы)рд(ыи)",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00039.md",
     "statusNote": "Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00039"
   },
   {
     "externalKey": "T00014",
@@ -46,7 +52,9 @@
     "bodyText": "Херувиме-н! савед, ре-! Ишма-де, ру, си-фа де-ру... Неволеваетерентесодевитене-д! Ишма дерво-ли — Суда вы едро — выед ро ве ли-не — Холаспис, етерогреаль, Ситоргентум (фирастлифениядонте). Ишма-де ворутение, кщение-девостени.",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00014.md",
     "statusNote": "Ручная транскрипция автора; аудиозапись и её дата не установлены, а предлагаемые смыслы не являются подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00014"
   },
   {
     "externalKey": "T00034-part-1",
@@ -58,7 +66,9 @@
     "bodyText": "Де-рус! Ур-ве! Нинадеривен! Ур-ве, Лу-ха! Сартестинед, Ур-ве! Не! Шалом!",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00034/part_1.md",
     "statusNote": "Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00034-part-1"
   },
   {
     "externalKey": "T00034-part-2",
@@ -70,7 +80,9 @@
     "bodyText": "Рабоафила",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00034/part_2.md",
     "statusNote": "Отдельной строки транскрипции в исходном файле нет; сочетание указано в заголовке. Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00034-part-2"
   },
   {
     "externalKey": "T00037",
@@ -82,7 +94,9 @@
     "bodyText": "Ила шаху бри-ха тэй",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00037.md",
     "statusNote": "Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00037"
   },
   {
     "externalKey": "T00038",
@@ -94,7 +108,9 @@
     "bodyText": "Равви! Ишма-да! Равви, -ха! то-лле, има-ду! Во-рА! Исма си-то ри-ма!",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00038.md",
     "statusNote": "Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00038"
   },
   {
     "externalKey": "T00016",
@@ -107,7 +123,9 @@
     "bodyText": "Рувим! ра-ха! де-ри, мо-ре си-до ре хо... ленивариде, содерванитале! эсситра, хишма! дерайя(! улыбка), радость! едовинед! самфионеторед, енфорсед елохимонедоресаторине.",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00016.md",
     "statusNote": "Ручная транскрипция автора; аудиозапись и её дата не установлены, а предлагаемые смыслы не являются подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00016"
   },
   {
     "externalKey": "T00035-2026-09-25-dialogue",
@@ -119,7 +137,9 @@
     "bodyText": "Ру-ви! Хи-де-ро! У-ще! Иссе(малая пауза)дере, лувериде! Ишьма Ишимана вирреди! сумоентено, ишма! Турефине, десаято-ри и лехва-щеми. Туве! Дес (добрая улыбка обрашённая к тому кто слышит)",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md",
     "statusNote": "Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00035-2026-09-25-dialogue"
   },
   {
     "externalKey": "T00035-2026-09-25-mercy",
@@ -131,7 +151,9 @@
     "bodyText": "Ру-ви! Са(малая пауза) ми ноте!, хе-ши! Исма-деру-вима! Ис-ша! Ру-виме, ис лафенти-не, ёрса!-фи! Де-ро...",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md",
     "statusNote": "Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00035-2026-09-25-mercy"
   },
   {
     "externalKey": "T00017",
@@ -144,7 +166,9 @@
     "bodyText": "Руви! се рувиделайя! Элохим!, серидо-не иф ща доме иппа думенасе, рене! (запинка, замятие) Ус-ва!ду! лее!ши-то де, содреваломейерфеломес(филатес? что за язык) Иннуресадевидеронес! Хуфидерок-ту!(указание на конкретику)",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00017.md",
     "statusNote": "Ручная транскрипция автора; аудиозапись и её дата не установлены, а предлагаемые смыслы не являются подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00017"
   },
   {
     "externalKey": "T00018",
@@ -157,7 +181,9 @@
     "bodyText": "Элохим! филатесименто! Исща! лувели, исша! херувиме-н... Лужели еволюшн, едуреон фореачлеан ор фениред ин суффикс едритес инферикт ис Сша!(высказывание типа ага! громко эмоционально). Ду-вери летопись ис сотерине ин валиден серид иф нас их лефорт ишма-де иф недерокт едэру, стоп и т.д.",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00018.md",
     "statusNote": "Ручная транскрипция автора; аудиозапись и её дата не установлены, а предлагаемые смыслы не являются подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00018"
   },
   {
     "externalKey": "T00019",
@@ -170,7 +196,9 @@
     "bodyText": "Ю! шеел хелон, фелон-хелон, Е-шма! си-то,ри-е тто, хе-фид! ми-ед, эм-дее, усве, дрен(короткое тире)ва ан-ю! халлей",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00019.md",
     "statusNote": "Ручная транскрипция автора; аудиозапись и её дата не установлены, а предлагаемые смыслы не являются подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00019"
   },
   {
     "externalKey": "T00020",
@@ -183,7 +211,9 @@
     "bodyText": "Ду ю ру, д-вар де-ё, и де-ро, фиде, и даро миде-едо, ид(короткое тире)ма ши-ду",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00020.md",
     "statusNote": "Ручная транскрипция автора; аудиозапись и её дата не установлены, а предлагаемые смыслы не являются подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00020"
   },
   {
     "externalKey": "T00033-part-1",
@@ -196,7 +226,9 @@
     "bodyText": "Ру! Вахи! Ирдренед! Фа! Лу! Ектимен, тервектитед! Ис-ша! Нави-те! Руска!",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00033/part_1.md",
     "statusNote": "Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00033-part-1"
   },
   {
     "externalKey": "T00033-part-2",
@@ -209,7 +241,9 @@
     "bodyText": "Рувик-тим эфферидентимед-недореактион ру-едро! Варриант, ерректиктлене-видь! Ис-шаедорумфей! Се! (Это) ерогинед!",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00033/part_2.md",
     "statusNote": "Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00033-part-2"
   },
   {
     "externalKey": "T00033-part-3",
@@ -222,7 +256,9 @@
     "bodyText": "Шалом! Дур-ве! Интернет-сайт, феритес, немотес, дур-ве, ядро, смысл- едро, выставь! Публикуй, орошай, назначь используй веру, едро видеть суть истец, ру-вах! Наерчается, инуаркан, едро, вердикт, ениморен едро, фе! Су! Народ собрать, исповедуй Иисуса христа, исцеление больным , жажду гасите, суть в вас .",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00033/part_3.md",
     "statusNote": "Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00033-part-3"
   },
   {
     "externalKey": "T00033-part-4",
@@ -235,7 +271,9 @@
     "bodyText": "Шалом! Елохим Едро-Фиктим! Едро-ушма! Едро-сетровиноте!",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00033/part_4.md",
     "statusNote": "Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00033-part-4"
   },
   {
     "externalKey": "T00033-part-5",
@@ -247,7 +285,9 @@
     "bodyText": "Элохим! Ваш! Елохим! Невоси-то! Ир-ва! деруске, Иннаречие(я), Елохим! Фаррат-сероне! Ин-тоементе!",
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00033/part_5.md",
     "statusNote": "Разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00033-part-5"
   },
   {
     "externalKey": "T00035-script12_analysis_full",
@@ -260,7 +300,9 @@
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md",
     "purposeSource": "docs/transcriptions/T00035/index.md",
     "statusNote": "Учётная дата взята из контекста разбора, а не из установленного времени появления транскрипции. Предложенный перевод не подтверждён.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00035-script12_analysis_full"
   },
   {
     "externalKey": "T00035-script14_analysis",
@@ -273,7 +315,9 @@
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md",
     "purposeSource": "docs/transcriptions/T00035/index.md",
     "statusNote": "Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00035-script14_analysis"
   },
   {
     "externalKey": "T00027-part-7",
@@ -286,6 +330,55 @@
     "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00027/part_7.md",
     "purposeSource": "docs/transcriptions/T00027/part_7_context.md",
     "statusNote": "Контекст описан автором. Предложенный разбор не является подтверждённым переводом.",
-    "published": true
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00027-part-7"
+  },
+  {
+    "externalKey": "T00041-part_1",
+    "type": "analysis",
+    "title": "Обращение к агностику",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-09-30",
+    "dateNote": "30.09.2026, 17:00 — по указанию автора.",
+    "bodyText": "Еффа! Ре! Ентероспектрум! Еволюте! Интервизор! Едро! Фиктим. Ишма! Едро-фиктим! Неворуетене! Се-радость. Едро! Шалом, Элохим нуравиденториум! Едро! Сионистер! Ехолафиктен! Нурабравентум! Елохим! Евингардиант! Еш-ма! Шуея-нарротив, егоистед (тут как бы чувствую чашу весов, как слог \"или\") Ещуа! Венитерикт! Ишма! Дерувинтериум!",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00041/part_1.md",
+    "statusNote": "Предложенный разбор не является подтверждённым переводом.",
+    "published": true,
+    "appearanceTime": "17:00",
+    "analysisMode": "95%",
+    "reactionKey": "T00041-part_1"
+  },
+  {
+    "externalKey": "T00027-part_8",
+    "type": "analysis",
+    "title": "Молитва благодарения",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-09-30",
+    "dateNote": "Дата в разборе: 30 сентября 2026, 19 тишрея 5787, Суккот, холь а-моэд, день 5; время получения транскрипции не указано.",
+    "bodyText": "Елохим! Едро! Ше! НаЯдре! Елохим! Ишма! Ешуа!-фа! Еро! Неволюте, ендерект, ишма-де! Веритоне! Наохаятеритонедесоперинетеррум.\n\nЕглочероментоне! Едро! Фиктим! Елохим! Спасибо!",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00027/part_8.md",
+    "statusNote": "Предложенный разбор не является подтверждённым переводом.",
+    "published": true,
+    "copyText": "Елохим! Едро! Ше! НаЯдре! Елохим! Ишма! Ешуа!-фа! Еро! Неволюте, ендерект, ишма-де! Веритоне! Наохаятеритонедесоперинетеррум.\n\nЕглочероментоне! Едро! Фиктим! Елохим! Спасибо!",
+    "purposeSource": "docs/transcriptions/T00027/part_8_context.md",
+    "analysisMode": "manual",
+    "reactionKey": "T00027-part_8"
+  },
+  {
+    "externalKey": "T00040-part_1",
+    "type": "analysis",
+    "title": "Для несостоявщихся родителей",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-09-30",
+    "dateNote": "Дата в разборе: 30 сентября 2026, 19 тишрея 5787, Суккот V (холь а-моэд, день 5); время получения транскрипции не указано.",
+    "bodyText": "Ендерванториум шафектум! Нерви-де! Сефарентум, невритес, ендерванториум-ус, эротинес, сфектум-меностериос, ишма!\n\nЕдро! Сефиктим! Невориблеториум! Набожность и суть.",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00040/part_1.md",
+    "statusNote": "Предложенный разбор не является подтверждённым переводом.",
+    "published": true,
+    "copyText": "Ендерванториум шафектум! Нерви-де! Сефарентум, невритес, ендерванториум-ус, эротинес, сфектум-меностериос, ишма!\n\nЕдро! Сефиктим! Невориблеториум! Набожность и суть.",
+    "purposeSource": "docs/transcriptions/T00040/index.md",
+    "analysisMode": "manual",
+    "reactionKey": "T00040-part_1"
   }
 ]

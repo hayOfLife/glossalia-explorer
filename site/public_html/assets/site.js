@@ -22,12 +22,18 @@
   let calendarMonth = Number(todayParts.month);
   let entries = [];
   let loadFailed = false;
-  const reactionApiUrl = "https://94-232-41-163.sslip.io/glossaliae/reactions";
+  const localEnvironment = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
+  const productionReactionApiUrl = "https://94-232-41-163.sslip.io/glossaliae/reactions";
+  const localReactionApiUrl = "https://94-232-41-163.sslip.io/glossaliae/reactions-local";
+  const reactionApiUrl = localEnvironment ? localReactionApiUrl : productionReactionApiUrl;
   const reactionCounts = new Map();
+  const pendingReactions = new Set();
+  const reactionErrors = new Map();
+  let reactionsRequested = false;
   let reactionsAvailable = false;
   let sessionVoterId = null;
-  const voterStorageKey = "glossaliae-voter-id";
-  const voteStorageKey = "glossaliae-votes";
+  const voterStorageKey = localEnvironment ? "glossaliae-voter-id-local" : "glossaliae-voter-id";
+  const voteStorageKey = localEnvironment ? "glossaliae-votes-local" : "glossaliae-votes";
   const aliceLink = document.getElementById("alice-translation-link");
   const alicePromptStatus = document.getElementById("alice-prompt-status");
 
@@ -89,19 +95,21 @@
 
   function updateOneReactionControl(controls, key) {
     const counts = reactionCounts.get(key) || { likes: 0, dislikes: 0 };
+    const available = reactionsAvailable && reactionCounts.has(key);
+    const pending = pendingReactions.has(key);
 
     for (const button of controls.querySelectorAll("button")) {
       const vote = Number(button.dataset.vote);
       const count = vote === 1 ? counts.likes : counts.dislikes;
-      button.disabled = !reactionsAvailable;
+      button.disabled = !available || pending;
       button.setAttribute("aria-pressed", String(ownVotes[key] === vote));
-      button.setAttribute("aria-label", `${vote === 1 ? "Нравится" : "Не нравится"}: ${controls.dataset.reactionTitle}, голосов: ${reactionsAvailable ? count : "недоступно"}`);
-      button.querySelector("span").textContent = reactionsAvailable ? String(count) : "—";
+      button.setAttribute("aria-label", `${vote === 1 ? "Нравится" : "Не нравится"}: ${controls.dataset.reactionTitle}, голосов: ${available ? count : "недоступно"}`);
+      button.querySelector("span").textContent = available ? String(count) : "—";
     }
 
-    controls.querySelector("[data-reaction-status]").textContent = reactionsAvailable
-      ? ""
-      : "Оценки временно недоступны";
+    controls.querySelector("[data-reaction-status]").textContent = pending
+      ? "Сохраняем оценку…"
+      : (available ? reactionErrors.get(key) || "" : "Оценки временно недоступны");
   }
 
   function updateReactionControls(key) {
@@ -112,11 +120,18 @@
     }
   }
 
-  async function submitReaction(key, vote, controls) {
+  function validReactionCounts(counts) {
+    return counts && Number.isSafeInteger(counts.likes) && counts.likes >= 0
+      && Number.isSafeInteger(counts.dislikes) && counts.dislikes >= 0;
+  }
+
+  async function submitReaction(key, vote) {
+    if (!reactionsAvailable || !reactionCounts.has(key) || pendingReactions.has(key)) return;
+
     const nextVote = ownVotes[key] === vote ? 0 : vote;
-    const buttons = controls.querySelectorAll("button");
-    buttons.forEach((button) => { button.disabled = true; });
-    controls.querySelector("[data-reaction-status]").textContent = "Сохраняем оценку…";
+    pendingReactions.add(key);
+    reactionErrors.delete(key);
+    updateReactionControls(key);
 
     try {
       const response = await fetch(reactionApiUrl, {
@@ -134,6 +149,8 @@
       }
 
       const result = await response.json();
+      if (!validReactionCounts(result)) throw new Error("Invalid reaction counts");
+
       reactionCounts.set(key, { likes: result.likes, dislikes: result.dislikes });
       ownVotes[key] = nextVote;
       try {
@@ -141,20 +158,24 @@
       } catch {
         // Оценка сохранена на сервере и останется отмеченной до закрытия страницы
       }
-      updateReactionControls(key);
     } catch (error) {
-      buttons.forEach((button) => { button.disabled = false; });
-      controls.querySelector("[data-reaction-status]").textContent = error.rateLimited
+      reactionErrors.set(key, error.rateLimited
         ? "Слишком много оценок. Подождите до 10 минут."
-        : "Не удалось сохранить оценку. Попробуйте ещё раз.";
+        : "Не удалось сохранить оценку. Попробуйте ещё раз.");
+    } finally {
+      pendingReactions.delete(key);
+      updateReactionControls(key);
     }
   }
 
   function addReactionControls(card, entry) {
+    const key = entry.reactionKey || (entry.type === "manual_transcription" ? entry.externalKey : "");
+    if (!key || card.querySelector("[data-reaction-key]")) return;
+
     const controls = document.createElement("div");
     controls.className = "entry-reactions";
-    controls.dataset.reactionKey = entry.externalKey;
-    controls.dataset.reactionTitle = entry.title;
+    controls.dataset.reactionKey = key;
+    controls.dataset.reactionTitle = entry.title || "Транскрипция";
     addText(controls, "span", "entry-reactions-label", "Оцените транскрипцию");
 
     for (const [vote, symbol] of [[1, "👍"], [-1, "👎"]]) {
@@ -163,7 +184,7 @@
       button.dataset.vote = String(vote);
       button.setAttribute("aria-pressed", "false");
       button.append(document.createTextNode(`${symbol} `), document.createElement("span"));
-      button.addEventListener("click", () => submitReaction(entry.externalKey, vote, controls));
+      button.addEventListener("click", () => submitReaction(key, vote));
       controls.append(button);
     }
 
@@ -171,13 +192,15 @@
     status.dataset.reactionStatus = "";
     status.setAttribute("role", "status");
     card.append(controls);
-    updateOneReactionControl(controls, entry.externalKey);
+    updateOneReactionControl(controls, key);
   }
 
   async function loadReactions() {
-    if (!reactionApiUrl) {
+    if (!reactionApiUrl || reactionsRequested) {
       return;
     }
+
+    reactionsRequested = true;
 
     try {
       const response = await fetch(reactionApiUrl, { credentials: "omit", cache: "no-store" });
@@ -187,8 +210,12 @@
       }
 
       const counts = await response.json();
+      if (!counts || typeof counts !== "object" || Array.isArray(counts)) {
+        throw new Error("Invalid reaction counts format");
+      }
+
       for (const [key, value] of Object.entries(counts)) {
-        reactionCounts.set(key, value);
+        if (validReactionCounts(value)) reactionCounts.set(key, value);
       }
 
       reactionsAvailable = true;
@@ -198,6 +225,19 @@
 
     for (const controls of document.querySelectorAll("[data-reaction-key]")) {
       updateOneReactionControl(controls, controls.dataset.reactionKey);
+    }
+  }
+
+  function prepareTranscriptionReactions() {
+    for (const placeholder of document.querySelectorAll("[data-transcription-reaction]")) {
+      addReactionControls(placeholder, {
+        reactionKey: placeholder.dataset.transcriptionReaction,
+        title: placeholder.dataset.reactionTitle,
+      });
+    }
+
+    if (document.querySelector("[data-reaction-key]")) {
+      loadReactions();
     }
   }
 
@@ -220,6 +260,11 @@
     element.textContent = value;
     parent.append(element);
     return element;
+  }
+
+  function analysisLabel(mode) {
+    const label = mode === "manual" ? "100%" : (/^(?:100|[1-9]?\d)%$/.test(mode) ? mode : "авто");
+    return `Разбор транскрипции: ${label}`;
   }
 
   function createEntryCard(entry, headingTag) {
@@ -246,6 +291,7 @@
       heading.textContent = entry.title;
     }
     addText(card, "p", "entry-body", entry.bodyText);
+    addText(card, "p", "analysis-mode", analysisLabel(entry.analysisMode));
     addText(card, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote}`);
 
     if (entry.method) {
@@ -269,7 +315,7 @@
       // Некорректный адрес источника не влияет на показ самой записи
     }
 
-    if (entry.type === "manual_transcription") {
+    if (entry.type === "manual_transcription" || entry.type === "analysis") {
       addReactionControls(card, entry);
     }
 
@@ -392,7 +438,7 @@
     for (const link of links) {
       const isCurrent = link.dataset.tabLink === currentId
         || (link.dataset.tabLink === "help" && currentId.startsWith("help-"))
-        || (link.dataset.tabLink === "situations" && (currentId.startsWith("situation-") || currentId === "sos"));
+        || (link.dataset.tabLink === "situations" && (currentId.startsWith("situation-") || currentId === "sos" || currentId === "termination-of-pregnancy"));
       link.classList.toggle("is-active", isCurrent);
 
       if (isCurrent) {
@@ -475,11 +521,106 @@
       document.getElementById(button.dataset.openDialog).showModal();
     });
   }
+
+  const detailDialog = document.getElementById("transcription-detail-dialog");
+  const detailTitle = document.getElementById("transcription-detail-title");
+  const detailContent = document.getElementById("transcription-detail-content");
+  const detailPageLink = document.getElementById("transcription-detail-page");
+  let detailRequest = null;
+  let detailOrigin = null;
+
+  if (detailDialog && detailTitle && detailContent && detailPageLink && typeof detailDialog.showModal === "function") {
+    document.addEventListener("click", async (event) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+
+      const link = event.target.closest(".sos-actions a, .entry-card h3 a, .entry-card h4 a");
+      if (!link) return;
+
+      const destination = new URL(link.href, window.location.href);
+      if (destination.origin !== window.location.origin || !/^\/transcriptions\/.+\/$/.test(destination.pathname)) return;
+
+      event.preventDefault();
+      detailRequest?.abort();
+      const request = new AbortController();
+      detailRequest = request;
+      detailOrigin = { link, x: window.scrollX, y: window.scrollY };
+      detailTitle.textContent = "Полный разбор";
+      detailPageLink.href = destination.href;
+      detailContent.replaceChildren();
+      const status = addText(detailContent, "p", "", "Загружаем разбор…");
+      status.setAttribute("role", "status");
+      document.documentElement.classList.add("transcription-detail-open");
+      detailDialog.showModal();
+
+      try {
+        const response = await fetch(destination.href, { credentials: "omit", cache: "no-cache", signal: request.signal });
+        if (!response.ok) throw new Error("Transcription unavailable");
+
+        const page = new DOMParser().parseFromString(await response.text(), "text/html");
+        const analysis = page.querySelector(".transcription-analysis");
+        if (!analysis) throw new Error("Transcription analysis missing");
+        if (request.signal.aborted || !detailDialog.open) return;
+
+        detailTitle.textContent = page.querySelector("#transcription h2")?.textContent || "Полный разбор";
+        const content = document.importNode(analysis, true);
+        for (const sourceLink of content.querySelectorAll("a[href]")) {
+          if (sourceLink.getAttribute("href").startsWith("#")) continue;
+          sourceLink.target = "_blank";
+          sourceLink.rel = "noopener noreferrer";
+        }
+        detailContent.replaceChildren(content);
+      } catch {
+        if (!request.signal.aborted && detailDialog.open) {
+          status.textContent = "Не удалось загрузить разбор. Попробуйте ещё раз или откройте отдельной страницей.";
+        }
+      }
+    });
+
+    detailDialog.addEventListener("close", () => {
+      if (detailDialog.open) return;
+
+      detailRequest?.abort();
+      detailRequest = null;
+      document.documentElement.classList.remove("transcription-detail-open");
+      if (!detailOrigin) return;
+
+      // Закрытие читателя возвращает фокус и прокрутку к исходному абзацу
+      detailOrigin.link.focus({ preventScroll: true });
+      window.scrollTo({ left: detailOrigin.x, top: detailOrigin.y, behavior: "instant" });
+      detailOrigin = null;
+    });
+  }
+
   document.getElementById("calendar-previous")?.addEventListener("click", () => shiftMonth(-1));
   document.getElementById("calendar-next")?.addEventListener("click", () => shiftMonth(1));
   showCurrentSection();
   renderCalendar();
   renderCollections();
+  prepareTranscriptionReactions();
+
+  const dictionaryContainer = document.getElementById("channel-dictionary-content");
+  if (dictionaryContainer && !dictionaryContainer.children.length) {
+    fetch("/data/dictionary.html", { credentials: "omit", cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Dictionary unavailable");
+        return response.text();
+      })
+      .then((content) => { dictionaryContainer.innerHTML = content; })
+      .catch(() => { dictionaryContainer.textContent = "Не удалось загрузить словарь. Обновите страницу."; });
+  }
+
+  const analysisFields = Array.from(document.querySelectorAll("[data-analysis-source]"));
+  if (analysisFields.length) fetch("/data/analysis-modes.json", { credentials: "omit", cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error("Analysis modes unavailable");
+      return response.json();
+    })
+    .then((modes) => {
+      for (const field of analysisFields) {
+        field.textContent = analysisLabel(modes[field.dataset.analysisSource]);
+      }
+    })
+    .catch(() => {});
 
   const translationFields = Array.from(document.querySelectorAll("[data-author-translation]"));
   if (translationFields.length) fetch("data/author-translations.json", { credentials: "omit", cache: "no-store" })

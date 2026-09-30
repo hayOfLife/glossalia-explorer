@@ -1,0 +1,38 @@
+[Unit]
+Description=Glossolalia local preview reactions API
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+User=glossaliae-reactions-local
+WorkingDirectory=/opt/glossaliae-reactions
+Environment=REACTIONS_ENVIRONMENT=local
+Environment=REACTIONS_PORT=8792
+Environment=REACTIONS_DATA_FILE=/var/lib/glossaliae-reactions-local/reactions.json
+ExecStart=/usr/bin/node /opt/glossaliae-reactions/server.mjs
+Restart=on-failure
+RestartSec=5s
+UMask=0077
+StateDirectory=glossaliae-reactions-local
+StateDirectoryMode=0700
+NoNewPrivileges=yes
+PrivateDevices=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/glossaliae-reactions-local
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+IPAddressDeny=any
+IPAddressAllow=localhost
+SocketBindDeny=any
+SocketBindAllow=tcp:8792
+TasksMax=64
+MemoryHigh=96M
+MemoryMax=128M
+LimitCORE=0
+
+[Install]
+WantedBy=multi-user.target

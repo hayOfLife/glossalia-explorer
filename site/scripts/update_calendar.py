@@ -46,7 +46,7 @@ def source_section(text: str) -> str:
     if quoted:
         return "\n".join(quoted).strip()
 
-    return section.split("\n\n", 1)[0].strip()
+    return re.split(r"^\s*(?:-{3,}|\*{3,})\s*$", section, maxsplit=1, flags=re.MULTILINE)[0].strip()
 
 
 def entry_from_file(relative_path: str) -> dict:

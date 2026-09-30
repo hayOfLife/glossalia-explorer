@@ -3,6 +3,7 @@ set -eu
 
 test "$(id -un)" = sheepfold-admin
 test -f /tmp/server.mjs
+test -f /tmp/transcriptions.json
 test -f /tmp/glossaliae-reactions.service
 test -f /tmp/Caddy-route.caddy
 test ! -e /etc/systemd/system/glossaliae-reactions.service
@@ -30,6 +31,7 @@ caddy adapt --config /tmp/Caddyfile.glossaliae-candidate --pretty >/dev/null
 
 sudo install -d -o root -g root -m 0755 /opt/glossaliae-reactions
 sudo install -o root -g root -m 0644 /tmp/server.mjs /opt/glossaliae-reactions/server.mjs
+sudo install -o root -g root -m 0644 /tmp/transcriptions.json /opt/glossaliae-reactions/transcriptions.json
 sudo useradd --system --user-group --no-create-home --home-dir /nonexistent --shell /usr/sbin/nologin glossaliae-reactions
 sudo install -d -o glossaliae-reactions -g glossaliae-reactions -m 0700 /var/lib/glossaliae-reactions
 sudo install -o root -g root -m 0644 /tmp/glossaliae-reactions.service /etc/systemd/system/glossaliae-reactions.service

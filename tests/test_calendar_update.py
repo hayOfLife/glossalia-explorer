@@ -15,6 +15,17 @@ SPEC.loader.exec_module(calendar)
 
 
 class CalendarUpdateTest(unittest.TestCase):
+    def test_source_section_preserves_multiple_paragraphs(self):
+        text = "## Исходная строка\n\nПервая строка\n\nВторая строка\n\n---\n\n## Разбор\n\nПояснение\n"
+        self.assertEqual(calendar.source_section(text), "Первая строка\n\nВторая строка")
+
+    def test_source_section_preserves_both_thanksgiving_parts(self):
+        source = SCRIPT.parents[2] / "docs/transcriptions/T00027/part_8.md"
+        body = calendar.source_section(source.read_text(encoding="utf-8"))
+        self.assertIn("Елохим! Едро! Ше!", body)
+        self.assertIn("Еглочероментоне! Едро! Фиктим! Елохим! Спасибо!", body)
+        self.assertNotIn("##", body)
+
     def test_adds_new_file_with_source_date_and_preserves_text(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

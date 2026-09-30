@@ -23,6 +23,9 @@ ROUTES = {
     "situation-1": "/situations/glossolalia/",
     "sos": "/sos/",
     "situation-3": "/situations/help/",
+    "termination-of-pregnancy": "/termination-of-pregnancy/",
+    "situation-5": "/situations/agnosticism/",
+    "situation-6": "/situations/life-partner/",
     "translation": "/translation/",
     "help": "/help/",
     "help-glossolalia": "/help/glossolalia/",
@@ -31,6 +34,7 @@ ROUTES = {
     "help-theories": "/help/theories/",
     "help-ai": "/help/ai/",
     "help-author": "/help/author/",
+    "help-eugenics": "/help/eugenics-vs-genetic-engineering/",
     "donate": "/donate/",
     "for-ai": "/for-ai/",
 }
@@ -40,6 +44,7 @@ SOURCE_URL = "https://github.com/hayOfLife/glossalia-explorer/blob/main/"
 PUBLISHED_LINK = re.compile(r'href="https://github\.com/hayOfLife/glossalia-explorer/blob/main/(docs/transcriptions/[^"]+\.md)"')
 AUTHOR_TRANSLATION = re.compile(r'<div class="author-translation-body" data-author-translation="([^"]*)"></div>')
 PURPOSE_PLACEHOLDER = re.compile(r'<div class="transcription-purpose-body" data-purpose-source="([^"]*)"></div>')
+REACTION_PLACEHOLDER = re.compile(r'<div data-transcription-reaction="[^"]+" data-reaction-title="[^"]*"></div>')
 
 
 def digest_file(path: Path) -> str:
@@ -77,7 +82,7 @@ def html_document(source: str, panel: str, panel_id: str, title: str, descriptio
 
 def inline(text: str, source_url: str = SOURCE_URL) -> str:
     escaped = html.escape(text)
-    escaped = re.sub(r'\[([^]]+)\]\(([^)]+)\)', lambda match: f'<a href="{html.escape(source_link(match.group(2), source_url), quote=True)}">{match.group(1)}</a>', escaped)
+    escaped = re.sub(r'\[([^]]+)\]\(([^)]+)\)', lambda match: f'<a href="{html.escape(source_link(html.unescape(match.group(2)), source_url), quote=True)}">{match.group(1)}</a>', escaped)
     escaped = re.sub(r'\*\*([^*]+)\*\*', r'<strong>\1</strong>', escaped)
     escaped = re.sub(r'`([^`]+)`', r'<code>\1</code>', escaped)
     return escaped
@@ -108,6 +113,7 @@ def markdown_table(lines: list[str], source_url: str) -> str:
 
 def markdown_html(text: str, source_url: str) -> str:
     """Преобразовать обычные блоки Markdown, оставляя сложные таблицы без потери текста."""
+    text = re.sub(r"^разбор транскрипции: (?:авто|ручной, 100%|(?:100|[1-9]?\d)%)\s*\n", "", text, count=1)
     result: list[str] = []
     paragraph: list[str] = []
     listing = False
@@ -223,6 +229,53 @@ def copy_texts(source: str) -> dict[str, str]:
     return result
 
 
+def reaction_key(relative: str, entry: dict | None = None) -> str:
+    previous = (entry or {}).get("externalKey", "")
+    if re.fullmatch(r"T\d{5}(?:-[A-Za-z0-9_-]{1,100})?", previous):
+        return previous
+
+    path = Path(relative).relative_to("docs/transcriptions").with_suffix("")
+    tag = path.parts[0]
+    slug = "-".join(path.parts[1:])
+    key = tag + ("-" + slug if slug else "")
+    if not re.fullmatch(r"T\d{5}(?:-[A-Za-z0-9_-]{1,100})?", key):
+        key = tag + "-source-" + hashlib.sha256(relative.encode("utf-8")).hexdigest()[:16]
+    return key
+
+
+def reaction_placeholder(key: str, title: str) -> str:
+    return f'<div data-transcription-reaction="{html.escape(key, quote=True)}" data-reaction-title="{html.escape(title, quote=True)}"></div>'
+
+
+def attach_block_reactions(source: str, keys: dict[str, str], texts: dict[str, str]) -> tuple[str, set[str]]:
+    source = REACTION_PLACEHOLDER.sub("", source)
+    text_keys = {re.sub(r"\s+", " ", text).strip(): keys[relative] for relative, text in texts.items()}
+    inline_keys = {"sos-text-1": "T00027-sos-text-1"}
+    added = set()
+    for block in sos_item_blocks(source):
+        field = re.search(r'<textarea\b[^>]*id="([^"]+)"[^>]*>(.*?)</textarea>', block, re.S)
+        if not field or not html.unescape(field.group(2)).strip():
+            continue
+
+        link = PUBLISHED_LINK.search(block)
+        translation = AUTHOR_TRANSLATION.search(block)
+        relative = link.group(1) if link else translation.group(1) if translation else ""
+        text = re.sub(r"\s+", " ", html.unescape(field.group(2))).strip()
+        key = keys.get(relative) or text_keys.get(text) or inline_keys.get(field.group(1))
+        if not key:
+            raise ValueError(f"Не задан постоянный ключ транскрипции: {field.group(1)}")
+
+        summary = re.search(r'<summary>(.*?)</summary>', block, re.S)
+        title = html.unescape(re.sub(r'<[^>]+>', '', summary.group(1))) if summary else field.group(1)
+        closing = block.rfind('</div>')
+        if closing < 0:
+            raise ValueError(f"Нет блока транскрипции: {field.group(1)}")
+        replacement = block[:closing] + reaction_placeholder(key, title) + block[closing:]
+        source = source.replace(block, replacement, 1)
+        added.add(key)
+    return source, added
+
+
 def transcription_section(markdown: str, heading: str) -> str:
     section = re.search(rf'^## {re.escape(heading)}\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
     if not section:
@@ -241,7 +294,7 @@ def original_transcription(markdown: str) -> str:
 
 
 def author_translation_html(markdown: str, source_url: str) -> str:
-    for heading in ("Перевод автора", "Авторский перевод", "Итоговый перевод", "Связный перевод", "Перевод (гипотеза)"):
+    for heading in ("Перевод автора", "Авторский перевод", "Сводный перевод Автор№1", "Итоговый перевод", "Связный перевод", "Перевод (гипотеза)"):
         section = re.search(rf'^## {re.escape(heading)}(?:\s*\([^\n]*\))?\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
         if section:
             content = section.group(1).strip().removesuffix("---").strip()
@@ -259,6 +312,146 @@ def purpose_html(source_path: Path) -> str:
     return '<p>Пока не заполнено</p>'
 
 
+def analysis_mode(markdown: str) -> str:
+    marker = re.search(r"^разбор транскрипции: (авто|ручной, 100%|(?:100|[1-9]?\d)%)$", markdown, re.M)
+    if marker:
+        value = marker.group(1)
+        return {"ручной, 100%": "manual", "авто": "auto"}.get(value, value)
+    return "manual" if re.search(r"пометки\s+автора|\bуточнено\b", markdown, re.I) else "auto"
+
+
+def analysis_label(mode: str) -> str:
+    label = "100%" if mode == "manual" else mode if re.fullmatch(r"(?:100|[1-9]?\d)%", mode) else "авто"
+    return "Разбор транскрипции: " + label
+
+
+def dictionary_languages(content: str) -> list[str]:
+    aliases = (
+        ("иврит", r"иврит\w*|ивр\."),
+        ("греческий", r"греческ\w*|греч\."),
+        ("латинский", r"латинск\w*|лат\."),
+        ("арамейский", r"арамейск\w*|арам\."),
+        ("аккадский", r"аккадск\w*"),
+        ("арабский", r"арабск\w*|араб\."),
+        ("японский", r"японск\w*|япон\.|яп\."),
+        ("старославянский", r"старославянск\w*|ст\.-слав\."),
+        ("славянский", r"славянск\w*|(?<!ст\.-)слав\."),
+        ("русский", r"русск\w*|рус(?:ск)?\."),
+        ("английский", r"английск\w*|англ\."),
+        ("караимский", r"караимск\w*"),
+        ("сирийский", r"сирийск\w*"),
+    )
+    result = []
+    for line in content.splitlines():
+        line = line.strip()
+        field = re.match(r"^(?:-\s+)?\*\*([^*\n]+):\*\*\s*(.+)$", line)
+        if field:
+            label, value = field.groups()
+            if value.strip() in {"—", "-", "Пока не заполнено"}:
+                continue
+            if any(re.fullmatch(pattern, label, re.I) for _, pattern in aliases):
+                candidate = label
+            elif re.search(r"язык|предложен|предположен|корень|значение|двойной смысл|кандидат|поправка", label, re.I):
+                candidate = value
+            else:
+                continue
+        elif line.startswith("Словарная гипотеза:"):
+            candidate = line.split("`", 1)[0]
+        elif re.search(r"(?<!\w)(?:лат|греч|арам|ивр|рус|русск|англ|слав|япон|яп)\.(?!\w)", line, re.I):
+            candidate = line
+        elif re.match(r"^Русские слова\b", line, re.I):
+            candidate = line
+        else:
+            continue
+
+        candidate = re.sub(r"https?://\S+", "", candidate)
+
+        # Язык берётся из пометок лексического разбора, а не из алфавита или номера Стронга
+        matches = sorted((match.start(), name) for name, pattern in aliases
+                         for match in re.finditer(rf"(?<!\w)(?:{pattern})(?!\w)", candidate, re.I))
+        result.extend(name for _, name in matches)
+
+    result = list(dict.fromkeys(result))
+    return [name for name in result if name != "славянский" or "старославянский" not in result]
+
+
+def dictionary_fields(title: str, content: str) -> list[list[str]]:
+    fields: dict[str, list[str]] = {}
+    for line in content.splitlines():
+        match = re.match(r"^(?:-\s+)?\*\*([^*\n]+):\*\*\s*(.+)$", line.strip())
+        if match:
+            fields.setdefault(match.group(1).casefold(), []).append(match.group(2))
+
+    def values(labels: tuple[str, ...]) -> list[str]:
+        return list(dict.fromkeys(value for label in labels for value in fields.get(label, [])))
+
+    writing = values(("написание", "корень", "иврит", "японский", "славянский"))
+    transcription = values(("транскрипция", "слово", "ручная форма", "форма автора", "звук", "точная форма и движок", "ручная форма f7", "ручная форма и контекст")) or [title]
+    engine_marker = r",\s*(ZIPA|W2V2|Allosaurus)\b"
+    obtained = [engine for text in transcription for engine in re.findall(engine_marker, text)] or ["ручная"]
+    transcription = [re.sub(engine_marker, "", text).strip() for text in transcription]
+
+    dictionary = values(("перевод из словаря",))
+    interpretation = values(("трактовка автора", "толкование автора", "авторское толкование", "образ пользователя"))
+    language = values(("язык", "языки")) or dictionary_languages(content)
+    dictionary_notes = re.findall(r"^Словарная гипотеза: [^\n]+", content, re.M)
+    if not dictionary:
+        dictionary.extend(dictionary_notes)
+
+    if not writing:
+        for note in dictionary_notes:
+            writing.extend(re.findall(r"`([\u0370-\u03ff\u1f00-\u1fff\u0590-\u05ff\u3040-\u30ff\u4e00-\u9fff]+)`", note))
+
+    # Словарные значения извлекаются только из явно записанной пары леммы и глосса
+    if not dictionary:
+        foreign = r"[A-Za-z\u0370-\u03ff\u1f00-\u1fff\u0590-\u05ff\u3040-\u30ff\u4e00-\u9fff]+"
+        pair = rf"(?<![-\w*`])(?P<word>`{foreign}`|\*{foreign}\*|{foreign})\s*\((?P<gloss>[^()\n]+)\)"
+        for match in re.finditer(pair, content):
+            gloss = match.group("gloss")
+            if content[match.end():].lstrip().startswith('?') or re.search(r"→|=>", gloss):
+                continue
+
+            quoted = re.search(r"«([^»]+)»", gloss)
+            if quoted:
+                gloss = quoted.group(1)
+            else:
+                gloss = re.sub(r"^[HG]\d+,\s*", "", gloss)
+                if (re.search(r"[HG]\d|[+=]", gloss) or not re.search(r"[А-Яа-яЁё]", gloss)
+                        or re.match(r"^(?:арам|греч|лат|иврит|ивр|япон|яп|англ|слав|рус)\.?$", gloss.strip(), re.I)):
+                    continue
+
+            word = match.group("word").strip("`*")
+            dictionary.append(f"{word} — {gloss}")
+            if not values(("написание", "корень", "иврит", "японский", "славянский")):
+                writing.append(word)
+
+    return [list(dict.fromkeys(column)) for column in (writing, transcription, obtained, dictionary, interpretation, language)]
+
+
+def dictionary_html(markdown: str, source_url: str) -> str:
+    headings = list(re.finditer(r"^## (.+)$", markdown, re.M))
+    labels = ("Написание", "транскрипция", "Транскрипция получена", "перевод из словаря", "трактовка автора", "язык")
+    rows = []
+    for index, heading in enumerate(headings):
+        end = headings[index + 1].start() if index + 1 < len(headings) else len(markdown)
+        content = markdown[heading.end():end].strip()
+        columns = dictionary_fields(heading.group(1), content)
+        cells = []
+        for number, (label, values) in enumerate(zip(labels, columns)):
+            tag = 'th' if number == 1 else 'td'
+            attributes = ' scope="row"' if number == 1 else ''
+            text = markdown_html('\n\n'.join(values), source_url) if values else '<p class="dictionary-empty">Пока не заполнено</p>'
+            if number == 4:
+                text += ('<details class="dictionary-sources"><summary>Разборы и источники</summary>'
+                         '<div class="dictionary-source-body">' + markdown_html(content, source_url) + '</div></details>')
+            cells.append(f'<{tag}{attributes} data-label="{label}">{text}</{tag}>')
+
+        rows.append('<tr>' + ''.join(cells) + '</tr>')
+    return ('<div class="dictionary-table-wrap"><table class="dictionary-table" aria-labelledby="channel-dictionary-title">'
+            '<thead><tr>' + ''.join(f'<th scope="col">{label}</th>' for label in labels) + '</tr></thead>'
+            '<tbody>' + ''.join(rows) + '</tbody></table></div>')
+
+
 def main() -> None:
     source = (SOURCE / "index.html").read_text(encoding="utf-8")
     OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -268,6 +461,13 @@ def main() -> None:
     by_source = {entry["sourceUrl"].removeprefix(SOURCE_URL): entry for entry in entries if entry.get("published")}
     text_for_copy = copy_texts(source)
     published_paths = set(by_source) | set(text_for_copy)
+    reaction_keys = {relative: reaction_key(relative, by_source.get(relative)) for relative in sorted(published_paths)}
+    if len(set(reaction_keys.values())) != len(reaction_keys):
+        raise ValueError("Разные транскрипции имеют одинаковый ключ голосования")
+    source, inline_reaction_keys = attach_block_reactions(source, reaction_keys, text_for_copy)
+    reaction_manifest_path = ROOT / "site/reactions-api/transcriptions.json"
+    reaction_manifest_path.write_text(json.dumps({"schema": 1, "keys": sorted(set(reaction_keys.values()) | inline_reaction_keys)}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    analysis_modes = {}
     translations = {}
     purposes = {}
     sources_for_purposes: set[Path] = set()
@@ -276,6 +476,7 @@ def main() -> None:
         if not relative.startswith("docs/transcriptions/") or not source_path.is_file() or not source_path.is_relative_to(ROOT / "docs" / "transcriptions"):
             raise ValueError(f"Нет исходника перевода: {relative}")
         markdown = source_path.read_text(encoding="utf-8")
+        analysis_modes[relative] = analysis_mode(markdown)
         translations[relative] = author_translation_html(markdown, SOURCE_URL + relative)
         purpose_relative = by_source.get(relative, {}).get("purposeSource", relative)
         purpose_path = ROOT / purpose_relative
@@ -295,8 +496,34 @@ def main() -> None:
         content = purposes.get(relative, '<p>Пока не заполнено</p>')
         return f'<div class="transcription-purpose-body">{content}</div>'
 
+    source = re.sub(
+        r'(<p class="analysis-mode" data-analysis-source="([^"]*)">).*?</p>',
+        lambda match: match.group(1) + analysis_label(analysis_modes.get(match.group(2), "auto")) + '</p>',
+        source,
+    )
+    (SOURCE / "index.html").write_text(source, encoding="utf-8")
+
+    source = re.sub(
+        r'<p class="analysis-mode" data-analysis-source="([^"]*)">.*?</p>',
+        lambda match: '<p class="analysis-mode">' + analysis_label(analysis_modes.get(match.group(1), "auto")) + '</p>',
+        source,
+    )
+    for entry in entries:
+        relative = entry.get("sourceUrl", "").removeprefix(SOURCE_URL)
+        entry["analysisMode"] = analysis_modes.get(relative, "auto")
+        if entry.get("published") and entry.get("type") in {"manual_transcription", "analysis"} and relative in reaction_keys:
+            entry["reactionKey"] = reaction_keys[relative]
+        else:
+            entry.pop("reactionKey", None)
+    (SOURCE / "data" / "entries.json").write_text(json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (SOURCE / "data" / "analysis-modes.json").write_text(json.dumps(analysis_modes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
     source = AUTHOR_TRANSLATION.sub(insert_translation, source)
     source = PURPOSE_PLACEHOLDER.sub(insert_purpose, source)
+    dictionary_path = ROOT / "docs" / "dictionary" / "combined.md"
+    dictionary = dictionary_html(dictionary_path.read_text(encoding="utf-8"), SOURCE_URL + "docs/dictionary/combined.md")
+    (SOURCE / "data" / "dictionary.html").write_text(dictionary, encoding="utf-8")
+    source = source.replace('<div id="channel-dictionary-content"></div>', '<div id="channel-dictionary-content">' + dictionary + '</div>')
     panels = {match.group(1): match.group(0) for match in PANEL.finditer(source)}
     if set(panels) != set(ROUTES):
         raise ValueError(f"Маршруты и разделы не совпадают: {set(panels) ^ set(ROUTES)}")
@@ -309,7 +536,7 @@ def main() -> None:
     shutil.copytree(SOURCE / "data", OUTPUT / "data", dirs_exist_ok=True)
     verification_file = SOURCE / "yandex_1195bbe61e0c2002.html"
     shutil.copyfile(verification_file, OUTPUT / verification_file.name)
-    sources = [SOURCE / "index.html", verification_file, Path(__file__)]
+    sources = [SOURCE / "index.html", verification_file, Path(__file__), dictionary_path, reaction_manifest_path]
     sources.extend(sources_for_purposes)
     sources.extend(path for folder in ("assets", "data") for path in (SOURCE / folder).rglob("*") if path.is_file())
     urls = []
@@ -348,6 +575,7 @@ def main() -> None:
                 '<details class="transcription-purpose"><summary>предполагаемое назначение</summary>'
                 f'<div class="transcription-purpose-body">{purposes[relative]}</div></details>'
                 f'<textarea id="transcription-copy" aria-label="Текст для копирования" readonly rows="5">{html.escape(copy_text)}</textarea>'
+                f'<p class="analysis-mode">{analysis_label(analysis_modes[relative])}</p>'
                 '<details class="author-translation"><summary>предполагаемый перевод</summary>'
                 f'<div class="author-translation-body">{translations[relative]}</div></details>'
                 '<div class="sos-actions"><button type="button" data-copy-target="transcription-copy">Скопировать</button>'
@@ -369,6 +597,7 @@ def main() -> None:
             '<p class="entry-meta">Источник транскрипции: автор.</p>'
             f'<p class="entry-status">{html.escape(entry.get("statusNote", ""))}</p>'
             f'{copy_block}'
+            f'{reaction_placeholder(reaction_keys[relative], title)}'
             f'<div class="transcription-analysis">{analysis}</div>'
             f'<p><a href="{html.escape(source_url, quote=True)}" target="_blank" rel="noopener noreferrer">Исходный Markdown на GitHub ↗</a></p>'
             '</article></section>'

@@ -5,13 +5,46 @@ import { isIP } from 'node:net';
 import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const allowedKeys = ['T00014', 'T00016', 'T00017', 'T00018', 'T00019', 'T00020'];
+const maxAllowedKeys = 10000;
+const transcriptionKeyPattern = /^T[0-9]{5}(?:-[A-Za-z0-9_-]{1,100})?$/;
 const maxBodyBytes = 256;
 const maxVoters = 10000;
 const rateWindowMs = 10 * 60 * 1000;
 const maxVotesPerIp = 40;
 const maxVotesPerVoter = 12;
 const maxIpBuckets = 2048;
+const productionOrigin = 'https://glossalia-explorer.tuqo.ru';
+
+function isLocalOrigin(origin) {
+  try {
+    const url = new URL(origin);
+    return ['http:', 'https:'].includes(url.protocol)
+      && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
+      && url.origin === origin
+      && (!url.port || Number(url.port) > 0);
+  } catch {
+    return false;
+  }
+}
+
+function validateAllowedKeys(keys) {
+  if (!Array.isArray(keys) || keys.length === 0 || keys.length > maxAllowedKeys
+    || [...keys].some((key) => typeof key !== 'string' || !transcriptionKeyPattern.test(key))
+    || new Set(keys).size !== keys.length) {
+    throw new Error('Invalid reaction transcription manifest');
+  }
+
+  return [...keys];
+}
+
+function loadAllowedKeys() {
+  const manifest = JSON.parse(readFileSync(new URL('./transcriptions.json', import.meta.url), 'utf8'));
+  if (manifest?.schema !== 1) {
+    throw new Error('Invalid reaction transcription manifest');
+  }
+
+  return validateAllowedKeys(manifest.keys);
+}
 
 function canRecordVote(buckets, key, limit, capacity, now) {
   const bucket = buckets.get(key);
@@ -40,7 +73,7 @@ function countsFor(votes, key) {
   };
 }
 
-function loadVotes(storagePath) {
+function loadVotes(storagePath, allowedKeys) {
   if (!existsSync(storagePath)) {
     return Object.fromEntries(allowedKeys.map((key) => [key, {}]));
   }
@@ -50,9 +83,9 @@ function loadVotes(storagePath) {
     throw new Error('Invalid reaction storage');
   }
 
-  for (const key of allowedKeys) {
-    const voters = parsed.votes[key];
-    if (!voters || typeof voters !== 'object' || Array.isArray(voters)) {
+  for (const [key, voters] of Object.entries(parsed.votes)) {
+    if (!transcriptionKeyPattern.test(key)
+      || !voters || typeof voters !== 'object' || Array.isArray(voters)) {
       throw new Error('Invalid reaction storage');
     }
 
@@ -63,8 +96,9 @@ function loadVotes(storagePath) {
     }
   }
 
-  if (Object.keys(parsed.votes).length !== allowedKeys.length) {
-    throw new Error('Invalid reaction storage');
+  // Коллекции снятых с публикации текстов сохраняются для возможного возвращения
+  for (const key of allowedKeys) {
+    if (!Object.hasOwn(parsed.votes, key)) parsed.votes[key] = {};
   }
 
   return parsed.votes;
@@ -126,12 +160,19 @@ function readBody(request) {
   });
 }
 
-export function createReactionServer({ storagePath, allowedOrigin, now = Date.now }) {
-  if (!storagePath || !allowedOrigin) {
-    throw new Error('Storage path and origin are required');
+export function createReactionServer({ storagePath, allowedOrigin, environment = 'production', allowedKeys: keys = loadAllowedKeys(), now = Date.now }) {
+  if (!['production', 'local'].includes(environment)) {
+    throw new Error('Invalid reaction environment');
   }
 
-  let votes = loadVotes(storagePath);
+  if (!storagePath || (environment === 'production' && allowedOrigin !== productionOrigin)) {
+    throw new Error('Storage path and production origin are required');
+  }
+
+  const endpoint = environment === 'local' ? '/glossaliae/reactions-local' : '/glossaliae/reactions';
+  const allowedKeys = validateAllowedKeys(keys);
+  let votes = loadVotes(storagePath, allowedKeys);
+  let storageUnavailable = false;
   let sequence = 0;
   let totalVoters = Object.values(votes).reduce((sum, voters) => sum + Object.keys(voters).length, 0);
   const ipBuckets = new Map();
@@ -142,35 +183,42 @@ export function createReactionServer({ storagePath, allowedOrigin, now = Date.no
 
   return createServer(async (request, response) => {
     const origin = request.headers.origin || '';
-    if (request.url !== '/glossaliae/reactions') {
-      sendJson(response, 404, { error: 'Not found' }, origin, allowedOrigin);
+    const originAllowed = environment === 'local' ? isLocalOrigin(origin) : origin === allowedOrigin;
+    const responseOrigin = originAllowed ? origin : undefined;
+    if (request.url !== endpoint) {
+      sendJson(response, 404, { error: 'Not found' }, origin, responseOrigin);
+      return;
+    }
+
+    if (storageUnavailable) {
+      sendJson(response, 503, { error: 'Reactions are unavailable' }, origin, responseOrigin);
       return;
     }
 
     if (request.method === 'GET') {
-      sendJson(response, 200, Object.fromEntries(allowedKeys.map((key) => [key, countsFor(votes, key)])), origin, allowedOrigin);
+      sendJson(response, 200, Object.fromEntries(allowedKeys.map((key) => [key, countsFor(votes, key)])), origin, responseOrigin);
       return;
     }
 
     if (request.method !== 'POST') {
-      sendJson(response, 405, { error: 'Method is not allowed' }, origin, allowedOrigin);
+      sendJson(response, 405, { error: 'Method is not allowed' }, origin, responseOrigin);
       return;
     }
 
-    if (origin !== allowedOrigin) {
-      sendJson(response, 403, { error: 'Origin is not allowed' }, origin, allowedOrigin);
+    if (!originAllowed) {
+      sendJson(response, 403, { error: 'Origin is not allowed' }, origin, responseOrigin);
       return;
     }
 
     if (!/^text\/plain(?:;\s*charset=utf-8)?$/i.test(request.headers['content-type'] || '')) {
-      sendJson(response, 415, { error: 'Content type is not allowed' }, origin, allowedOrigin);
+      sendJson(response, 415, { error: 'Content type is not allowed' }, origin, responseOrigin);
       return;
     }
 
     // Caddy перезаписывает этот заголовок фактическим адресом клиента
     const clientIp = request.headers['x-glossaliae-client-ip'];
     if (typeof clientIp !== 'string' || !isIP(clientIp)) {
-      sendJson(response, 403, { error: 'Trusted client address is required' }, origin, allowedOrigin);
+      sendJson(response, 403, { error: 'Trusted client address is required' }, origin, responseOrigin);
       return;
     }
 
@@ -178,7 +226,7 @@ export function createReactionServer({ storagePath, allowedOrigin, now = Date.no
     try {
       input = JSON.parse(await readBody(request));
     } catch (error) {
-      sendJson(response, error instanceof RangeError ? 413 : 400, { error: 'Invalid request' }, origin, allowedOrigin);
+      sendJson(response, error instanceof RangeError ? 413 : 400, { error: 'Invalid request' }, origin, responseOrigin);
       return;
     }
 
@@ -188,26 +236,26 @@ export function createReactionServer({ storagePath, allowedOrigin, now = Date.no
       || ![-1, 0, 1].includes(input.vote)
       || typeof input.voterId !== 'string'
       || !/^[0-9a-f]{32}$/.test(input.voterId)) {
-      sendJson(response, 400, { error: 'Invalid reaction' }, origin, allowedOrigin);
+      sendJson(response, 400, { error: 'Invalid reaction' }, origin, responseOrigin);
       return;
     }
 
     const voterHash = createHash('sha256').update(input.voterId).digest('hex');
     const currentVote = votes[input.key][voterHash];
     if (currentVote === input.vote || (currentVote === undefined && input.vote === 0)) {
-      sendJson(response, 200, countsFor(votes, input.key), origin, allowedOrigin);
+      sendJson(response, 200, countsFor(votes, input.key), origin, responseOrigin);
       return;
     }
 
     if (currentVote === undefined && input.vote !== 0 && totalVoters >= maxVoters) {
-      sendJson(response, 503, { error: 'Reaction storage is full' }, origin, allowedOrigin);
+      sendJson(response, 503, { error: 'Reaction storage is full' }, origin, responseOrigin);
       return;
     }
 
     const timestamp = now();
     if (!canRecordVote(ipBuckets, clientIp, maxVotesPerIp, maxIpBuckets, timestamp)
       || !canRecordVote(voterBuckets, voterHash, maxVotesPerVoter, maxVoters, timestamp)) {
-      sendJson(response, 429, { error: 'Too many votes; try again later' }, origin, allowedOrigin);
+      sendJson(response, 429, { error: 'Too many votes; try again later' }, origin, responseOrigin);
       return;
     }
 
@@ -222,9 +270,15 @@ export function createReactionServer({ storagePath, allowedOrigin, now = Date.no
       saveVotes(storagePath, nextVotes, ++sequence);
     } catch {
       // После ошибки синхронизации переименованный файл мог уже стать текущим
-      votes = loadVotes(storagePath);
-      totalVoters = Object.values(votes).reduce((sum, voters) => sum + Object.keys(voters).length, 0);
-      sendJson(response, 503, { error: 'Reactions are unavailable' }, origin, allowedOrigin);
+      try {
+        votes = loadVotes(storagePath, allowedKeys);
+        totalVoters = Object.values(votes).reduce((sum, voters) => sum + Object.keys(voters).length, 0);
+      } catch {
+        // До перезапуска нельзя перезаписывать хранилище с неизвестным состоянием
+        storageUnavailable = true;
+      }
+
+      sendJson(response, 503, { error: 'Reactions are unavailable' }, origin, responseOrigin);
       return;
     }
 
@@ -233,17 +287,18 @@ export function createReactionServer({ storagePath, allowedOrigin, now = Date.no
     recordVote(voterBuckets, voterHash, timestamp);
     if (currentVote === undefined && input.vote !== 0) totalVoters++;
     if (currentVote !== undefined && input.vote === 0) totalVoters--;
-    sendJson(response, 200, countsFor(votes, input.key), origin, allowedOrigin);
+    sendJson(response, 200, countsFor(votes, input.key), origin, responseOrigin);
   });
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const storagePath = process.env.REACTIONS_DATA_FILE;
   const allowedOrigin = process.env.REACTIONS_ALLOWED_ORIGIN;
+  const environment = process.env.REACTIONS_ENVIRONMENT || 'production';
   const port = Number(process.env.REACTIONS_PORT || 8791);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('Invalid port');
   }
 
-  createReactionServer({ storagePath, allowedOrigin }).listen(port, '127.0.0.1');
+  createReactionServer({ storagePath, allowedOrigin, environment }).listen(port, '127.0.0.1');
 }
