@@ -39,7 +39,7 @@ sudo -n true
 for service in caddy.service sheepfold-message-relay.service glossaliae-reactions.service; do
   systemctl is-active --quiet "$service"
 done
-for file in server.mjs transcriptions.json server.test.mjs glossaliae-reactions-local.service Caddy-local-route.caddy; do
+for file in server.mjs comments.mjs transcriptions.json server.test.mjs comments.test.mjs glossaliae-reactions-local.service Caddy-local-route.caddy; do
   test -f "$staging/$file"
   test ! -L "$staging/$file"
 done
@@ -64,6 +64,10 @@ fi
 test "$(systemctl show -p LoadState --value glossaliae-reactions-local.service)" = not-found
 sudo -n test -f /opt/glossaliae-reactions/server.mjs
 sudo -n test ! -L /opt/glossaliae-reactions/server.mjs
+sudo -n test ! -L /opt/glossaliae-reactions/comments.mjs
+if sudo -n test -e /opt/glossaliae-reactions/comments.mjs; then
+  sudo -n test -f /opt/glossaliae-reactions/comments.mjs
+fi
 sudo -n test ! -L /opt/glossaliae-reactions/transcriptions.json
 sudo -n test -f /etc/caddy/Caddyfile
 sudo -n test ! -L /etc/caddy/Caddyfile
@@ -71,7 +75,8 @@ test "$(sudo -n sha256sum /opt/glossaliae-reactions/server.mjs | cut -d ' ' -f 1
 test "$(sudo -n sha256sum /etc/caddy/Caddyfile | cut -d ' ' -f 1)" = "$expected_caddy_sha"
 
 /usr/bin/node --check "$staging/server.mjs"
-/usr/bin/node --test "$staging/server.test.mjs"
+/usr/bin/node --check "$staging/comments.mjs"
+/usr/bin/node --test "$staging/server.test.mjs" "$staging/comments.test.mjs"
 sudo -n systemd-analyze verify "$staging/glossaliae-reactions-local.service"
 curl -fsS --max-time 5 -H 'X-Sheepfold-Client-IP: 127.0.0.1' http://127.0.0.1:8790/v1/health >/dev/null
 
@@ -101,6 +106,11 @@ had_manifest=0
 if sudo -n test -e /opt/glossaliae-reactions/transcriptions.json; then
   sudo -n install -o root -g root -m 0600 /opt/glossaliae-reactions/transcriptions.json "$backup/transcriptions.json"
   had_manifest=1
+fi
+had_comments=0
+if sudo -n test -e /opt/glossaliae-reactions/comments.mjs; then
+  sudo -n install -o root -g root -m 0600 /opt/glossaliae-reactions/comments.mjs "$backup/comments.mjs"
+  had_comments=1
 fi
 sudo -n install -o root -g root -m 0600 "$staging/glossaliae-reactions-local.service" "$backup/local.service.new"
 
@@ -141,6 +151,7 @@ PY
 sudo -n caddy validate --config "$backup/Caddyfile.candidate" --adapter caddyfile
 
 server_changed=0
+comments_changed=0
 manifest_changed=0
 unit_changed=0
 caddy_changed=0
@@ -166,6 +177,15 @@ rollback() {
   if test "$server_changed" -eq 1 && ! sudo -n cmp -s /opt/glossaliae-reactions/server.mjs "$backup/server.mjs"; then
     sudo -n install -o root -g root -m 0644 "$backup/server.mjs" /opt/glossaliae-reactions/server.mjs || rollback_ok=0
   fi
+  if test "$comments_changed" -eq 1; then
+    if test "$had_comments" -eq 1; then
+      if ! sudo -n cmp -s /opt/glossaliae-reactions/comments.mjs "$backup/comments.mjs"; then
+        sudo -n install -o root -g root -m 0644 "$backup/comments.mjs" /opt/glossaliae-reactions/comments.mjs || rollback_ok=0
+      fi
+    elif sudo -n test -e /opt/glossaliae-reactions/comments.mjs; then
+      sudo -n mv /opt/glossaliae-reactions/comments.mjs "$backup/comments.mjs.rolled-back" || rollback_ok=0
+    fi
+  fi
   if test "$manifest_changed" -eq 1; then
     if test "$had_manifest" -eq 1; then
       if ! sudo -n cmp -s /opt/glossaliae-reactions/transcriptions.json "$backup/transcriptions.json"; then
@@ -175,7 +195,7 @@ rollback() {
       sudo -n mv /opt/glossaliae-reactions/transcriptions.json "$backup/transcriptions.json.rolled-back" || rollback_ok=0
     fi
   fi
-  if test "$server_changed" -eq 1 || test "$manifest_changed" -eq 1; then
+  if test "$server_changed" -eq 1 || test "$comments_changed" -eq 1 || test "$manifest_changed" -eq 1; then
     sudo -n systemctl restart glossaliae-reactions.service || rollback_ok=0
     curl -fsS --retry 10 --retry-connrefused --retry-delay 1 --max-time 3 http://127.0.0.1:8791/glossaliae/reactions >/dev/null || rollback_ok=0
   fi
@@ -193,6 +213,14 @@ trap 'exit 1' HUP INT TERM
 # Повторная сверка защищает от изменения конфигурации во время предварительных проверок
 test "$(sudo -n sha256sum /opt/glossaliae-reactions/server.mjs | cut -d ' ' -f 1)" = "$expected_server_sha"
 test "$(sudo -n sha256sum /etc/caddy/Caddyfile | cut -d ' ' -f 1)" = "$expected_caddy_sha"
+if test "$had_comments" -eq 1; then
+  sudo -n cmp -s /opt/glossaliae-reactions/comments.mjs "$backup/comments.mjs"
+else
+  sudo -n test ! -e /opt/glossaliae-reactions/comments.mjs
+  sudo -n test ! -L /opt/glossaliae-reactions/comments.mjs
+fi
+comments_changed=1
+sudo -n install -o root -g root -m 0644 "$staging/comments.mjs" /opt/glossaliae-reactions/comments.mjs
 server_changed=1
 sudo -n install -o root -g root -m 0644 "$staging/server.mjs" /opt/glossaliae-reactions/server.mjs
 manifest_changed=1

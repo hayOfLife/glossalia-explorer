@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "site" / "scripts"))
-from build_static import BASE_URL, OUTPUT, ROUTES, analysis_label, analysis_mode, inline, markdown_html, author_translation_html, copy_texts, dictionary_fields, dictionary_html, digest_file, markdown_table, original_transcription, purpose_html, reaction_key, sos_item_blocks, transcription_route, transcription_section  # noqa: E402
+from build_static import BASE_URL, OUTPUT, ROUTES, CHAT_TEMPLATE, analysis_label, analysis_mode, attach_block_reactions, inline, markdown_html, author_translation_html, copy_texts, dictionary_fields, dictionary_html, digest_file, markdown_table, original_transcription, purpose_html, reaction_key, sos_item_blocks, transcription_route, transcription_section  # noqa: E402
 
 
 class PageParser(HTMLParser):
@@ -26,11 +26,16 @@ class PageParser(HTMLParser):
         self.textarea = ""
         self.csp = ""
         self.reactions: list[str] = []
+        self.chats: list[str] = []
+        self.chat_hidden: list[bool] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attributes = dict(attrs)
         if tag == "div" and attributes.get("data-transcription-reaction"):
             self.reactions.append(attributes["data-transcription-reaction"])
+        if tag == "div" and attributes.get("data-transcription-chat"):
+            self.chats.append(attributes["data-transcription-chat"])
+            self.chat_hidden.append("hidden" in attributes)
         if tag == "meta" and attributes.get("http-equiv") == "Content-Security-Policy":
             self.csp = attributes.get("content", "")
         if tag == "section" and "data-panel" in attributes:
@@ -51,6 +56,54 @@ class PageParser(HTMLParser):
 
 
 class StaticBuildTest(unittest.TestCase):
+    def test_comments_are_hidden_and_share_each_transcription_key(self) -> None:
+        for path in OUTPUT.rglob("index.html"):
+            with self.subTest(page=path):
+                parser = PageParser()
+                page = path.read_text(encoding="utf-8")
+                parser.feed(page)
+                expected = parser.reactions + (["for-ai"] if path.parent == OUTPUT / "for-ai" else [])
+                self.assertCountEqual(expected, parser.chats)
+                self.assertTrue(all(parser.chat_hidden))
+                self.assertIn('/assets/comments.js?v=author-inbox-20261001', page)
+                self.assertIn('/assets/styles.css?v=reading-controls-20261001', page)
+                if parser.chats:
+                    self.assertIn('data-chat-api="https://94-232-41-163.sslip.io/glossaliae/comments"', page)
+
+    def test_comments_template_and_general_ai_chat_position(self) -> None:
+        source = (ROOT / "site/public_html/index.html").read_text(encoding="utf-8")
+        matches = list(CHAT_TEMPLATE.finditer(source))
+        self.assertEqual(1, len(matches))
+        template = matches[0].group(1)
+        self.assertEqual(1, template.count('data-transcription-chat=""'))
+        self.assertIn('data-chat-rules', template)
+        self.assertIn('Технические правила пользования чатом', template)
+        self.assertIn('glossaliae-comment-author', template)
+        self.assertIn('"action":"create","key":"KEY","text":"MESSAGE","authorToken":"TOKEN_64_HEX","replyTo":null', template)
+        self.assertIn('"replyTo":"user_001"', template)
+        self.assertIn('<code>user_001</code>–<code>user_100</code> зарезервированы', template)
+        self.assertNotIn('name="name"', template)
+        notice = ('Дисклэймер: Уважаемые "хацкеры" и искуственные интелекты! пожалуйста без оффтопа. '
+                  'Чат специально скрыт чтобы спасти сайт ох хейта, так как людям очень ненравиться '
+                  'когда говорят о релии не так как они привыкли.')
+        self.assertIn(notice, html.unescape(re.sub(r'<[^>]+>', '', template)))
+        ai_page = (OUTPUT / "for-ai/index.html").read_text(encoding="utf-8")
+        panel = re.search(r'<section[^>]+id="for-ai"[^>]*>(.*?)</section>', ai_page, re.S).group(1)
+        self.assertGreater(panel.index('data-transcription-chat="for-ai"'), panel.index('id="channel-dictionary-content"'))
+        self.assertEqual(1, panel.count('data-transcription-chat="for-ai"'))
+        self.assertIn('"replyTo":"user_001"', panel)
+
+    def test_rebuilding_inline_chat_placeholders_is_idempotent(self) -> None:
+        source = (ROOT / "site/public_html/index.html").read_text(encoding="utf-8")
+        entries = json.loads((ROOT / "site/public_html/data/entries.json").read_text(encoding="utf-8"))
+        by_source = {entry['sourceUrl'].split('/blob/main/', 1)[1]: entry for entry in entries if entry.get('published')}
+        texts = copy_texts(source)
+        keys = {relative: reaction_key(relative, by_source.get(relative)) for relative in set(by_source) | set(texts)}
+        first, first_keys = attach_block_reactions(source, keys, texts)
+        second, second_keys = attach_block_reactions(first, keys, texts)
+        self.assertEqual(first, second)
+        self.assertEqual(first_keys, second_keys)
+
     def test_all_transcription_pages_share_manifest_keys_with_calendar(self) -> None:
         manifest = json.loads((ROOT / "site/reactions-api/transcriptions.json").read_text(encoding="utf-8"))
         keys = manifest["keys"]
@@ -118,6 +171,7 @@ class StaticBuildTest(unittest.TestCase):
         script = (ROOT / "site/public_html/assets/site.js").read_text(encoding="utf-8")
         endpoints = re.findall(r'const (?:production|local)ReactionApiUrl = "([^"]+)";', script)
         self.assertEqual(2, len(endpoints))
+        endpoints.append("https://94-232-41-163.sslip.io/glossaliae/comments")
 
         for path in OUTPUT.rglob("index.html"):
             with self.subTest(page=path):
@@ -181,6 +235,68 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
         self.assertLess(transcription_page.index('class="author-translation"'), transcription_page.index('class="sos-actions"'))
 
+    def test_three_level_connected_translation_preserves_source_sections(self) -> None:
+        markdown = (ROOT / "docs/transcriptions/T00042/part_1.md").read_text(encoding="utf-8")
+        section = re.search(r'^## Всё послание связным текстом\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S).group(1)
+        expected = markdown_html(section.strip().removesuffix("---").strip(), BASE_URL)
+        rendered = author_translation_html(markdown, BASE_URL)
+        self.assertEqual(expected, rendered)
+        for heading in ("Пешат (буквально)", "Драш (толкование)", "Сод (тайна)"):
+            self.assertIn(heading, rendered)
+        self.assertIn("Целители — это: пиши, помни, познай", rendered)
+        self.assertNotIn("Кросс-фрагментные корни", rendered)
+
+    def test_numbered_lists_preserve_item_numbers_and_close_before_other_blocks(self) -> None:
+        source = "1. **Запрос** — дай\n2. Регистрация\n- Приписка\n4) Возврат\n---\n7. Корень\n| Слово | Значение |\n| --- | --- |\n| Руфим | Целители |\n"
+        rendered = markdown_html(source, BASE_URL)
+        self.assertIn('<ol>\n<li value="1"><strong>Запрос</strong> — дай</li>\n<li value="2">Регистрация</li>\n</ol>\n<ul>', rendered)
+        self.assertIn('</ul>\n<ol start="4">\n<li value="4">Возврат</li>\n</ol>\n<hr>', rendered)
+        self.assertIn('<ol start="7">\n<li value="7">Корень</li>\n</ol>\n<div class="source-table-wrap">', rendered)
+        self.assertEqual(3, rendered.count("</ol>"))
+
+    def test_empty_quote_separator_is_not_visible_text(self) -> None:
+        rendered = markdown_html("> Послание\n>\n> Приписка\n\n1. Действие\n```text\n2. Исходная строка\n```\n# Конец", BASE_URL)
+        self.assertIn('<blockquote>Послание</blockquote>\n<blockquote>Приписка</blockquote>', rendered)
+        self.assertNotIn('&gt;', rendered)
+        self.assertIn('<li value="1">Действие</li>\n</ol>\n<pre><code>\n2. Исходная строка', rendered)
+        self.assertIn('<h2>Конец</h2>', rendered)
+
+    def test_word_by_word_translation_marks_labels_without_changing_text(self) -> None:
+        markdown = (ROOT / "docs/transcriptions/T00041/part_1.md").read_text(encoding="utf-8")
+        section = re.search(r'^## Итоговый перевод\s*\n(.*)', markdown, re.S | re.M).group(1).strip()
+        rendered = author_translation_html(markdown, BASE_URL)
+        unmarked = re.sub(r'<mark class="transcription-term">(.*?)</mark>', r'\1', rendered, flags=re.S)
+        self.assertEqual(markdown_html(section, BASE_URL), unmarked)
+        for label in ("Еффа!", "Едро! Фиктим. Ишма!", "Шуея-нарратив, егоистед или Ещуа!", "Дерувинтриум!"):
+            self.assertIn(f'<mark class="transcription-term">{label}</mark>', rendered)
+        self.assertNotIn('<mark class="transcription-term">Я — факт!', rendered)
+        for route in ("situations/agnosticism", "transcriptions/T00041/part_1"):
+            page = (OUTPUT / route / "index.html").read_text(encoding="utf-8")
+            self.assertIn('<mark class="transcription-term">Еффа!</mark>', page)
+
+    def test_russian_translation_remains_unmarked(self) -> None:
+        markdown = (ROOT / "docs/transcriptions/T00032/part_1.md").read_text(encoding="utf-8")
+        rendered = author_translation_html(markdown, BASE_URL)
+        self.assertIn("Херувимы! Обет — видь!", rendered)
+        self.assertNotIn('<mark', rendered)
+
+    def test_word_translation_does_not_mark_russian_conclusions(self) -> None:
+        markdown = ('## Необработанная транскрипция\n\nЕффа! Ишма!\n\n'
+                    '## Итоговый перевод\n\nЕффа!\nЯ — факт!\n\nИшма!\nУслышит.\n\n'
+                    'Всё это означает:\nРусское итоговое пояснение.\n\nСпасибо Богу!\nИтоговая молитва.\n')
+        rendered = author_translation_html(markdown, BASE_URL)
+        self.assertEqual(2, rendered.count('<mark class="transcription-term">'))
+        self.assertIn('<p>Всё это означает: Русское итоговое пояснение.</p>', rendered)
+        self.assertIn('<p>Спасибо Богу! Итоговая молитва.</p>', rendered)
+
+    def test_explicit_translation_pair_keeps_markup_and_escaping(self) -> None:
+        markdown = ('## Необработанная транскрипция\n\nЕффа!\n\n'
+                    '## Итоговый перевод\n\n**Еффа!** → Я — факт! <script>\n')
+        rendered = author_translation_html(markdown, BASE_URL)
+        self.assertEqual('<p><mark class="transcription-term"><strong>Еффа!</strong></mark> → Я — факт! &lt;script&gt;</p>', rendered)
+        unrelated = markdown.replace('**Еффа!** →', 'Важный вывод →')
+        self.assertNotIn('<mark', author_translation_html(unrelated, BASE_URL))
+
     def test_purpose_uses_only_the_specific_card(self) -> None:
         transcription_dir = ROOT / "docs" / "transcriptions"
         direct = purpose_html(transcription_dir / "T00027" / "part_1.md")
@@ -199,7 +315,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
 
         purposes = json.loads((ROOT / "site" / "public_html" / "data" / "transcription-purposes.json").read_text(encoding="utf-8"))
-        self.assertEqual(24, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
+        self.assertEqual(27, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00033/part_1.md"])
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00034/part_1.md"])
 
@@ -235,7 +351,7 @@ class StaticBuildTest(unittest.TestCase):
     def test_analysis_labels_follow_copy_fields(self) -> None:
         for page_path in OUTPUT.rglob("index.html"):
             page = page_path.read_text(encoding="utf-8")
-            fields = re.findall(r'<textarea\b.*?</textarea>(.*?)(?=<textarea|$)', page, re.S)
+            fields = re.findall(r'<textarea\b(?=[^>]*\breadonly\b)[^>]*>.*?</textarea>(.*?)(?=<textarea|$)', page, re.S)
             for after_field in fields:
                 self.assertRegex(after_field, r'^\s*<p class="analysis-mode">Разбор транскрипции: (?:авто|(?:100|[1-9]?\d)%)</p>')
         relative = "docs/transcriptions/T00027/part_8.md"
@@ -391,6 +507,30 @@ class StaticBuildTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertEqual(expected, digest_file(ROOT / path))
         self.assertEqual((ROOT / "site" / "content-manifest.json").read_bytes(), (OUTPUT / "content-manifest.json").read_bytes())
+
+    def test_calendar_blocks_match_published_transcription_fields(self) -> None:
+        data_dir = OUTPUT / "data"
+        entries = json.loads((data_dir / "entries.json").read_text(encoding="utf-8"))
+        blocks = json.loads((data_dir / "calendar-transcriptions.json").read_text(encoding="utf-8"))
+        purposes = json.loads((data_dir / "transcription-purposes.json").read_text(encoding="utf-8"))
+        translations = json.loads((data_dir / "author-translations.json").read_text(encoding="utf-8"))
+        expected = [entry for entry in entries if entry.get("published") and entry["type"] in {"manual_transcription", "analysis"}]
+        self.assertEqual({entry["sourceUrl"] for entry in expected}, set(blocks))
+        for entry in expected:
+            with self.subTest(entry=entry["externalKey"]):
+                relative = entry["sourceUrl"].split("/blob/main/", 1)[1]
+                block = blocks[entry["sourceUrl"]]
+                page = OUTPUT / block["pageUrl"].lstrip("/") / "index.html"
+                parser = PageParser()
+                parser.feed(page.read_text(encoding="utf-8"))
+                self.assertEqual(parser.textarea, block["copyText"])
+                self.assertEqual(purposes[relative], block["purposeHtml"])
+                self.assertEqual(translations[relative], block["translationHtml"])
+
+        help_entry = next(entry for entry in expected if entry["externalKey"] == "T00042-part_1")
+        help_block = blocks[help_entry["sourceUrl"]]
+        self.assertEqual(help_entry["copyText"], help_block["copyText"])
+        self.assertNotEqual(help_entry["bodyText"], help_block["copyText"])
 
     def test_sitemap_contains_each_page(self) -> None:
         sitemap = (OUTPUT / "sitemap.xml").read_text(encoding="utf-8")

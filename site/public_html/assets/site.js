@@ -2,6 +2,13 @@
   const links = Array.from(document.querySelectorAll("[data-tab-link]"));
   const sectionNav = document.querySelector(".section-nav");
   const tabScrollKey = "glossaliae-scroll-to-tabs";
+  const sectionPaths = new Set([
+    "/", "/news/", "/calendar/", "/situations/", "/situations/glossolalia/",
+    "/sos/", "/situations/help/", "/termination-of-pregnancy/", "/situations/agnosticism/",
+    "/situations/life-partner/", "/translation/", "/help/", "/help/glossolalia/",
+    "/help/purpose/", "/help/churches/", "/help/theories/", "/help/ai/", "/help/author/",
+    "/help/eugenics-vs-genetic-engineering/", "/donate/", "/for-ai/",
+  ]);
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
   const panelIds = new Set(panels.map((panel) => panel.id));
   const calendarGrid = document.getElementById("calendar-grid");
@@ -21,6 +28,7 @@
   let calendarYear = Number(todayParts.year);
   let calendarMonth = Number(todayParts.month);
   let entries = [];
+  let calendarTranscriptions = {};
   let loadFailed = false;
   const localEnvironment = ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
   const productionReactionApiUrl = "https://94-232-41-163.sslip.io/glossaliae/reactions";
@@ -317,9 +325,71 @@
 
     if (entry.type === "manual_transcription" || entry.type === "analysis") {
       addReactionControls(card, entry);
+
+      if (entry.reactionKey) {
+        const chat = document.createElement("div");
+        chat.className = "transcription-chat";
+        chat.dataset.transcriptionChat = entry.reactionKey;
+        chat.hidden = true;
+        card.append(chat);
+      }
     }
 
     return card;
+  }
+
+  function createCalendarTranscription(entry, number) {
+    const transcription = calendarTranscriptions[entry.sourceUrl];
+    const item = document.createElement("details");
+    item.className = "sos-item";
+    addText(item, "summary", "", `${number}. ${entry.title}`);
+    const body = addText(item, "div", "sos-item-body", "");
+    addText(body, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote}`);
+
+    const purpose = addText(body, "details", "transcription-purpose", "");
+    addText(purpose, "summary", "", "предполагаемое назначение");
+    const purposeBody = addText(purpose, "div", "transcription-purpose-body", "");
+    purposeBody.innerHTML = transcription?.purposeHtml || "<p>Пока не заполнено</p>";
+
+    const field = document.createElement("textarea");
+    field.id = `calendar-transcription-${number}`;
+    field.setAttribute("aria-label", "Текст для копирования");
+    field.readOnly = true;
+    field.rows = 4;
+    field.value = transcription?.copyText ?? entry.copyText ?? entry.bodyText ?? "";
+    body.append(field);
+    addText(body, "p", "analysis-mode", analysisLabel(entry.analysisMode));
+
+    const translation = addText(body, "details", "author-translation", "");
+    addText(translation, "summary", "", "предполагаемый перевод");
+    const translationBody = addText(translation, "div", "author-translation-body", "");
+    translationBody.innerHTML = transcription?.translationHtml || "<p>Пока не заполнено</p>";
+
+    const actions = addText(body, "div", "sos-actions", "");
+    const copyButton = addText(actions, "button", "", "Скопировать");
+    copyButton.type = "button";
+    copyButton.dataset.copyTarget = field.id;
+    const detailLink = addText(actions, "a", "", "Подробнее");
+    detailLink.href = transcription?.pageUrl || entry.sourceUrl;
+    if (!transcription?.pageUrl) {
+      detailLink.target = "_blank";
+      detailLink.rel = "noopener noreferrer";
+    }
+    const status = addText(actions, "span", "sos-copy-status", "");
+    status.dataset.copyStatus = "";
+    status.setAttribute("role", "status");
+    status.setAttribute("aria-live", "polite");
+
+    if (entry.method) addText(body, "p", "entry-meta", `Способ: ${entry.method}`);
+    if (entry.statusNote) addText(body, "p", "entry-status", entry.statusNote);
+    addReactionControls(body, entry);
+    if (entry.reactionKey) {
+      const chat = document.createElement("div");
+      chat.dataset.transcriptionChat = entry.reactionKey;
+      chat.hidden = true;
+      body.append(chat);
+    }
+    return item;
   }
 
   function renderDayResults() {
@@ -347,8 +417,11 @@
       return;
     }
 
+    let transcriptionNumber = 0;
     for (const entry of selectedEntries) {
-      todayResults.append(createEntryCard(entry, "h4"));
+      todayResults.append(entry.type === "manual_transcription" || entry.type === "analysis"
+        ? createCalendarTranscription(entry, ++transcriptionNumber)
+        : createEntryCard(entry, "h4"));
     }
   }
 
@@ -461,28 +534,39 @@
     sectionNav?.scrollIntoView({ block: "start", behavior: "instant" });
   }
 
-  for (const link of links) {
-    link.addEventListener("click", (event) => {
-      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  document.addEventListener("click", (event) => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
 
-      const destination = new URL(link.href, window.location.href);
-      if (destination.pathname === window.location.pathname) {
-        requestAnimationFrame(scrollToTabs);
-      } else {
-        try {
-          sessionStorage.setItem(tabScrollKey, "1");
-        } catch {
-          // Прокрутка недоступна, если браузер запрещает хранилище сеанса
-        }
+    const link = event.target.closest?.("a[href]");
+    if (!link || link.hasAttribute("download") || (link.target && link.target.toLowerCase() !== "_self")) return;
+
+    const destination = new URL(link.href, window.location.href);
+    if (destination.origin !== window.location.origin) return;
+
+    const isPanelHash = !document.body.dataset.pageId
+      && destination.pathname === window.location.pathname
+      && panelIds.has(destination.hash.slice(1));
+    if (!isPanelHash && link.getAttribute("href").startsWith("#")) return;
+    if (!isPanelHash && (!sectionPaths.has(destination.pathname) || destination.hash)) return;
+
+    if (destination.pathname === window.location.pathname && destination.search === window.location.search) {
+      if (document.body.dataset.pageId) event.preventDefault();
+      requestAnimationFrame(scrollToTabs);
+    } else {
+      try {
+        sessionStorage.setItem(tabScrollKey, destination.pathname);
+      } catch {
+        // Прокрутка недоступна, если браузер запрещает хранилище сеанса
       }
-    });
-  }
+    }
+  });
 
   window.addEventListener("pageshow", () => {
     try {
-      if (sessionStorage.getItem(tabScrollKey) === "1") {
+      const destinationPath = sessionStorage.getItem(tabScrollKey);
+      if (destinationPath) {
         sessionStorage.removeItem(tabScrollKey);
-        requestAnimationFrame(scrollToTabs);
+        if (destinationPath === window.location.pathname) requestAnimationFrame(scrollToTabs);
       }
     } catch {
       // Прокрутка недоступна, если браузер запрещает хранилище сеанса
@@ -495,27 +579,28 @@
       requestAnimationFrame(scrollToTabs);
     });
   }
-  for (const button of document.querySelectorAll("[data-copy-target]")) {
-    button.addEventListener("click", async () => {
-      const field = document.getElementById(button.dataset.copyTarget);
-      const status = button.parentElement.querySelector("[data-copy-status]");
+  document.addEventListener("click", async (event) => {
+    const button = event.target.closest?.("[data-copy-target]");
+    if (!button) return;
 
-      try {
-        if (navigator.clipboard?.writeText) {
-          await navigator.clipboard.writeText(field.value);
-        } else {
-          field.select();
-          if (!document.execCommand("copy")) {
-            throw new Error("Copy unavailable");
-          }
-        }
-        status.textContent = "Скопировано";
-      } catch {
+    const field = document.getElementById(button.dataset.copyTarget);
+    const status = button.parentElement.querySelector("[data-copy-status]");
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(field.value);
+      } else {
         field.select();
-        status.textContent = "Скопируйте выделенный текст вручную";
+        if (!document.execCommand("copy")) {
+          throw new Error("Copy unavailable");
+        }
       }
-    });
-  }
+      status.textContent = "Скопировано";
+    } catch {
+      field.select();
+      status.textContent = "Скопируйте выделенный текст вручную";
+    }
+  });
   for (const button of document.querySelectorAll("[data-open-dialog]")) {
     button.addEventListener("click", () => {
       document.getElementById(button.dataset.openDialog).showModal();
@@ -654,6 +739,19 @@
       for (const field of purposeFields) field.textContent = "Пока не заполнено";
     });
 
+  const calendarTranscriptionsReady = todayResults
+    ? fetch("/data/calendar-transcriptions.json", { credentials: "omit", cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Calendar transcriptions unavailable");
+        return response.json();
+      })
+      .then((data) => {
+        if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid calendar transcriptions");
+        calendarTranscriptions = data;
+      })
+      .catch(() => {})
+    : Promise.resolve();
+
   if (calendarGrid || newsResults || situationsResults) fetch("/data/entries.json", { credentials: "omit", cache: "no-store" })
     .then((response) => {
       if (!response.ok) {
@@ -662,12 +760,13 @@
 
       return response.json();
     })
-    .then((data) => {
+    .then(async (data) => {
       if (!Array.isArray(data)) {
         throw new Error("Invalid data format");
       }
 
       entries = data;
+      await calendarTranscriptionsReady;
       renderCalendar();
       renderCollections();
       loadReactions();

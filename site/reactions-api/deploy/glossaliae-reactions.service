@@ -9,6 +9,7 @@ Group=glossaliae-reactions
 WorkingDirectory=/opt/glossaliae-reactions
 Environment=REACTIONS_DATA_FILE=/var/lib/glossaliae-reactions/reactions.json
 Environment=REACTIONS_ALLOWED_ORIGIN=https://glossalia-explorer.tuqo.ru
+EnvironmentFile=-/etc/glossaliae-reactions/comments-admin.env
 ExecStart=/usr/bin/node /opt/glossaliae-reactions/server.mjs
 Restart=on-failure
 RestartSec=5s

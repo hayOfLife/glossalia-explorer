@@ -42,6 +42,20 @@
     "reactionKey": "T00039"
   },
   {
+    "externalKey": "T00030",
+    "type": "analysis",
+    "title": "Второй скрипт для Алексея",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-09-23",
+    "dateNote": "учётная дата 23.09.2026 (по указанию автора от 28.09.2026); фактические дата и время первого получения неизвестны; файл повторно предоставлен 27.09.2026.",
+    "bodyText": "Шалом! Вестина-ру, фетч — ишма-нерудо, идеватис-ентер! Ле! Исшма-де! Рувимен! Ентарес-сеорг! Ру-фа! Де-нерко! Ле! Урва! Лаер-до! Инферно-ру!-де! Ис-шма, феррон!",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00042/part_2.md",
+    "statusNote": "Предложенный разбор не является подтверждённым переводом.",
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00030"
+  },
+  {
     "externalKey": "T00014",
     "type": "manual_transcription",
     "title": "B3-F1",
@@ -154,6 +168,23 @@
     "published": true,
     "analysisMode": "auto",
     "reactionKey": "T00035-2026-09-25-mercy"
+  },
+  {
+    "externalKey": "T00042-part_1",
+    "type": "analysis",
+    "title": "Транскрипция для друга",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-09-26",
+    "dateNote": "26.09.2026, 15:14 — по файлу и уточнению автора.",
+    "bodyText": "Трафанет! Ендостерикт! Херувиме-Н! ФА! Рафии! Наоми-ду!, стерви-де, рени-су Эвейн — (чувство что здесь команда вводиться) Ща(длинный выдох).\n\nРуфим — де стезиктед, фин.",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00042/part_1.md",
+    "statusNote": "Разбор предоставлен автором; предположительный перевод.",
+    "published": true,
+    "appearanceTime": "15:14",
+    "analysisMode": "auto",
+    "reactionKey": "T00042-part_1",
+    "copyText": "Трафанет! Ендостерикт! Херувиме-Н! ФА! Рафии! Наоми-ду!, стерви-де, рени-су Эвейн - Ща(длинный выдох).",
+    "purposeSource": "docs/transcriptions/T00042/part_1_context.md"
   },
   {
     "externalKey": "T00017",
@@ -350,6 +381,21 @@
     "reactionKey": "T00041-part_1"
   },
   {
+    "externalKey": "T00041-part_2",
+    "type": "manual_transcription",
+    "title": "Абзац 2",
+    "group": "Текст",
+    "calendarDate": "2026-09-30",
+    "dateNote": "30.09.2026, 22:00 — по указанию автора.",
+    "bodyText": "Салем! Бадевинтед! Ектим! Наафет, Елохим! Фектим! Едро! Ис-ша, наобум, евенгарден, {имя человека}, елохим, еминесторед.",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00041/part_2.md",
+    "statusNote": "Разбор пока не добавлен.",
+    "published": true,
+    "appearanceTime": "22:00",
+    "analysisMode": "auto",
+    "reactionKey": "T00041-part_2"
+  },
+  {
     "externalKey": "T00027-part_8",
     "type": "analysis",
     "title": "Молитва благодарения",
@@ -380,5 +426,20 @@
     "purposeSource": "docs/transcriptions/T00040/index.md",
     "analysisMode": "manual",
     "reactionKey": "T00040-part_1"
+  },
+  {
+    "externalKey": "T00043",
+    "type": "analysis",
+    "title": "Диалог конкретного человека с Богом",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-10-01",
+    "dateNote": "01.10.2026, примерно 22:02 (мск), по уточнению автора «час назад»; в файле указан октябрь 2026.",
+    "bodyText": "1 часть:\n(предположительно - это то что человек говорил Богу ранее)\nРафа! Найди силу во мне! дай ростку духа силы! Исследуй меня, моё сердце! измени мои знания духа, дай ему голос и силу! Дай мне дыхание твоё! Исследуй меня для своей задачи, научи сердце моё следовать воле твоей! Исцели раны души моей чтобы я шёл(шла) дальше!\n\n2 часть:\n(Бог отвечает:)\nЕдувиндеред Ешадринед! Елохим! Майентенсе! Едувинктим! inject Евиндуриместифект! Еволютениентериум-едро, Фа! Се-едро вишма-деру, Ишмаевергентум-едро. Сайфектум! Наутаринте! Еволюте!-эффективная и сила твоя!\n\n3 часть:\n(то что Бог хотел бы слышать от человека)\nЯдро жизни моей измени, избавь меня от молчания духа, исцели ядро жизни и дай мне видеть дела твои во мне! Аминь!",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00043.md",
+    "statusNote": "Разбор предоставлен автором; предположительный перевод.",
+    "published": true,
+    "appearanceTime": "22:02",
+    "analysisMode": "manual",
+    "reactionKey": "T00043"
   }
 ]

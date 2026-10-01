@@ -7,6 +7,7 @@ import html
 import json
 import re
 import shutil
+from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse
 
@@ -45,6 +46,8 @@ PUBLISHED_LINK = re.compile(r'href="https://github\.com/hayOfLife/glossalia-expl
 AUTHOR_TRANSLATION = re.compile(r'<div class="author-translation-body" data-author-translation="([^"]*)"></div>')
 PURPOSE_PLACEHOLDER = re.compile(r'<div class="transcription-purpose-body" data-purpose-source="([^"]*)"></div>')
 REACTION_PLACEHOLDER = re.compile(r'<div data-transcription-reaction="[^"]+" data-reaction-title="[^"]*"></div>')
+CHAT_PLACEHOLDER = re.compile(r'<div(?=[^>]*\bdata-transcription-chat="([^"]+)")(?=[^>]*\bhidden\b)[^>]*>\s*</div>')
+CHAT_TEMPLATE = re.compile(r'<template\b[^>]*\bid="transcription-chat-template"[^>]*>\s*(.*?)\s*</template>', re.S)
 
 
 def digest_file(path: Path) -> str:
@@ -116,7 +119,7 @@ def markdown_html(text: str, source_url: str) -> str:
     text = re.sub(r"^разбор транскрипции: (?:авто|ручной, 100%|(?:100|[1-9]?\d)%)\s*\n", "", text, count=1)
     result: list[str] = []
     paragraph: list[str] = []
-    listing = False
+    listing = ""
     fence = False
     table: list[str] = []
 
@@ -136,8 +139,8 @@ def markdown_html(text: str, source_url: str) -> str:
             flush_paragraph()
             flush_table()
             if listing:
-                result.append("</ul>")
-                listing = False
+                result.append(f"</{listing}>")
+                listing = ""
             result.append("</code></pre>" if fence else "<pre><code>")
             fence = not fence
             continue
@@ -146,38 +149,54 @@ def markdown_html(text: str, source_url: str) -> str:
             continue
         if stripped.startswith("|") and stripped.endswith("|"):
             flush_paragraph()
+            if listing:
+                result.append(f"</{listing}>")
+                listing = ""
             table.append(line)
             continue
         flush_table()
         if not stripped:
             flush_paragraph()
             if listing:
-                result.append("</ul>")
-                listing = False
+                result.append(f"</{listing}>")
+                listing = ""
             continue
         heading = re.match(r'^(#{1,6})\s+(.+)$', stripped)
         if heading:
             flush_paragraph()
             if listing:
-                result.append("</ul>")
-                listing = False
+                result.append(f"</{listing}>")
+                listing = ""
             level = min(len(heading.group(1)) + 1, 6)
             result.append(f'<h{level}>{inline(heading.group(2), source_url)}</h{level}>')
             continue
         if re.fullmatch(r'-{3,}|\*{3,}', stripped):
             flush_paragraph()
+            if listing:
+                result.append(f"</{listing}>")
+                listing = ""
             result.append("<hr>")
             continue
-        if stripped.startswith(("- ", "* ")):
+        ordered = re.match(r'^(\d{1,9})[.)]\s+(.+)$', stripped)
+        if ordered or stripped.startswith(("- ", "* ")):
             flush_paragraph()
-            if not listing:
-                result.append("<ul>")
-                listing = True
-            result.append("<li>" + inline(stripped[2:], source_url) + "</li>")
+            kind = "ol" if ordered else "ul"
+            if listing != kind:
+                if listing:
+                    result.append(f"</{listing}>")
+                start = f' start="{int(ordered.group(1))}"' if ordered and int(ordered.group(1)) != 1 else ""
+                result.append(f"<{kind}{start}>")
+                listing = kind
+            value = f' value="{int(ordered.group(1))}"' if ordered else ""
+            content = ordered.group(2) if ordered else stripped[2:]
+            result.append(f"<li{value}>" + inline(content, source_url) + "</li>")
             continue
         if listing:
-            result.append("</ul>")
-            listing = False
+            result.append(f"</{listing}>")
+            listing = ""
+        if stripped == ">":
+            flush_paragraph()
+            continue
         if stripped.startswith("> "):
             flush_paragraph()
             result.append("<blockquote>" + inline(stripped[2:], source_url) + "</blockquote>")
@@ -187,7 +206,7 @@ def markdown_html(text: str, source_url: str) -> str:
     flush_paragraph()
     flush_table()
     if listing:
-        result.append("</ul>")
+        result.append(f"</{listing}>")
     if fence:
         result.append("</code></pre>")
     return "\n".join(result)
@@ -247,12 +266,19 @@ def reaction_placeholder(key: str, title: str) -> str:
     return f'<div data-transcription-reaction="{html.escape(key, quote=True)}" data-reaction-title="{html.escape(title, quote=True)}"></div>'
 
 
+def chat_markup(key: str, template: str) -> str:
+    if template.count('data-transcription-chat=""') != 1:
+        raise ValueError("В шаблоне комментариев нужен один пустой ключ")
+    return template.replace('data-transcription-chat=""', f'data-transcription-chat="{html.escape(key, quote=True)}"', 1)
+
+
 def attach_block_reactions(source: str, keys: dict[str, str], texts: dict[str, str]) -> tuple[str, set[str]]:
     source = REACTION_PLACEHOLDER.sub("", source)
     text_keys = {re.sub(r"\s+", " ", text).strip(): keys[relative] for relative, text in texts.items()}
     inline_keys = {"sos-text-1": "T00027-sos-text-1"}
     added = set()
-    for block in sos_item_blocks(source):
+    for original_block in sos_item_blocks(source):
+        block = CHAT_PLACEHOLDER.sub("", original_block)
         field = re.search(r'<textarea\b[^>]*id="([^"]+)"[^>]*>(.*?)</textarea>', block, re.S)
         if not field or not html.unescape(field.group(2)).strip():
             continue
@@ -270,8 +296,9 @@ def attach_block_reactions(source: str, keys: dict[str, str], texts: dict[str, s
         closing = block.rfind('</div>')
         if closing < 0:
             raise ValueError(f"Нет блока транскрипции: {field.group(1)}")
-        replacement = block[:closing] + reaction_placeholder(key, title) + block[closing:]
-        source = source.replace(block, replacement, 1)
+        replacement = (block[:closing] + reaction_placeholder(key, title)
+                       + f'<div data-transcription-chat="{html.escape(key, quote=True)}" hidden></div>' + block[closing:])
+        source = source.replace(original_block, replacement, 1)
         added.add(key)
     return source, added
 
@@ -293,13 +320,64 @@ def original_transcription(markdown: str) -> str:
     return transcription_section(markdown, "Необработанная транскрипция")
 
 
-def author_translation_html(markdown: str, source_url: str) -> str:
-    for heading in ("Перевод автора", "Авторский перевод", "Сводный перевод Автор№1", "Итоговый перевод", "Связный перевод", "Перевод (гипотеза)"):
+def translation_labels_html(content: str, source_url: str, transcription: str) -> str:
+    rendered = markdown_html(content, source_url)
+
+    def words(text: str) -> set[str]:
+        return set(re.findall(r"[^\W\d_]+(?:[-‑][^\W\d_]+)*", text.casefold()))
+
+    source_words = words(transcription)
+
+    def source_label(text: str) -> bool:
+        label_words = words(text) - {"или"}
+        return bool(label_words) and all(
+            word in source_words or any(
+                len(word) >= 7 and len(source) >= 7 and word[0] == source[0]
+                and SequenceMatcher(None, word, source).ratio() >= 0.9
+                for source in source_words
+            )
+            for word in label_words
+        )
+
+    labels = []
+    for paragraph in re.split(r"\n\s*\n", content):
+        lines = paragraph.strip().splitlines()
+        if not lines or lines[0].lstrip().startswith(("#", ">", "```", "|", "«", '"')):
+            continue
+        first = lines[0].strip()
+        tag = "li" if first.startswith(("- ", "* ")) else "p"
+        if tag == "li":
+            first = first[2:]
+        pair = re.split(r"\s+(?:→|->|—|–|=)\s+|:\s+", first, maxsplit=1)
+        label = pair[0].strip()
+        plain = label.replace("**", "").replace("`", "")
+        explicit = len(pair) == 2
+        if len(plain) > 120 or len(words(plain)) > 8 or "[" in plain:
+            continue
+        if not explicit and (len(lines) < 2 or not plain.endswith(("!", ".", ":"))):
+            continue
+        labels.append((tag, label, explicit, source_label(plain)))
+
+    # Повторяемая структура позволяет отметить подписи с отличающимся написанием без исправления исходника
+    paired = [item for item in labels if not item[2]]
+    matched = [item for item in paired if item[3]]
+    word_by_word = len(matched) >= 2 and len(matched) * 2 >= len(paired)
+    for tag, label, explicit, matched_source in labels:
+        if not matched_source or not (explicit or word_by_word):
+            continue
+        prefix = inline(label, source_url)
+        rendered = rendered.replace(f"<{tag}>{prefix}", f'<{tag}><mark class="transcription-term">{prefix}</mark>', 1)
+    return rendered
+
+
+def author_translation_html(markdown: str, source_url: str, copy_text: str = "") -> str:
+    for heading in ("Перевод автора", "Авторский перевод", "Сводный перевод Автор№1", "Итоговый перевод", "Связный перевод", "Перевод (гипотеза)", "Всё послание связным текстом"):
         section = re.search(rf'^## {re.escape(heading)}(?:\s*\([^\n]*\))?\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
         if section:
             content = section.group(1).strip().removesuffix("---").strip()
             if content:
-                return markdown_html(content, source_url)
+                transcription = "\n".join((original_transcription(markdown), transcription_section(markdown, "Текст для копирования"), copy_text))
+                return translation_labels_html(content, source_url, transcription)
     return '<p>Пока не заполнено</p>'
 
 
@@ -454,6 +532,10 @@ def dictionary_html(markdown: str, source_url: str) -> str:
 
 def main() -> None:
     source = (SOURCE / "index.html").read_text(encoding="utf-8")
+    chat_template_match = CHAT_TEMPLATE.search(source)
+    if not chat_template_match:
+        raise ValueError("Не найден шаблон комментариев")
+    chat_template = chat_template_match.group(1)
     OUTPUT.mkdir(parents=True, exist_ok=True)
     translation_sources = {match.group(1) for match in AUTHOR_TRANSLATION.finditer(source) if match.group(1)}
     purpose_sources = {match.group(1) for match in PURPOSE_PLACEHOLDER.finditer(source) if match.group(1)}
@@ -470,14 +552,18 @@ def main() -> None:
     analysis_modes = {}
     translations = {}
     purposes = {}
+    resolved_copy_texts = {}
     sources_for_purposes: set[Path] = set()
     for relative in sorted(published_paths | translation_sources | purpose_sources):
         source_path = ROOT / relative
         if not relative.startswith("docs/transcriptions/") or not source_path.is_file() or not source_path.is_relative_to(ROOT / "docs" / "transcriptions"):
             raise ValueError(f"Нет исходника перевода: {relative}")
         markdown = source_path.read_text(encoding="utf-8")
+        entry = by_source.get(relative, {})
+        resolved_copy_texts[relative] = (entry.get("copyText") or transcription_section(markdown, "Текст для копирования")
+                                         or text_for_copy.get(relative) or original_transcription(markdown) or entry.get("bodyText", ""))
         analysis_modes[relative] = analysis_mode(markdown)
-        translations[relative] = author_translation_html(markdown, SOURCE_URL + relative)
+        translations[relative] = author_translation_html(markdown, SOURCE_URL + relative, text_for_copy.get(relative, ""))
         purpose_relative = by_source.get(relative, {}).get("purposeSource", relative)
         purpose_path = ROOT / purpose_relative
         if not purpose_relative.startswith("docs/transcriptions/") or not purpose_path.is_file() or not purpose_path.is_relative_to(ROOT / "docs" / "transcriptions"):
@@ -518,6 +604,7 @@ def main() -> None:
     (SOURCE / "data" / "entries.json").write_text(json.dumps(entries, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (SOURCE / "data" / "analysis-modes.json").write_text(json.dumps(analysis_modes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
+    source = CHAT_PLACEHOLDER.sub(lambda match: chat_markup(match.group(1), chat_template), source)
     source = AUTHOR_TRANSLATION.sub(insert_translation, source)
     source = PURPOSE_PLACEHOLDER.sub(insert_purpose, source)
     dictionary_path = ROOT / "docs" / "dictionary" / "combined.md"
@@ -532,6 +619,19 @@ def main() -> None:
     translation_data.write_text(json.dumps(translations, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     purpose_data = SOURCE / "data" / "transcription-purposes.json"
     purpose_data.write_text(json.dumps(purposes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    calendar_transcriptions = {
+        entry["sourceUrl"]: {
+            "copyText": resolved_copy_texts[relative],
+            "purposeHtml": purposes[relative],
+            "translationHtml": translations[relative],
+            "pageUrl": transcription_route(ROOT / relative),
+        }
+        for relative, entry in by_source.items()
+        if entry.get("type") in {"manual_transcription", "analysis"}
+    }
+    (SOURCE / "data" / "calendar-transcriptions.json").write_text(
+        json.dumps(calendar_transcriptions, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     shutil.copytree(SOURCE / "assets", OUTPUT / "assets", dirs_exist_ok=True)
     shutil.copytree(SOURCE / "data", OUTPUT / "data", dirs_exist_ok=True)
     verification_file = SOURCE / "yandex_1195bbe61e0c2002.html"
@@ -565,8 +665,7 @@ def main() -> None:
         markdown = source_path.read_text(encoding="utf-8")
         heading = re.search(r'^#\s+(.+)$', markdown, re.M)
         title = entry.get("title") or (heading.group(1) if heading else source_path.stem)
-        copy_text = (entry.get("copyText") or transcription_section(markdown, "Текст для копирования")
-                     or text_for_copy.get(relative) or original_transcription(markdown) or entry.get("bodyText", ""))
+        copy_text = resolved_copy_texts[relative]
         analysis = markdown_html(markdown, source_url)
         copy_block = ""
         if copy_text:
@@ -586,7 +685,7 @@ def main() -> None:
         panel = (
             '<section class="content-panel is-active" id="transcription" data-panel '
             f'data-title="{html.escape(title, quote=True)}">'
-            f'<a class="help-back" href="/calendar/">← Календарь</a>'
+            f'<a class="help-back" href="/calendar/">← Новые транскрипции</a>'
             '<div class="section-heading">'
             f'<h2>{html.escape(title)}</h2>'
             f'<p class="section-lead">Дата: {html.escape(date_note)}</p>'
@@ -600,6 +699,7 @@ def main() -> None:
             f'{reaction_placeholder(reaction_keys[relative], title)}'
             f'<div class="transcription-analysis">{analysis}</div>'
             f'<p><a href="{html.escape(source_url, quote=True)}" target="_blank" rel="noopener noreferrer">Исходный Markdown на GitHub ↗</a></p>'
+            f'{chat_markup(reaction_keys[relative], chat_template)}'
             '</article></section>'
         )
         page = html_document(source, panel, "transcription", title, (entry.get("bodyText") or title)[:155], route)

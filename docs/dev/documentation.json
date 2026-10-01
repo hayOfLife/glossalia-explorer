@@ -2,6 +2,27 @@
   "version": 1,
   "documents": [
     {
+      "path": "docs/transcriptions/T00043.md",
+      "title": "§T00043 — Диалог конкретного человека с Богом",
+      "status": "reference",
+      "purpose": "Общая транскрипция с присланным разбором, переводом и обезличенным именем человека",
+      "tags": ["T00043"]
+    },
+    {
+      "path": "docs/architecture/decisions/0010-author-inbox.md",
+      "title": "ADR-0010: Обращения к автору в скрытых чатах",
+      "status": "current",
+      "purpose": "Зарезервированное имя автора, обращения из всех чатов и локальная панель прочтения и ответа",
+      "tags": ["authorinbox"]
+    },
+    {
+      "path": "docs/architecture/decisions/0009-hidden-comments.md",
+      "title": "ADR-0009: Скрытые комментарии к транскрипциям",
+      "status": "current",
+      "purpose": "Причина скрытого общего чата, постоянного случайного псевдонима и входа владельца по паролю",
+      "tags": ["hiddencomments"]
+    },
+    {
       "path": "docs/dictionary/slovar_kanala.md",
       "title": "СЛОВАРЬ КАНАЛА",
       "status": "reference",
@@ -710,7 +731,7 @@
       "tags": ["T00029"]
     },
     {
-      "path": "docs/transcriptions/T00030.md",
+      "path": "docs/transcriptions/T00042/part_2.md",
       "title": "§T00030 — Второй скрипт для Алексея",
       "status": "reference",
       "purpose": "Исходная строка и статус предложенного чтения: Второй скрипт для Алексея",
@@ -997,6 +1018,35 @@
       "title": "§T00041 — Обращение к агностику",
       "status": "reference",
       "purpose": "Транскрипция автора с отдельным текстом для копирования и присланным переводом",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00041/part_2.md",
+      "title": "§T00041 — Абзац 2",
+      "status": "reference",
+      "purpose": "Вторая транскрипция на странице Агностицизм, полученная 30.09.2026 в 22:00; без разбора",
+      "tags": []
+    },
+    {
+      "path": "docs/transcriptions/T00042/index.md",
+      "title": "§T00042 — Помощь человеку, заблудившемуся в грехах и событиях жизни",
+      "status": "reference",
+      "purpose": "Указатель транскрипций страницы о помощи человеку, заблудившемуся в грехах и событиях жизни",
+      "tags": ["T00042"]
+    },
+    {
+      "path": "docs/transcriptions/T00042/part_1.md",
+      "title": "Фрагмент 8 — Транскрипция для друга",
+      "status": "reference",
+      "purpose": "Приложенный полный разбор части 1 с разрешённой заменой личного имени на Автор№1",
+      "tags": [],
+      "verbatim": true
+    },
+    {
+      "path": "docs/transcriptions/T00042/part_1_context.md",
+      "title": "§T00042 — Контекст части 1",
+      "status": "reference",
+      "purpose": "Дата, источник, исходная транскрипция и отдельный текст для копирования части 1",
       "tags": []
     },
     {

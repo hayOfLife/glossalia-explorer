@@ -2,8 +2,9 @@ import { createHash } from 'node:crypto';
 import { closeSync, existsSync, fsyncSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { isIP } from 'node:net';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { createCommentHandler, isLocalOrigin } from './comments.mjs';
 
 const maxAllowedKeys = 10000;
 const transcriptionKeyPattern = /^T[0-9]{5}(?:-[A-Za-z0-9_-]{1,100})?$/;
@@ -14,18 +15,6 @@ const maxVotesPerIp = 40;
 const maxVotesPerVoter = 12;
 const maxIpBuckets = 2048;
 const productionOrigin = 'https://glossalia-explorer.tuqo.ru';
-
-function isLocalOrigin(origin) {
-  try {
-    const url = new URL(origin);
-    return ['http:', 'https:'].includes(url.protocol)
-      && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)
-      && url.origin === origin
-      && (!url.port || Number(url.port) > 0);
-  } catch {
-    return false;
-  }
-}
 
 function validateAllowedKeys(keys) {
   if (!Array.isArray(keys) || keys.length === 0 || keys.length > maxAllowedKeys
@@ -160,7 +149,7 @@ function readBody(request) {
   });
 }
 
-export function createReactionServer({ storagePath, allowedOrigin, environment = 'production', allowedKeys: keys = loadAllowedKeys(), now = Date.now }) {
+export function createReactionServer({ storagePath, allowedOrigin, environment = 'production', allowedKeys: keys = loadAllowedKeys(), adminPasswordHash, now = Date.now }) {
   if (!['production', 'local'].includes(environment)) {
     throw new Error('Invalid reaction environment');
   }
@@ -171,6 +160,8 @@ export function createReactionServer({ storagePath, allowedOrigin, environment =
 
   const endpoint = environment === 'local' ? '/glossaliae/reactions-local' : '/glossaliae/reactions';
   const allowedKeys = validateAllowedKeys(keys);
+  const commentHandler = environment === 'production'
+    ? createCommentHandler({ storagePath: join(dirname(storagePath), 'comments.json'), allowedKeys, adminPasswordHash, now }) : null;
   let votes = loadVotes(storagePath, allowedKeys);
   let storageUnavailable = false;
   let sequence = 0;
@@ -182,6 +173,11 @@ export function createReactionServer({ storagePath, allowedOrigin, environment =
   }
 
   return createServer(async (request, response) => {
+    if (commentHandler && request.url?.split('?')[0] === '/glossaliae/comments') {
+      await commentHandler(request, response);
+      return;
+    }
+
     const origin = request.headers.origin || '';
     const originAllowed = environment === 'local' ? isLocalOrigin(origin) : origin === allowedOrigin;
     const responseOrigin = originAllowed ? origin : undefined;
@@ -295,10 +291,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const storagePath = process.env.REACTIONS_DATA_FILE;
   const allowedOrigin = process.env.REACTIONS_ALLOWED_ORIGIN;
   const environment = process.env.REACTIONS_ENVIRONMENT || 'production';
+  const adminPasswordHash = process.env.COMMENTS_ADMIN_PASSWORD_HASH;
   const port = Number(process.env.REACTIONS_PORT || 8791);
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new Error('Invalid port');
   }
 
-  createReactionServer({ storagePath, allowedOrigin, environment }).listen(port, '127.0.0.1');
+  createReactionServer({ storagePath, allowedOrigin, environment, adminPasswordHash }).listen(port, '127.0.0.1');
 }

@@ -1,0 +1,13 @@
+	@glossaliae_comments path /glossaliae/comments
+	handle @glossaliae_comments {
+		request_body {
+			max_size 16384
+		}
+		reverse_proxy 127.0.0.1:8791 {
+			header_up X-Glossaliae-Client-IP {remote_host}
+			transport http {
+				dial_timeout 3s
+				response_header_timeout 10s
+			}
+		}
+	}
