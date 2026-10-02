@@ -7,6 +7,7 @@
     "/sos/", "/situations/help/", "/termination-of-pregnancy/", "/situations/agnosticism/",
     "/situations/life-partner/", "/translation/", "/help/", "/help/glossolalia/",
     "/help/purpose/", "/help/churches/", "/help/theories/", "/help/ai/", "/help/author/",
+    "/articles/why-god-is-lord/", "/articles/glossolalia-hypothesis/",
     "/help/eugenics-vs-genetic-engineering/", "/donate/", "/for-ai/",
   ]);
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
@@ -510,7 +511,7 @@
 
     for (const link of links) {
       const isCurrent = link.dataset.tabLink === currentId
-        || (link.dataset.tabLink === "help" && currentId.startsWith("help-"))
+        || (link.dataset.tabLink === "help" && (currentId.startsWith("help-") || currentId.startsWith("article-")))
         || (link.dataset.tabLink === "situations" && (currentId.startsWith("situation-") || currentId === "sos" || currentId === "termination-of-pregnancy"));
       link.classList.toggle("is-active", isCurrent);
 

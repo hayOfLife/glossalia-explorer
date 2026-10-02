@@ -33,6 +33,8 @@ ROUTES = {
     "help-purpose": "/help/purpose/",
     "help-churches": "/help/churches/",
     "help-theories": "/help/theories/",
+    "article-why-god-is-lord": "/articles/why-god-is-lord/",
+    "article-glossolalia-hypothesis": "/articles/glossolalia-hypothesis/",
     "help-ai": "/help/ai/",
     "help-author": "/help/author/",
     "help-eugenics": "/help/eugenics-vs-genetic-engineering/",
@@ -45,6 +47,7 @@ SOURCE_URL = "https://github.com/hayOfLife/glossalia-explorer/blob/main/"
 PUBLISHED_LINK = re.compile(r'href="https://github\.com/hayOfLife/glossalia-explorer/blob/main/(docs/transcriptions/[^"]+\.md)"')
 AUTHOR_TRANSLATION = re.compile(r'<div class="author-translation-body" data-author-translation="([^"]*)"></div>')
 PURPOSE_PLACEHOLDER = re.compile(r'<div class="transcription-purpose-body" data-purpose-source="([^"]*)"></div>')
+DOCUMENT_PLACEHOLDER = re.compile(r'<div class="help-page" data-document-source="([^"]*)"></div>')
 REACTION_PLACEHOLDER = re.compile(r'<div data-transcription-reaction="[^"]+" data-reaction-title="[^"]*"></div>')
 CHAT_PLACEHOLDER = re.compile(r'<div(?=[^>]*\bdata-transcription-chat="([^"]+)")(?=[^>]*\bhidden\b)[^>]*>\s*</div>')
 CHAT_TEMPLATE = re.compile(r'<template\b[^>]*\bid="transcription-chat-template"[^>]*>\s*(.*?)\s*</template>', re.S)
@@ -96,6 +99,16 @@ def source_link(target: str, source_url: str) -> str:
         return target
     resolved = urljoin(source_url, quote(target))
     return resolved if urlparse(resolved).scheme == "https" else "#"
+
+
+def plain_document_html(text: str) -> str:
+    blocks = re.split(r"\n\s*\n", text.replace("\r\n", "\n").strip())
+    result = []
+    for block in blocks:
+        tag = "h3" if re.fullmatch(r"Раздел \d+\.[^\n]+", block) else "p"
+        content = html.escape(block).replace("\n", "<br>\n")
+        result.append(f"<{tag}>{content}</{tag}>")
+    return "\n".join(result)
 
 
 def markdown_table(lines: list[str], source_url: str) -> str:
@@ -607,6 +620,15 @@ def main() -> None:
     source = CHAT_PLACEHOLDER.sub(lambda match: chat_markup(match.group(1), chat_template), source)
     source = AUTHOR_TRANSLATION.sub(insert_translation, source)
     source = PURPOSE_PLACEHOLDER.sub(insert_purpose, source)
+
+    def insert_document(match: re.Match[str]) -> str:
+        relative = html.unescape(match.group(1))
+        document = (SOURCE / relative).resolve()
+        if not document.is_file() or document.suffix.lower() != ".txt" or not document.is_relative_to(SOURCE / "assets" / "documents"):
+            raise ValueError(f"Нет публичного текстового документа: {relative}")
+        return '<div class="help-page">' + plain_document_html(document.read_text(encoding="utf-8-sig")) + '</div>'
+
+    source = DOCUMENT_PLACEHOLDER.sub(insert_document, source)
     dictionary_path = ROOT / "docs" / "dictionary" / "combined.md"
     dictionary = dictionary_html(dictionary_path.read_text(encoding="utf-8"), SOURCE_URL + "docs/dictionary/combined.md")
     (SOURCE / "data" / "dictionary.html").write_text(dictionary, encoding="utf-8")

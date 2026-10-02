@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "site" / "scripts"))
-from build_static import BASE_URL, OUTPUT, ROUTES, CHAT_TEMPLATE, analysis_label, analysis_mode, attach_block_reactions, inline, markdown_html, author_translation_html, copy_texts, dictionary_fields, dictionary_html, digest_file, markdown_table, original_transcription, purpose_html, reaction_key, sos_item_blocks, transcription_route, transcription_section  # noqa: E402
+from build_static import BASE_URL, OUTPUT, ROUTES, CHAT_TEMPLATE, analysis_label, analysis_mode, attach_block_reactions, inline, markdown_html, author_translation_html, copy_texts, dictionary_fields, dictionary_html, digest_file, markdown_table, original_transcription, plain_document_html, purpose_html, reaction_key, sos_item_blocks, transcription_route, transcription_section  # noqa: E402
 
 
 class PageParser(HTMLParser):
@@ -56,6 +56,33 @@ class PageParser(HTMLParser):
 
 
 class StaticBuildTest(unittest.TestCase):
+    def test_plain_document_keeps_text_and_escapes_html(self) -> None:
+        text = 'Раздел 1. Заголовок\n\n<script>alert("текст")</script> & <слово>\nВторая строка.'
+        rendered = plain_document_html(text)
+        self.assertIn('<h3>Раздел 1. Заголовок</h3>', rendered)
+        self.assertNotIn('<script>', rendered)
+        self.assertNotIn('<слово>', rendered)
+        restored = html.unescape(re.sub(r'<[^>]+>', ' ', rendered))
+        self.assertEqual(re.sub(r'\s+', ' ', text).strip(), re.sub(r'\s+', ' ', restored).strip())
+
+    def test_agnosticism_intro_keeps_existing_transcription_keys(self) -> None:
+        page = (OUTPUT / 'situations/agnosticism/index.html').read_text(encoding='utf-8')
+        panel = re.search(r'<section[^>]+id="situation-5"[^>]*>(.*?)</section>', page, re.S).group(1)
+        notice = panel.index('Дорогой читатель, если вы открыты Богу')
+        self.assertLess(panel.index('<summary>1. Абзац</summary>'), notice)
+        self.assertLess(notice, panel.index('<summary>2. Обращение к агностику</summary>'))
+        self.assertLess(panel.index('<summary>2. Обращение к агностику</summary>'), panel.index('<summary>3. Абзац</summary>'))
+        self.assertIn('href="/articles/why-god-is-lord/">Документ</a>', panel)
+        parser = PageParser()
+        parser.feed(panel)
+        self.assertEqual(['T00041-part_1', 'T00041-part_2'], parser.reactions)
+        self.assertEqual(parser.reactions, parser.chats)
+        article = (OUTPUT / 'articles/why-god-is-lord/index.html').read_text(encoding='utf-8')
+        parser = PageParser()
+        parser.feed(article)
+        self.assertEqual([], parser.reactions)
+        self.assertEqual([], parser.chats)
+
     def test_comments_are_hidden_and_share_each_transcription_key(self) -> None:
         for path in OUTPUT.rglob("index.html"):
             with self.subTest(page=path):
@@ -66,7 +93,7 @@ class StaticBuildTest(unittest.TestCase):
                 self.assertCountEqual(expected, parser.chats)
                 self.assertTrue(all(parser.chat_hidden))
                 self.assertIn('/assets/comments.js?v=author-inbox-20261001', page)
-                self.assertIn('/assets/styles.css?v=reading-controls-20261001', page)
+                self.assertIn('/assets/styles.css?v=hero-paragraph-20261002', page)
                 if parser.chats:
                     self.assertIn('data-chat-api="https://94-232-41-163.sslip.io/glossaliae/comments"', page)
 
@@ -315,7 +342,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
 
         purposes = json.loads((ROOT / "site" / "public_html" / "data" / "transcription-purposes.json").read_text(encoding="utf-8"))
-        self.assertEqual(27, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
+        self.assertEqual(28, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00033/part_1.md"])
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00034/part_1.md"])
 

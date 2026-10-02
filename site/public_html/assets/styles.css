@@ -164,7 +164,7 @@ details[open] > summary::before {
   line-height: 1.7;
 }
 
-.hero-verse {
+.hero-description + .hero-description {
   margin-top: 12px;
 }
 
