@@ -447,7 +447,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** Де-ро...
 
@@ -652,7 +652,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** До!
 
@@ -747,7 +747,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Едро!
 
@@ -765,7 +765,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** едро!
 
@@ -783,7 +783,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Едро!
 
@@ -970,7 +970,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Елохим!
 
@@ -1173,7 +1173,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** Ис-ша!
 
@@ -1255,7 +1255,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** Исма
 
@@ -1313,7 +1313,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** ишма!
 
@@ -1682,7 +1682,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** ми ноте!
 
@@ -1977,7 +1977,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** ректум-фар
 
@@ -2133,7 +2133,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** Ру-ви!
 
@@ -2149,7 +2149,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Ру-ви!
 
@@ -2203,7 +2203,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** Са
 
@@ -2303,7 +2303,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Се
 
@@ -2319,7 +2319,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Се
 
@@ -2477,7 +2477,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** сумоентено
 
@@ -2535,7 +2535,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Туве!
 
@@ -2623,7 +2623,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Турефине
 
@@ -2682,7 +2682,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** У-ще!
 
@@ -2770,7 +2770,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** фа!
 
@@ -2786,7 +2786,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** ФА!
 
@@ -2859,7 +2859,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Фехонтеридентувеланенинтериум
 
@@ -2953,7 +2953,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** хе-ши!
 
@@ -3209,7 +3209,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Элохим!
 
@@ -3243,7 +3243,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** ёрса!
 
@@ -4409,7 +4409,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Шалом!
 
@@ -4546,7 +4546,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Е!
 
@@ -4604,7 +4604,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Шион!
 
@@ -4630,7 +4630,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Хи-де-ро!
 
@@ -4648,7 +4648,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Иссе...дере
 
@@ -4666,7 +4666,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** лувериде
 
@@ -4680,7 +4680,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Ишьма
 
@@ -4698,7 +4698,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Ишимана
 
@@ -4714,7 +4714,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** вирреди
 
@@ -4730,7 +4730,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** десаято-ри
 
@@ -4750,7 +4750,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** и лехва-щеми
 
@@ -4768,7 +4768,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 1 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_1.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-dialogue.md)
 
 **Транскрипция:** Дес
 
@@ -4784,7 +4784,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** деру-вима
 
@@ -4802,7 +4802,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** Ру-виме
 
@@ -4820,7 +4820,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** ис лафенти-не
 
@@ -4840,7 +4840,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 2 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_2.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/2026-09-25-mercy.md)
 
 **Транскрипция:** -фи!
 
@@ -4858,7 +4858,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Ру-ви-де!
 
@@ -4876,7 +4876,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Нерубелитенгент
 
@@ -4894,7 +4894,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** -виктим
 
@@ -4912,7 +4912,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Едро!-щедро
 
@@ -4932,7 +4932,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** веридентел
 
@@ -4950,7 +4950,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Иаденториум
 
@@ -4968,7 +4968,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** -велитес
 
@@ -4986,7 +4986,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Ректуагент
 
@@ -5004,7 +5004,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** маарел
 
@@ -5022,7 +5022,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** -фа
 
@@ -5040,7 +5040,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** Empty
 
@@ -5058,7 +5058,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 3 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_3.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script12_analysis_full.md)
 
 **Транскрипция:** - дур-ва
 
@@ -5076,7 +5076,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** майлТу
 
@@ -5098,7 +5098,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Ерелисен!
 
@@ -5118,7 +5118,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Ю!
 
@@ -5134,7 +5134,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** ю!
 
@@ -5148,7 +5148,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** энвектум
 
@@ -5170,7 +5170,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Руфакторт!
 
@@ -5192,7 +5192,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Ешма
 
@@ -5208,7 +5208,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** ешма!
 
@@ -5224,7 +5224,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** -лавиконда
 
@@ -5246,7 +5246,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** едро, фиктим!
 
@@ -5264,7 +5264,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 4 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_4.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/script14_analysis.md)
 
 **Транскрипция:** Елохим! Фа!
 
@@ -5282,7 +5282,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ефаломинестериум!
 
@@ -5302,7 +5302,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** ед!
 
@@ -5316,7 +5316,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ерра!
 
@@ -5336,7 +5336,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ембилдинг!
 
@@ -5356,7 +5356,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** education
 
@@ -5376,7 +5376,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ферритен!
 
@@ -5394,7 +5394,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Иссахижмановертоне!
 
@@ -5414,7 +5414,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Less, nearby, stern?
 
@@ -5434,7 +5434,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** кадми-наардикт!
 
@@ -5452,7 +5452,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ефикатион!
 
@@ -5466,7 +5466,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Надо!
 
@@ -5482,7 +5482,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ешмаа-find
 
@@ -5502,7 +5502,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Еличенистерниументорикеставироне-на!
 
@@ -5522,7 +5522,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** setup!
 
@@ -5542,7 +5542,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Едурва-на!
 
@@ -5560,7 +5560,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ектиероненд
 
@@ -5580,7 +5580,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Естектед!
 
@@ -5596,7 +5596,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Ректулус!
 
@@ -5618,7 +5618,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Наофуми!
 
@@ -5638,7 +5638,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Еее (выдох)!
 
@@ -5652,7 +5652,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Едро-дурва (это)
 
@@ -5672,7 +5672,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** - ектименд (mind?)
 
@@ -5692,7 +5692,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** еффект - руская
 
@@ -5712,7 +5712,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** фитуреандеракт!
 
@@ -5732,7 +5732,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Едро! Иегова!
 
@@ -5748,7 +5748,7 @@ Allosaurus даёт более короткий точный повтор `ʂ a 
 
 ### §T00035, часть 5 — вариант обновлённого разбора
 
-[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.txt)
+[Источник](https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md)
 
 **Транскрипция:** Науч-поп.
 

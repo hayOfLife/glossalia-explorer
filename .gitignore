@@ -14,7 +14,6 @@ __pycache__/
 *.txt
 !/site/public_html/llms.txt
 !/docs/transcriptions/T00027/skript_22_pardes_polnyi_v3.txt
-!/docs/transcriptions/T00035/part_[1-5].txt
 !/docs/transcriptions/T00039/2026-09-23_fragment_2_analysis.txt
 !/docs/transcriptions/T00039/2026-09-23_пересоздать.txt
 !/docs/transcriptions/T00041/script_19_translation.txt
