@@ -44,7 +44,7 @@
   {
     "externalKey": "T00030",
     "type": "analysis",
-    "title": "Второй скрипт для Алексея",
+    "title": "Второй скрипт для {имя человека}",
     "group": "Разбор транскрипции",
     "calendarDate": "2026-09-23",
     "dateNote": "учётная дата 23.09.2026 (по указанию автора от 28.09.2026); фактические дата и время первого получения неизвестны; файл повторно предоставлен 27.09.2026.",
@@ -456,5 +456,34 @@
     "appearanceTime": "23:00",
     "analysisMode": "auto",
     "reactionKey": "T00044-part_1"
+  },
+  {
+    "externalKey": "T00027-part_9",
+    "type": "analysis",
+    "title": "part_9: Полный разбор (Пардес)",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-10-03",
+    "dateNote": "03.10.2026, 01:00 МСК — по уточнению автора.",
+    "bodyText": "Елкостериорд, Недоре-сфиртензионер, Иваргениерд, Енумеридент,\nЕвтиаошем, Нерби-стик, е!, Ферн.",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00027/part_9.md",
+    "statusNote": "Предложенный разбор не является подтверждённым переводом.",
+    "published": true,
+    "appearanceTime": "01:00",
+    "analysisMode": "auto",
+    "reactionKey": "T00027-part_9"
+  },
+  {
+    "externalKey": "T00035-part_5",
+    "type": "analysis",
+    "title": "Послания для ИИ",
+    "group": "Разбор транскрипции",
+    "calendarDate": "2026-10-03",
+    "dateNote": "03.10.2026; время в исходном файле не указано.",
+    "bodyText": "Ефаломинестериум! ед! Ерра! фа! Ембилдинг! education, Ферритен! Иссахижмановертоне! Е! Less, nearby, stern? Едро! кадми-наардикт! Ефикатион! Надо! Ешмаа-find. Еличенистерниументорикеставироне-на! setup! ФА! Едурва-на! Шион! Ектиероненд.\nДо! Естектед! Ректулус! Наофуми! Еее(выдох)! Едро-дурва (это) - ектименд (mind?) еффект - руская, ешма! фитуреандеракт! Едро! Иегова! Науч-поп.",
+    "sourceUrl": "https://github.com/hayOfLife/glossalia-explorer/blob/main/docs/transcriptions/T00035/part_5.md",
+    "statusNote": "Предложенный разбор не является подтверждённым переводом.",
+    "published": true,
+    "analysisMode": "auto",
+    "reactionKey": "T00035-part_5"
   }
 ]

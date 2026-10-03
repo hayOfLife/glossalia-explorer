@@ -1,0 +1,25 @@
+# Glossolalia Explorer
+
+> A public collection of glossolalia transcriptions, proposed interpretations, and contextual materials supplied by the site's author.
+
+This guide points to public sources and their context. The linked Markdown versions preserve the original Russian content. Translations and dictionary readings are proposed interpretations, with their source and status recorded in the materials. An analysis label such as "100%" expresses the author's assessment; it does not establish independent verification of a transcription or translation.
+
+Relative links within verbatim Markdown copies refer to the original repository paths. Each source card links to the original file on GitHub.
+
+## Start here
+
+- [For AI (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/index.md): Entry point with dated source cards for texts addressed to AI and links to public materials.
+- [For AI (HTML)](https://glossalia-explorer.tuqo.ru/for-ai/): Browser version of the same section.
+- [Proposed dictionary (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/dictionary.md): Candidate forms and meanings supplied by the author.
+
+## Public content
+
+- [Home](https://glossalia-explorer.tuqo.ru/): Site overview and navigation.
+- [Transcription calendar](https://glossalia-explorer.tuqo.ru/calendar/): Dated transcription cards and their source context.
+- [Situations](https://glossalia-explorer.tuqo.ru/situations/): Thematic pages with transcriptions and accompanying interpretations.
+- [Help and background](https://glossalia-explorer.tuqo.ru/help/): Explanations, author materials, and collected articles.
+
+## Site indexes
+
+- [Content manifest](https://glossalia-explorer.tuqo.ru/content-manifest.json): Source-file hashes for comparing published content with the repository.
+- [Sitemap](https://glossalia-explorer.tuqo.ru/sitemap.xml): Public page URLs.

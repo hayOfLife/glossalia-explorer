@@ -6,15 +6,18 @@ import html
 import json
 import re
 import sys
+import tempfile
 import unittest
 from html.parser import HTMLParser
 from pathlib import Path
+from unittest.mock import patch
 from urllib.parse import urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "site" / "scripts"))
 from build_static import BASE_URL, OUTPUT, ROUTES, CHAT_TEMPLATE, analysis_label, analysis_mode, attach_block_reactions, inline, markdown_html, author_translation_html, copy_texts, dictionary_fields, dictionary_html, digest_file, markdown_table, original_transcription, plain_document_html, purpose_html, reaction_key, sos_item_blocks, transcription_route, transcription_section  # noqa: E402
+from build_static import ai_page_markdown, PANEL, SOURCE_URL  # noqa: E402
 
 
 class PageParser(HTMLParser):
@@ -56,6 +59,127 @@ class PageParser(HTMLParser):
 
 
 class StaticBuildTest(unittest.TestCase):
+    def test_ai_discovery_links_and_public_source_copies(self) -> None:
+        guide = ROOT / "site/public_html/llms.txt"
+        self.assertEqual(guide.read_bytes(), (OUTPUT / "llms.txt").read_bytes())
+        manifest = json.loads((OUTPUT / "content-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(digest_file(guide), manifest["sources"]["site/public_html/llms.txt"])
+        entries = json.loads((OUTPUT / "data/entries.json").read_text(encoding="utf-8"))
+        source = (ROOT / "site/public_html/index.html").read_text(encoding="utf-8")
+        public_sources = {entry["sourceUrl"].removeprefix(SOURCE_URL) for entry in entries if entry.get("published")}
+        public_sources.update(copy_texts(source))
+        expected_markdown = {OUTPUT / "for-ai/index.md", OUTPUT / "for-ai/dictionary.md"}
+        self.assertEqual((ROOT / "docs/dictionary/combined.md").read_bytes(), (OUTPUT / "for-ai/dictionary.md").read_bytes())
+
+        for relative in public_sources:
+            with self.subTest(source=relative):
+                path = OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.md"
+                self.assertEqual((ROOT / relative).read_bytes(), path.read_bytes())
+                expected_markdown.add(path)
+        self.assertEqual(expected_markdown, set(OUTPUT.rglob("*.md")))
+
+        for page in OUTPUT.rglob("index.html"):
+            with self.subTest(page=page):
+                head = page.read_text(encoding="utf-8").split('</head>', 1)[0]
+                self.assertEqual(1, head.count('<link rel="describedby" href="/llms.txt">'))
+                alternate = re.findall(r'<link rel="alternate" type="text/markdown" href="([^"]+)">', head)
+                markdown_path = page.with_suffix(".md")
+                self.assertEqual(["/" + markdown_path.relative_to(OUTPUT).as_posix()] if markdown_path in expected_markdown else [], alternate)
+
+        for text in (guide.read_text(encoding="utf-8"), (OUTPUT / "for-ai/index.md").read_text(encoding="utf-8")):
+            for url in re.findall(r'\]\((https://[^)]+)\)', text):
+                parsed = urlsplit(url)
+                if parsed.netloc != urlsplit(BASE_URL).netloc:
+                    continue
+                target = OUTPUT / parsed.path.lstrip("/")
+                if parsed.path.endswith("/"):
+                    target /= "index.html"
+                self.assertTrue(target.is_file(), url)
+
+    def test_ai_overview_follows_visible_blocks_and_preserves_fields(self) -> None:
+        source = (ROOT / "site/public_html/index.html").read_text(encoding="utf-8")
+        panel = next(match.group(0) for match in PANEL.finditer(source) if match.group(1) == "for-ai")
+        markdown = (OUTPUT / "for-ai/index.md").read_text(encoding="utf-8")
+        entries = json.loads((OUTPUT / "data/entries.json").read_text(encoding="utf-8"))
+        entries = {entry["sourceUrl"].removeprefix(SOURCE_URL): entry for entry in entries if entry.get("published")}
+        copied = json.loads((OUTPUT / "data/calendar-transcriptions.json").read_text(encoding="utf-8"))
+        blocks = sos_item_blocks(panel)
+        titles = [html.unescape(re.search(r'<summary>(.*?)</summary>', block, re.S).group(1)) for block in blocks]
+        self.assertEqual(titles, re.findall(r'^## (.+)$', markdown, re.M)[:-1])
+        sections = re.split(r'^## ', markdown, flags=re.M)[1:-1]
+
+        for block, section in zip(blocks, sections):
+            relative = re.search(r'data-author-translation="([^"]+)"', block).group(1)
+            entry = entries[relative]
+            self.assertIn(entry["dateNote"], section)
+            displayed_copy = html.unescape(re.search(r'<textarea[^>]*>(.*?)</textarea>', block, re.S).group(1))
+            self.assertEqual(displayed_copy, copied[SOURCE_URL + relative]["copyText"])
+            self.assertIn("### Text for copying\n\n```text\n" + copied[SOURCE_URL + relative]["copyText"] + "\n```", section)
+            purpose_relative = re.search(r'data-purpose-source="([^"]+)"', block).group(1)
+            purpose_source = (ROOT / purpose_relative).read_text(encoding="utf-8")
+            purpose = re.search(r'^## Назначение\s*\n(.*?)(?=^## |\Z)', purpose_source, re.M | re.S).group(1).strip()
+            self.assertIn("### Purpose (proposed)\n\n" + purpose, section)
+            original = (ROOT / relative).read_text(encoding="utf-8")
+            translation = re.search(r'^## Перевод автора\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
+            if not translation:
+                translation = re.search(r'^## Перевод \(гипотеза\)\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
+            if translation:
+                self.assertIn("### Proposed translation\n\n" + translation.group(1).strip().removesuffix("---").strip(), section)
+            else:
+                self.assertNotIn("### Proposed translation", section)
+            comments = re.search(r'^## Сопроводительные слова автора\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
+            if comments:
+                self.assertIn("### Author comments\n\n" + comments.group(1).strip(), section)
+            notes = re.search(r'^## Якоря для нейронки\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
+            if notes:
+                self.assertIn("### Notes for AI\n\n" + notes.group(1).strip(), section)
+
+    def test_new_ai_block_without_translation_or_date_is_not_filled_in(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            relative = "docs/transcriptions/T99999/part_1.md"
+            path = root / relative
+            path.parent.mkdir(parents=True)
+            path.write_text("# Источник\n\n## Назначение\n\n\n## Необработанная транскрипция\n\nРу!\n", encoding="utf-8")
+            panel = ('<details class="sos-item"><summary>Новый блок</summary>'
+                     f'<div class="author-translation-body" data-author-translation="{relative}"></div></details>')
+            copy_text = "Ру!\n```\nдальше"
+            with patch("build_static.ROOT", root):
+                markdown = ai_page_markdown(panel, {}, {relative: copy_text})
+            self.assertIn("## Новый блок", markdown)
+            self.assertIn("````text\n" + copy_text + "\n````", markdown)
+            self.assertNotIn("### Proposed translation", markdown)
+            self.assertNotIn("### Purpose", markdown)
+            self.assertNotIn("Date (source note)", markdown)
+            self.assertNotIn("Пока не заполнено", markdown)
+
+    def test_fenced_source_keeps_lines_and_escapes_html(self) -> None:
+        text = 'Строка 1\nСтрока 2\n\n<script> & "цитата"\n'
+        for closing in ("```", ""):
+            with self.subTest(closing=closing):
+                rendered = markdown_html("```text\n" + text + closing, "https://github.com/hayOfLife/glossalia-explorer/")
+                content = re.search(r"<pre><code>(.*?)</code></pre>", rendered, re.S).group(1)
+                self.assertEqual(text, html.unescape(content))
+                self.assertNotIn("<script>", rendered)
+
+    def test_full_markdown_source_keeps_inner_fences_as_text(self) -> None:
+        text = '# Источник\n\n```text\nРу!\n```\n\n## Разбор\n<script> & текст\n'
+        rendered = markdown_html("````text\n" + text + "````\n", BASE_URL)
+        content = re.search(r"<pre><code>(.*?)</code></pre>", rendered, re.S).group(1)
+        self.assertEqual(text, html.unescape(content))
+        self.assertNotIn("<h", rendered)
+        self.assertNotIn("<script>", rendered)
+
+    def test_quoted_word_translation_highlights_only_source_labels(self) -> None:
+        text = ('## Необработанная транскрипция\n\nРу-ви! Хи-де-ро!\n\n'
+                '## Перевод автора\n\n> **Ру-ви!** — место.\n>\n'
+                '> **Хи-де-ро!** — комната.\n>\n'
+                '> «Этот перевод написан по-русски».\n')
+        rendered = author_translation_html(text, BASE_URL)
+        self.assertIn('<blockquote><mark class="transcription-term"><strong>Ру-ви!</strong></mark> — место.', rendered)
+        self.assertIn('<blockquote><mark class="transcription-term"><strong>Хи-де-ро!</strong></mark> — комната.', rendered)
+        self.assertEqual(2, rendered.count('<mark class="transcription-term">'))
+
     def test_plain_document_keeps_text_and_escapes_html(self) -> None:
         text = 'Раздел 1. Заголовок\n\n<script>alert("текст")</script> & <слово>\nВторая строка.'
         rendered = plain_document_html(text)
@@ -93,7 +217,7 @@ class StaticBuildTest(unittest.TestCase):
                 self.assertCountEqual(expected, parser.chats)
                 self.assertTrue(all(parser.chat_hidden))
                 self.assertIn('/assets/comments.js?v=author-inbox-20261001', page)
-                self.assertIn('/assets/styles.css?v=hero-paragraph-20261002', page)
+                self.assertIn('/assets/styles.css?v=common-points-20261003', page)
                 if parser.chats:
                     self.assertIn('data-chat-api="https://94-232-41-163.sslip.io/glossaliae/comments"', page)
 
@@ -285,7 +409,7 @@ class StaticBuildTest(unittest.TestCase):
         rendered = markdown_html("> Послание\n>\n> Приписка\n\n1. Действие\n```text\n2. Исходная строка\n```\n# Конец", BASE_URL)
         self.assertIn('<blockquote>Послание</blockquote>\n<blockquote>Приписка</blockquote>', rendered)
         self.assertNotIn('&gt;', rendered)
-        self.assertIn('<li value="1">Действие</li>\n</ol>\n<pre><code>\n2. Исходная строка', rendered)
+        self.assertIn('<li value="1">Действие</li>\n</ol>\n<pre><code>2. Исходная строка', rendered)
         self.assertIn('<h2>Конец</h2>', rendered)
 
     def test_word_by_word_translation_marks_labels_without_changing_text(self) -> None:
@@ -327,7 +451,7 @@ class StaticBuildTest(unittest.TestCase):
     def test_purpose_uses_only_the_specific_card(self) -> None:
         transcription_dir = ROOT / "docs" / "transcriptions"
         direct = purpose_html(transcription_dir / "T00027" / "part_1.md")
-        self.assertIn("Просьба о защите Наташи", direct)
+        self.assertIn("Просьба о защите {имя человека}", direct)
 
         self.assertEqual('<p>Пока не заполнено</p>', purpose_html(transcription_dir / "T00033" / "part_1.md"))
         self.assertEqual('<p>Пока не заполнено</p>', purpose_html(transcription_dir / "T00034" / "part_1.md"))
@@ -342,7 +466,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
 
         purposes = json.loads((ROOT / "site" / "public_html" / "data" / "transcription-purposes.json").read_text(encoding="utf-8"))
-        self.assertEqual(28, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
+        self.assertEqual(31, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00033/part_1.md"])
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00034/part_1.md"])
 
@@ -585,14 +709,14 @@ class StaticBuildTest(unittest.TestCase):
         self.assertIn(purpose, transcript)
         self.assertIn("майлТу(отправка на почту", section)
         self.assertIn("майлТу(отправка на почту", transcript)
-        self.assertIn("Бог! Отправка — прямой телец", section)
-        self.assertIn("Бог! Отправка — прямой телец", transcript)
+        self.assertIn("Прямой телец", section)
+        self.assertIn("Прямой телец", transcript)
         self.assertLess(section.index("25.09.2026 — О настроенном диалоге"), section.index("28.09.2026 — Послание о нейросети"))
         self.assertIn("Ру-ви! Хи-де-ро! У-ще!", section)
         self.assertLess(section.index("28.09.2026 — Послание о нейросети"), section.index("29.09.2026 — Обращение к нейронке"))
         self.assertIn("Элохим! Ру-ви-де!", section)
         self.assertIn("Элохим! Ру-ви-де!", earlier_transcript)
-        self.assertIn("Бог! Дух — приди — знай!", section)
+        self.assertIn("Дух — приди — знай!", section)
         self.assertIn(purpose, earlier_transcript)
 
 

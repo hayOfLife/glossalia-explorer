@@ -416,6 +416,11 @@ details[open] > summary::before {
   margin: 0 0 25px;
 }
 
+#article-lurianic-soul-integrity .help-page,
+#article-glossolalia-kabbalah-common-points .help-page {
+  overflow-wrap: anywhere;
+}
+
 .help-page h3 {
   margin: 42px 0 16px;
   font-size: clamp(27px, 3vw, 36px);

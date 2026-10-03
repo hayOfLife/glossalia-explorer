@@ -6,8 +6,10 @@
     "/", "/news/", "/calendar/", "/situations/", "/situations/glossolalia/",
     "/sos/", "/situations/help/", "/termination-of-pregnancy/", "/situations/agnosticism/",
     "/situations/life-partner/", "/translation/", "/help/", "/help/glossolalia/",
-    "/help/purpose/", "/help/churches/", "/help/theories/", "/help/ai/", "/help/author/",
+    "/help/purpose/", "/help/churches/", "/help/theories/", "/help/library/", "/help/ai/", "/help/author/",
     "/articles/why-god-is-lord/", "/articles/glossolalia-hypothesis/",
+    "/articles/lurianic-kabbalah-soul-integrity/",
+    "/articles/glossolalia-kabbalah-common-points/",
     "/help/eugenics-vs-genetic-engineering/", "/donate/", "/for-ai/",
   ]);
   const panels = Array.from(document.querySelectorAll("[data-panel]"));

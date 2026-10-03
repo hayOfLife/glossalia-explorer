@@ -12,6 +12,9 @@ __pycache__/
 *.wma
 *.mp4
 *.txt
+!/site/public_html/llms.txt
+!/docs/transcriptions/T00027/skript_22_pardes_polnyi_v3.txt
+!/docs/transcriptions/T00035/part_[1-5].txt
 !/docs/transcriptions/T00039/2026-09-23_fragment_2_analysis.txt
 !/docs/transcriptions/T00039/2026-09-23_пересоздать.txt
 !/docs/transcriptions/T00041/script_19_translation.txt
@@ -20,6 +23,8 @@ __pycache__/
 !/docs/transcriptions/T00044/part_1.txt
 !/site/public_html/assets/documents/Почему Бог не только друг, но и Господин.txt
 !/site/public_html/assets/documents/Гипотеза о том чем является глоссалия.txt
+!/site/public_html/assets/documents/возвращение целостности души по версии Лурианской каббалы.txt
+!/site/public_html/assets/documents/общие точки информации из Глоссалии и еврейской каббалы.txt
 !/site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt
 !/site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt
 !/galilean.txt
