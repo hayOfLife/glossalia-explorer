@@ -121,14 +121,13 @@ details[open] > summary::before {
 .hero {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
-  min-height: 425px;
   overflow: hidden;
   border-bottom: 1px solid var(--line);
 }
 
 .hero-copy {
   align-self: center;
-  padding: 64px 24px 64px 0;
+  padding: 0 24px 0 0;
 }
 
 .eyebrow,
@@ -417,12 +416,29 @@ details[open] > summary::before {
 }
 
 #article-lurianic-soul-integrity .help-page,
-#article-glossolalia-kabbalah-common-points .help-page {
+#article-glossolalia-kabbalah-common-points .help-page,
+#article-latin-greek-process-morphology .help-page,
+#article-transcription-notes .help-page {
   overflow-wrap: anywhere;
 }
 
-.help-page h3 {
+.help-page h3,
+.dictionary-methodology h5 {
   margin: 42px 0 16px;
+  font-size: clamp(27px, 3vw, 36px);
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.translation-method-divider {
+  margin: 40px 0 28px;
+  border: 0;
+  border-top: 4px solid var(--ink-soft);
+}
+
+.translation-method-title {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
   font-size: clamp(27px, 3vw, 36px);
   font-weight: 400;
   line-height: 1.2;
@@ -536,6 +552,36 @@ details[open] > summary::before {
   cursor: pointer;
   font-family: Georgia, "Times New Roman", serif;
   font-size: 22px;
+}
+
+.sos-item > summary,
+.transcription-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sos-item > summary::before {
+  flex-shrink: 0;
+}
+
+.transcription-heading {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.transcription-acquisition {
+  display: inline-flex;
+  flex: 0 0 20px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.transcription-acquisition img {
+  display: block;
+  width: 20px;
+  height: 20px;
 }
 
 .sos-item summary:focus-visible,
@@ -1221,7 +1267,6 @@ html.transcription-detail-open body {
 @media (max-width: 800px) {
   .hero {
     grid-template-columns: minmax(0, 1fr) 220px;
-    min-height: 360px;
   }
 
   .hero-art-ring-one {
@@ -1274,7 +1319,7 @@ html.transcription-detail-open body {
   }
 
   .hero-copy {
-    padding: 32px 0 36px;
+    padding: 0;
   }
 
   .hero h1 {
@@ -1431,8 +1476,18 @@ p.analysis-mode {
   overflow-wrap: anywhere;
 }
 
+.dictionary-methodology,
 .dictionary-section {
   margin-top: 40px;
+}
+
+.dictionary-methodology + .dictionary-section {
+  margin-top: 24px;
+}
+
+.dictionary-methodology pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .dictionary-table {
@@ -1478,6 +1533,19 @@ p.analysis-mode {
   top: 0;
   background: var(--paper-light);
   z-index: 1;
+}
+
+.suffix-dictionary-table > thead > tr > th:nth-child(1) {
+  width: 12%;
+}
+
+.suffix-dictionary-table > thead > tr > th:nth-child(2) {
+  width: 24%;
+}
+
+.suffix-dictionary-table > thead > tr > th:nth-child(3),
+.suffix-dictionary-table > thead > tr > th:nth-child(4) {
+  width: 32%;
 }
 
 .dictionary-table > tbody > tr > th {

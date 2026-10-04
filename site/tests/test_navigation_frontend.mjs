@@ -7,11 +7,15 @@ const source = readFileSync(new URL('../public_html/assets/site.js', import.meta
 const builder = readFileSync(new URL('../scripts/build_static.py', import.meta.url), 'utf8');
 const routeBlock = builder.match(/ROUTES = \{([\s\S]*?)\n\}/)?.[1];
 assert.ok(routeBlock);
-const sectionRoutes = [...routeBlock.matchAll(/"[a-z0-9-]+": "([^"]+)"/g)].map((match) => match[1]);
+const routeIds = new Map([...routeBlock.matchAll(/"([a-z0-9-]+)": "([^"]+)"/g)].map((match) => [match[2], match[1]]));
+const sectionRoutes = [...routeIds.keys()];
+const documentRoutes = sectionRoutes.filter((route) => routeIds.get(route).startsWith('article-')
+  || ['help-eugenics', 'help-churches'].includes(routeIds.get(route)));
 const scrollKey = 'glossaliae-scroll-to-tabs';
 
 function browser(options = {}) {
   const location = new URL(options.url || 'https://glossalia-explorer.tuqo.ru/situations/');
+  const pageId = options.pageId || routeIds.get(location.pathname) || 'situations';
   const storage = options.storage || new Map();
   const documentHandlers = new Map();
   const windowHandlers = new Map();
@@ -41,15 +45,16 @@ function browser(options = {}) {
     ['transcription-detail-content', element()],
     ['transcription-detail-page', element()],
   ]) : new Map();
-  const nav = { scrollIntoView: (settings) => scrolls.push(settings) };
+  const nav = { scrollIntoView: (settings) => scrolls.push({ ...settings, target: 'tabs' }) };
+  const heading = { scrollIntoView: (settings) => scrolls.push({ ...settings, target: 'document' }) };
   const context = createContext({
     document: {
-      body: { dataset: options.hashPanels ? {} : { pageId: options.pageId || 'situations' } },
+      body: { dataset: options.hashPanels ? {} : { pageId } },
       documentElement: { classList: { add() {}, remove() {} } },
       querySelector: (selector) => selector === '.section-nav' ? nav : null,
       querySelectorAll: (selector) => selector === '[data-panel]'
         ? (options.hashPanels || []).map((id) => ({ id, classList: { toggle() {} } })) : [],
-      getElementById: (id) => detailElements.get(id) || null,
+      getElementById: (id) => id === `${pageId}-title` ? heading : detailElements.get(id) || null,
       createElement: element,
       addEventListener: (name, handler) => {
         if (!documentHandlers.has(name)) documentHandlers.set(name, []);
@@ -58,6 +63,7 @@ function browser(options = {}) {
     },
     window: {
       location, scrollX: 11, scrollY: 912,
+      performance: { getEntriesByType: () => [{ type: options.navigationType || 'navigate' }] },
       scrollTo: (settings) => restoredPositions.push(settings),
       addEventListener: (name, handler) => {
         if (!windowHandlers.has(name)) windowHandlers.set(name, []);
@@ -109,8 +115,8 @@ function browser(options = {}) {
     return { event, link };
   }
 
-  function showPage() {
-    for (const handler of windowHandlers.get('pageshow') || []) handler();
+  function showPage(properties = {}) {
+    for (const handler of windowHandlers.get('pageshow') || []) handler({ persisted: false, ...properties });
   }
 
   function runFrames() {
@@ -120,7 +126,7 @@ function browser(options = {}) {
   return { click, showPage, runFrames, storage, scrolls, restoredPositions, dialog, fetches, location };
 }
 
-test('ссылки всех разделов сборщика прокручивают к табам на целевой странице', async () => {
+test('ссылки разделов прокручивают к табам, а документы — к своему заголовку', async () => {
   assert.ok(sectionRoutes.length > 0);
   for (const route of sectionRoutes) {
     const storage = new Map();
@@ -136,10 +142,61 @@ test('ссылки всех разделов сборщика прокручив
     assert.equal(destination.scrolls.length, 1);
     assert.equal(destination.scrolls[0].block, 'start');
     assert.equal(destination.scrolls[0].behavior, 'instant');
+    assert.equal(destination.scrolls[0].target, documentRoutes.includes(route) ? 'document' : 'tabs');
     assert.equal(storage.has(scrollKey), false);
     destination.showPage();
     destination.runFrames();
     assert.equal(destination.scrolls.length, 1);
+  }
+});
+
+test('прямое открытие каждого документа прокручивает к заголовку без флага и хранилища', () => {
+  for (const route of documentRoutes) {
+    for (const blockedStorage of [false, true]) {
+      const page = browser({ url: `http://127.0.0.1:8877${route}`, blockedStorage });
+      page.showPage();
+      page.runFrames();
+      assert.equal(page.scrolls.length, 1, route);
+      assert.equal(page.scrolls[0].target, 'document');
+      assert.equal(page.scrolls[0].block, 'start');
+      page.showPage();
+      page.runFrames();
+      assert.equal(page.scrolls.length, 1);
+    }
+  }
+});
+
+test('новая вкладка документа прокручивается сама, исходная вкладка сохраняет обычный клик', async () => {
+  const route = '/articles/latin-greek-process-morphology/';
+  for (const [properties, linkOptions] of [
+    [{ ctrlKey: true }, {}], [{ button: 1 }, {}], [{}, { target: '_blank' }],
+  ]) {
+    const origin = browser();
+    const { event } = await origin.click(route, properties, linkOptions);
+    origin.runFrames();
+    assert.equal(event.defaultPrevented, false);
+    assert.equal(origin.storage.has(scrollKey), false);
+    assert.equal(origin.scrolls.length, 0);
+
+    const destination = browser({ url: `https://glossalia-explorer.tuqo.ru${route}` });
+    destination.showPage();
+    destination.runFrames();
+    assert.equal(destination.scrolls.length, 1);
+    assert.equal(destination.scrolls[0].target, 'document');
+  }
+});
+
+test('открытие якоря документа, возврат и перезагрузка сохраняют позицию браузера', () => {
+  for (const options of [
+    { url: 'http://127.0.0.1:8877/articles/latin-greek-process-morphology/#main' },
+    { navigationType: 'back_forward' },
+    { navigationType: 'reload' },
+    { persisted: true },
+  ]) {
+    const page = browser({ url: 'http://127.0.0.1:8877/articles/latin-greek-process-morphology/', ...options });
+    page.showPage({ persisted: Boolean(options.persisted) });
+    page.runFrames();
+    assert.equal(page.scrolls.length, 0);
   }
 });
 

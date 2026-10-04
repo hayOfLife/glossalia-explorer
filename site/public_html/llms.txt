@@ -10,7 +10,11 @@ Relative links within verbatim Markdown copies refer to the original repository 
 
 - [For AI (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/index.md): Entry point with dated source cards for texts addressed to AI and links to public materials.
 - [For AI (HTML)](https://glossalia-explorer.tuqo.ru/for-ai/): Browser version of the same section.
+- [Translation method (HTML)](https://glossalia-explorer.tuqo.ru/translation/): Translation instructions, two dictionaries with their methodologies, and related document cards.
 - [Proposed dictionary (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/dictionary.md): Candidate forms and meanings supplied by the author.
+- [Dictionary methodology (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/dictionary-methodology.md): The author's supplied method for finding and classifying candidate readings.
+- [Suffix and particle methodology (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/suffix-methodology.md): Supplied context and confidence notes for the second dictionary section.
+- [Suffix dictionary (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/suffixes.md): The original four-column table of suffixes and examples.
 
 ## Public content
 

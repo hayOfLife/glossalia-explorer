@@ -2,14 +2,18 @@
   const links = Array.from(document.querySelectorAll("[data-tab-link]"));
   const sectionNav = document.querySelector(".section-nav");
   const tabScrollKey = "glossaliae-scroll-to-tabs";
+  let initialPageShown = false;
   const sectionPaths = new Set([
     "/", "/news/", "/calendar/", "/situations/", "/situations/glossolalia/",
     "/sos/", "/situations/help/", "/termination-of-pregnancy/", "/situations/agnosticism/",
-    "/situations/life-partner/", "/translation/", "/help/", "/help/glossolalia/",
+    "/situations/life-partner/", "/situations/mental-health/", "/translation/", "/help/", "/help/glossolalia/",
     "/help/purpose/", "/help/churches/", "/help/theories/", "/help/library/", "/help/ai/", "/help/author/",
     "/articles/why-god-is-lord/", "/articles/glossolalia-hypothesis/",
     "/articles/lurianic-kabbalah-soul-integrity/",
     "/articles/glossolalia-kabbalah-common-points/",
+    "/articles/latin-greek-process-morphology/",
+    "/articles/transcription-notes/",
+    "/articles/hebrew-russian-sounds/",
     "/help/eugenics-vs-genetic-engineering/", "/donate/", "/for-ai/",
   ]);
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
@@ -273,17 +277,65 @@
     return element;
   }
 
+  function addNewsText(parent, value) {
+    const text = String(value ?? "");
+    let offset = 0;
+
+    for (const match of text.matchAll(/\[([^\]\r\n]+)\]\(([^)\r\n]+)\)/g)) {
+      parent.append(document.createTextNode(text.slice(offset, match.index)));
+
+      let url;
+      try {
+        url = new URL(match[2], window.location.href);
+        if (url.protocol !== "http:" && url.protocol !== "https:") url = null;
+      } catch {
+        url = null;
+      }
+
+      if (url) {
+        const link = addText(parent, "a", "", match[1]);
+        link.href = url.href;
+      } else {
+        parent.append(document.createTextNode(match[0]));
+      }
+
+      offset = match.index + match[0].length;
+    }
+
+    parent.append(document.createTextNode(text.slice(offset)));
+  }
+
   function analysisLabel(mode) {
     const label = mode === "manual" ? "100%" : (/^(?:100|[1-9]?\d)%$/.test(mode) ? mode : "авто");
     return `Разбор транскрипции: ${label}`;
   }
 
+  function addAcquisitionIcon(heading, type) {
+    const audio = type === "audio";
+    const label = audio ? "Транскрипция получена из аудиозаписи" : "Транскрипция получена письменно";
+    const icon = addText(heading, "span", "transcription-acquisition", "");
+    icon.dataset.acquisitionType = audio ? "audio" : "written";
+    icon.setAttribute("title", label);
+    icon.setAttribute("aria-label", label);
+    icon.setAttribute("role", "img");
+    const image = document.createElement("img");
+    image.src = `/assets/transcription-${audio ? "audio" : "written"}.svg`;
+    image.alt = "";
+    image.width = 20;
+    image.height = 20;
+    icon.append(image);
+  }
+
   function createEntryCard(entry, headingTag) {
+    const isTranscription = entry.type === "manual_transcription" || entry.type === "analysis";
+    const isNews = entry.type === "news";
     const card = document.createElement("article");
     card.className = "entry-card";
     const entryLabel = entry.type === "manual_transcription" ? `§${entry.externalKey} · ${entry.group}` : entry.group;
     addText(card, "p", "entry-tag", entryLabel);
     const heading = addText(card, headingTag, "", "");
+    const headingText = isTranscription ? addText(heading, "span", "transcription-heading", "") : heading;
+    if (isTranscription) heading.classList.add("transcription-heading-row");
     let transcriptionPath;
     try {
       const sourceUrl = new URL(entry.sourceUrl);
@@ -297,13 +349,19 @@
       const pageLink = document.createElement("a");
       pageLink.href = `/transcriptions/${transcriptionPath[1]}/`;
       pageLink.textContent = entry.title;
-      heading.append(pageLink);
+      headingText.append(pageLink);
     } else {
-      heading.textContent = entry.title;
+      headingText.textContent = entry.title;
     }
-    addText(card, "p", "entry-body", entry.bodyText);
-    addText(card, "p", "analysis-mode", analysisLabel(entry.analysisMode));
-    addText(card, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote}`);
+    if (isTranscription) {
+      addAcquisitionIcon(heading, calendarTranscriptions[entry.sourceUrl]?.acquisitionType ?? entry.acquisitionType ?? "written");
+    }
+
+    const body = addText(card, "p", "entry-body", isNews ? "" : entry.bodyText);
+    if (isNews) addNewsText(body, entry.bodyText);
+
+    if (!isNews) addText(card, "p", "analysis-mode", analysisLabel(entry.analysisMode));
+    addText(card, "p", "entry-meta", `${isNews ? "Дата публикации" : "Появление транскрипции"}: ${entry.dateNote}`);
 
     if (entry.method) {
       addText(card, "p", "entry-meta", `Способ: ${entry.method}`);
@@ -326,7 +384,7 @@
       // Некорректный адрес источника не влияет на показ самой записи
     }
 
-    if (entry.type === "manual_transcription" || entry.type === "analysis") {
+    if (isTranscription) {
       addReactionControls(card, entry);
 
       if (entry.reactionKey) {
@@ -345,7 +403,9 @@
     const transcription = calendarTranscriptions[entry.sourceUrl];
     const item = document.createElement("details");
     item.className = "sos-item";
-    addText(item, "summary", "", `${number}. ${entry.title}`);
+    const heading = addText(item, "summary", "transcription-heading-row", "");
+    addText(heading, "span", "transcription-heading", `${number}. ${entry.title}`);
+    addAcquisitionIcon(heading, transcription?.acquisitionType ?? entry.acquisitionType ?? "written");
     const body = addText(item, "div", "sos-item-body", "");
     addText(body, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote}`);
 
@@ -510,11 +570,13 @@
   function showCurrentSection() {
     const hash = window.location.hash.slice(1);
     const currentId = document.body.dataset.pageId || (panelIds.has(hash) ? hash : "about");
+    const currentTabId = ["article-latin-greek-process-morphology", "article-transcription-notes", "article-hebrew-russian-sounds"].includes(currentId)
+      ? "translation" : currentId;
 
     for (const link of links) {
-      const isCurrent = link.dataset.tabLink === currentId
-        || (link.dataset.tabLink === "help" && (currentId.startsWith("help-") || currentId.startsWith("article-")))
-        || (link.dataset.tabLink === "situations" && (currentId.startsWith("situation-") || currentId === "sos" || currentId === "termination-of-pregnancy"));
+      const isCurrent = link.dataset.tabLink === currentTabId
+        || (link.dataset.tabLink === "help" && (currentTabId.startsWith("help-") || currentTabId.startsWith("article-")))
+        || (link.dataset.tabLink === "situations" && (currentTabId.startsWith("situation-") || currentTabId === "sos" || currentTabId === "termination-of-pregnancy"));
       link.classList.toggle("is-active", isCurrent);
 
       if (isCurrent) {
@@ -533,8 +595,16 @@
     document.documentElement.classList.add("site-ready");
   }
 
-  function scrollToTabs() {
-    sectionNav?.scrollIntoView({ block: "start", behavior: "instant" });
+  function documentHeading() {
+    const currentId = document.body.dataset.pageId || window.location.hash.slice(1);
+    return currentId.startsWith("article-") || ["help-eugenics", "help-churches"].includes(currentId)
+      ? document.getElementById(`${currentId}-title`)
+      : null;
+  }
+
+  function scrollToSectionStart() {
+    const target = documentHeading() || sectionNav;
+    target?.scrollIntoView({ block: "start", behavior: "instant" });
   }
 
   document.addEventListener("click", (event) => {
@@ -554,7 +624,7 @@
 
     if (destination.pathname === window.location.pathname && destination.search === window.location.search) {
       if (document.body.dataset.pageId) event.preventDefault();
-      requestAnimationFrame(scrollToTabs);
+      requestAnimationFrame(scrollToSectionStart);
     } else {
       try {
         sessionStorage.setItem(tabScrollKey, destination.pathname);
@@ -564,22 +634,32 @@
     }
   });
 
-  window.addEventListener("pageshow", () => {
+  window.addEventListener("pageshow", (event) => {
+    let shouldScroll = false;
+
     try {
       const destinationPath = sessionStorage.getItem(tabScrollKey);
       if (destinationPath) {
         sessionStorage.removeItem(tabScrollKey);
-        if (destinationPath === window.location.pathname) requestAnimationFrame(scrollToTabs);
+        shouldScroll = destinationPath === window.location.pathname;
       }
     } catch {
       // Прокрутка недоступна, если браузер запрещает хранилище сеанса
     }
+
+    // При возврате и перезагрузке браузер восстанавливает прежнее место чтения
+    const navigationType = window.performance?.getEntriesByType("navigation")[0]?.type;
+    const restoringPosition = event.persisted || ["back_forward", "reload"].includes(navigationType);
+    if (!initialPageShown && documentHeading() && !window.location.hash && !restoringPosition) shouldScroll = true;
+    initialPageShown = true;
+
+    if (shouldScroll) requestAnimationFrame(scrollToSectionStart);
   });
 
   if (!document.body.dataset.pageId) {
     window.addEventListener("hashchange", () => {
       showCurrentSection();
-      requestAnimationFrame(scrollToTabs);
+      requestAnimationFrame(scrollToSectionStart);
     });
   }
   document.addEventListener("click", async (event) => {
@@ -686,6 +766,17 @@
   renderCollections();
   prepareTranscriptionReactions();
 
+  const methodologyContainer = document.getElementById("channel-dictionary-methodology");
+  if (methodologyContainer && !methodologyContainer.children.length) {
+    fetch("/data/dictionary-methodology.html", { credentials: "omit", cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Dictionary methodology unavailable");
+        return response.text();
+      })
+      .then((content) => { methodologyContainer.innerHTML = content; })
+      .catch(() => { methodologyContainer.textContent = "Не удалось загрузить методологию. Обновите страницу."; });
+  }
+
   const dictionaryContainer = document.getElementById("channel-dictionary-content");
   if (dictionaryContainer && !dictionaryContainer.children.length) {
     fetch("/data/dictionary.html", { credentials: "omit", cache: "no-store" })
@@ -695,6 +786,22 @@
       })
       .then((content) => { dictionaryContainer.innerHTML = content; })
       .catch(() => { dictionaryContainer.textContent = "Не удалось загрузить словарь. Обновите страницу."; });
+  }
+
+  for (const [id, path, error] of [
+    ["channel-suffix-methodology", "/data/suffix-methodology.html", "Не удалось загрузить методологию. Обновите страницу."],
+    ["channel-suffix-dictionary-content", "/data/suffix-dictionary.html", "Не удалось загрузить словарь. Обновите страницу."],
+  ]) {
+    const container = document.getElementById(id);
+    if (container && !container.children.length) {
+      fetch(path, { credentials: "omit", cache: "no-store" })
+        .then((response) => {
+          if (!response.ok) throw new Error("Suffix section unavailable");
+          return response.text();
+        })
+        .then((content) => { container.innerHTML = content; })
+        .catch(() => { container.textContent = error; });
+    }
   }
 
   const analysisFields = Array.from(document.querySelectorAll("[data-analysis-source]"));

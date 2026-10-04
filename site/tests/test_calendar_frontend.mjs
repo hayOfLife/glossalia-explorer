@@ -250,6 +250,55 @@ test('данные блоков применяются независимо от
   assert.equal(cards(page)[1].querySelector('.author-translation-body').innerHTML, metadata[laterSource].translationHtml);
 });
 
+test('значок получения зависит от acquisitionType, сохраняется при смене дня и не появляется у новостей', async () => {
+  const page = browser();
+  const acquisitionEntries = fixtures.map((entry) => ({
+    ...entry,
+    acquisitionType: entry.sourceUrl === stableSource ? 'written' : 'audio',
+    analysisMode: entry.sourceUrl === stableSource ? 'auto' : '100%',
+  }));
+  const acquisitionMetadata = {
+    ...metadata,
+    [stableSource]: { ...metadata[stableSource], acquisitionType: 'audio' },
+    [laterSource]: { ...metadata[laterSource], acquisitionType: 'written' },
+  };
+  function checkIcon(card, type) {
+    const heading = summary(card);
+    assert.ok(heading.className.split(/\s+/).includes('transcription-heading-row'));
+    assert.ok(heading.querySelector('.transcription-heading'));
+    const icons = heading.querySelectorAll('.transcription-acquisition');
+    assert.equal(icons.length, 1);
+    assert.equal(icons[0].dataset.acquisitionType, type);
+    assert.equal(heading.children.at(-1), icons[0]);
+    const label = type === 'audio' ? 'Транскрипция получена из аудиозаписи' : 'Транскрипция получена письменно';
+    assert.equal(icons[0].getAttribute('title'), label);
+    assert.equal(icons[0].getAttribute('aria-label'), label);
+    assert.equal(icons[0].getAttribute('role'), 'img');
+    const image = icons[0].querySelector('img');
+    assert.equal(image.src, `/assets/transcription-${type}.svg`);
+    assert.equal(image.alt, '');
+    assert.equal(image.width, 20);
+    assert.equal(image.height, 20);
+  }
+
+  await page.reply('/data/entries.json', acquisitionEntries);
+  await page.reply('/data/calendar-transcriptions.json', acquisitionMetadata);
+  checkIcon(cards(page)[0], 'audio');
+  checkIcon(cards(page)[1], 'written');
+  assert.equal(cards(page)[0].querySelector('.analysis-mode').textContent, 'Разбор транскрипции: авто');
+  assert.equal(cards(page)[1].querySelector('.analysis-mode').textContent, 'Разбор транскрипции: 100%');
+  assert.equal(page.news.querySelector('.transcription-acquisition'), null);
+
+  const dayButtons = page.document.getElementById('calendar-grid').children.filter((element) => element.tagName === 'BUTTON');
+  await page.click(dayButtons.find((element) => element.textContent === '2'));
+  assert.equal(cards(page).length, 1);
+  checkIcon(cards(page)[0], 'audio');
+  await page.click(page.document.getElementById('calendar-grid').children.find((element) => element.tagName === 'BUTTON' && element.textContent === '1'));
+  assert.equal(cards(page).length, 2);
+  checkIcon(cards(page)[0], 'audio');
+  checkIcon(cards(page)[1], 'written');
+});
+
 test('смена дня заново нумерует абзацы, а динамическая кнопка копирует свою строку', async () => {
   const page = browser();
   await page.reply('/data/entries.json', fixtures);
@@ -283,6 +332,7 @@ test('отказ календарных метаданных сохраняет 
   for (const item of items) {
     assert.equal(item.querySelector('.transcription-purpose-body').textContent, 'Пока не заполнено');
     assert.equal(item.querySelector('.author-translation-body').textContent, 'Пока не заполнено');
+    assert.equal(summary(item).querySelector('.transcription-acquisition').querySelector('img').src, '/assets/transcription-written.svg');
   }
   assert.ok(page.document.getElementById('calendar-grid').children.some((element) => element.tagName === 'BUTTON'));
   assert.ok(page.news.querySelector('article').textContent.includes('Новость проекта'));
@@ -302,12 +352,31 @@ test('неполный JSON оставляет fallback для отсутств�
   assert.deepEqual(page.copied, []);
 });
 
-test('страница новостей сохраняет article и не загружает календарные данные', async () => {
+test('новость показывает безопасные ссылки и дату публикации без метки разбора и календарных данных', async () => {
   const page = browser({ newsOnly: true });
+  const bodyText = 'Первая строка\n[Как сделать перевод иных языков](/translation/)\n\n[Скачать файл промпта](/data/translation_materials.zip)\n[опасное](javascript:alert(1)) [сломано](https://[)\n<img src=x onerror=alert(1)><script>alert(1)</script>';
+  const newsEntries = fixtures.map((entry) => entry.type === 'news' ? {
+    ...entry, bodyText, dateNote: '05.10.2026',
+  } : entry);
+
   assert.equal(page.requests.some((request) => request.url === '/data/calendar-transcriptions.json'), false);
-  await page.reply('/data/entries.json', fixtures);
-  assert.equal(page.news.querySelector('article').className, 'entry-card');
-  assert.ok(page.news.querySelector('article').textContent.includes('Новость проекта'));
+  await page.reply('/data/entries.json', newsEntries);
+  const news = page.news.querySelector('article');
+  const body = news.querySelector('.entry-body');
+  assert.equal(news.className, 'entry-card');
+  assert.ok(news.textContent.includes('Новость проекта'));
+  assert.deepEqual(body.querySelectorAll('a').map((link) => [link.textContent, link.href]), [
+    ['Как сделать перевод иных языков', 'http://127.0.0.1:8877/translation/'],
+    ['Скачать файл промпта', 'http://127.0.0.1:8877/data/translation_materials.zip'],
+  ]);
+  assert.equal(body.textContent, bodyText
+    .replace('[Как сделать перевод иных языков](/translation/)', 'Как сделать перевод иных языков')
+    .replace('[Скачать файл промпта](/data/translation_materials.zip)', 'Скачать файл промпта'));
+  assert.equal(body.innerHTML, '');
+  assert.equal(body.querySelector('img'), null);
+  assert.equal(body.querySelector('script'), null);
+  assert.equal(news.querySelector('.analysis-mode'), null);
+  assert.equal(news.querySelector('.entry-meta').textContent, 'Дата публикации: 05.10.2026');
   assert.equal(page.news.querySelector('details'), null);
   assert.equal(page.requests.some((request) => request.url === '/data/calendar-transcriptions.json'), false);
 });
