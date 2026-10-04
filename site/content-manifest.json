@@ -53,11 +53,11 @@
     "site/public_html/assets/alice-mark.svg": "72ed60cc51373b4dc95a8aa3000f980e671a59ffb7aa1d8a2b1be880ca8d728a",
     "site/public_html/assets/comments.js": "2024c5ad77921a0dca0bb859787d1b4e19ba07165ebfa53adbe7da956a3fc70b",
     "site/public_html/assets/documents/kontekst_morfologiya_part8.txt": "236a2966663eea4ffbbcc5a0fa20f4b7d49a0d63c08d53ec773e030250802be4",
+    "site/public_html/assets/documents/возвращение целостности души по версии Лурианской каббалы.txt": "9d6e3e795bf7beb3fab256b67207a5df44133d02db669c95d3c37eb3bae73933",
     "site/public_html/assets/documents/Гипотеза о том чем является глоссалия.txt": "c836d0bad510c660fd30dba6ac8c43ee1119202630a5fd32240b88eb93715d00",
     "site/public_html/assets/documents/Звуки которых нет в иврите но есть в Русском языке.txt": "dbce349e6ea43d24bc71253b2f95a53dc149b95c58b656a6bf6731da3b99056c",
-    "site/public_html/assets/documents/Почему Бог не только друг, но и Господин.txt": "86a5afc9be22880de933596c9c32383497cf2304f7e3096ae73cfb8487c5f59b",
-    "site/public_html/assets/documents/возвращение целостности души по версии Лурианской каббалы.txt": "9d6e3e795bf7beb3fab256b67207a5df44133d02db669c95d3c37eb3bae73933",
     "site/public_html/assets/documents/общие точки информации из Глоссалии и еврейской каббалы.txt": "af3e4c45e5c8353d7443611dd2a8ad9a88dba0f65d297f279f6c5dd5142927b7",
+    "site/public_html/assets/documents/Почему Бог не только друг, но и Господин.txt": "86a5afc9be22880de933596c9c32383497cf2304f7e3096ae73cfb8487c5f59b",
     "site/public_html/assets/documents/техника безопасности по поиску жены.docx": "9103d283a91a7546091defe137793ea76841e4ddff4668a2ec3c8f22776bab99",
     "site/public_html/assets/documents/транскрипционные пометки.txt": "ed14ee11d9a6938c29a2436cb5f94ac3536feca120a8b00bf183f3c7a843daf6",
     "site/public_html/assets/favicon.svg": "b7f3b24817e852ac7a29d8fbcfcd2f09df590e2a4a2209f903803493b019354b",
@@ -79,11 +79,11 @@
     "site/public_html/data/suffix-dictionary.html": "43c6c0f8cd4d32f869c75d734e10a7b892a19cb21f6aae9fafccd13f1895c6f4",
     "site/public_html/data/suffix-methodology.html": "21e29c6397e4b1d63eefcbc07ae3bfbac9f2ba25875ba908e9c19da430caf5c4",
     "site/public_html/data/transcription-purposes.json": "923ee5a52b0d738d5a9dc65157ae15907f04a1b4b172461046b9c36056fb5fa7",
-    "site/public_html/data/translation_materials.zip": "0cc7c0436885315f8e4338163a5c7d9a70554a54852bf426e43891daf991bea9",
+    "site/public_html/data/translation_materials.zip": "0e38d188758a85001969daefb71d6c3ac0d737f66ed6553917a3c9297e9d7c7f",
     "site/public_html/index.html": "934d31577cf3237e758b65e77b8299d614f0de3190712700f88f47dea2df6287",
     "site/public_html/llms.txt": "1a1798ec50ee4a691817ac521031a2f2e43fd703047a06583f0172c7d20cfb59",
     "site/public_html/yandex_1195bbe61e0c2002.html": "b7263ea1a408e11778e26611c17ee7ad1d7e573c91681dc01811d4ece68b93d1",
     "site/reactions-api/transcriptions.json": "00b9fab06662cc4cf46b0dee256bc91bb4525ee0083a01f1735dc952b5a58cab",
-    "site/scripts/build_static.py": "da5eea8f47b8a0ca79248259ac98ee4538e2548d6d589c97f58943f0c06e3885"
+    "site/scripts/build_static.py": "c13f4fdf79efce776c7ed68a6f8f2cc56e225f3826d0d208cabae1bc1e48c747"
   }
 }

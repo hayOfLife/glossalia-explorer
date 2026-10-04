@@ -855,9 +855,7 @@ def main() -> None:
 
     archive_sources = {
         "PROMPT_general.txt": (SOURCE / "data" / "promptForAlice_guessingTheMeaningOfTheGlossary.txt",),
-        "method of compiling a dictionary of words.txt": (methodology_path,),
         "dictionary_of_words.txt": (methodology_path, dictionary_path),
-        "method of compiling a dictionary of suffixes and particles.txt": (suffix_methodology_path,),
         "dictionary_of_suffixes_and_particles.txt": (suffix_methodology_path, suffix_path),
         "phonetics_rus_vs_hebrew.txt": (SOURCE / "assets" / "documents" / "Звуки которых нет в иврите но есть в Русском языке.txt",),
     }

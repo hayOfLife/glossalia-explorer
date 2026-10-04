@@ -648,9 +648,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertEqual((ROOT / "site/public_html/data/translation_materials.zip").read_bytes(), archive_path.read_bytes())
         sources = {
             "PROMPT_general.txt": ("site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt",),
-            "method of compiling a dictionary of words.txt": ("docs/dictionary/methodology.md",),
             "dictionary_of_words.txt": ("docs/dictionary/methodology.md", "docs/dictionary/combined.md"),
-            "method of compiling a dictionary of suffixes and particles.txt": ("docs/dictionary/suffix-methodology.md",),
             "dictionary_of_suffixes_and_particles.txt": ("docs/dictionary/suffix-methodology.md", "docs/dictionary/suffixes.md"),
             "phonetics_rus_vs_hebrew.txt": ("site/public_html/assets/documents/Звуки которых нет в иврите но есть в Русском языке.txt",),
         }
