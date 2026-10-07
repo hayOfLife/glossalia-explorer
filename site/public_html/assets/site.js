@@ -6,14 +6,19 @@
   const sectionPaths = new Set([
     "/", "/news/", "/calendar/", "/situations/", "/situations/glossolalia/",
     "/sos/", "/situations/help/", "/termination-of-pregnancy/", "/situations/agnosticism/",
-    "/situations/life-partner/", "/situations/mental-health/", "/translation/", "/help/", "/help/glossolalia/",
+    "/situations/life-partner/", "/situations/mental-health/", "/situations/divine-guidance/", "/translation/", "/help/", "/help/glossolalia/",
     "/help/purpose/", "/help/churches/", "/help/theories/", "/help/library/", "/help/ai/", "/help/author/",
     "/articles/why-god-is-lord/", "/articles/glossolalia-hypothesis/",
     "/articles/lurianic-kabbalah-soul-integrity/",
     "/articles/glossolalia-kabbalah-common-points/",
+    "/articles/self-writing-generative-archive/",
     "/articles/latin-greek-process-morphology/",
     "/articles/transcription-notes/",
     "/articles/hebrew-russian-sounds/",
+    "/articles/author-term-definitions/",
+    "/articles/channel-abbreviations/",
+    "/articles/transcription-symbol-systems/",
+    "/articles/transcription-symbols-print/",
     "/help/eugenics-vs-genetic-engineering/", "/donate/", "/for-ai/",
   ]);
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
@@ -570,7 +575,7 @@
   function showCurrentSection() {
     const hash = window.location.hash.slice(1);
     const currentId = document.body.dataset.pageId || (panelIds.has(hash) ? hash : "about");
-    const currentTabId = ["article-latin-greek-process-morphology", "article-transcription-notes", "article-hebrew-russian-sounds"].includes(currentId)
+    const currentTabId = ["article-latin-greek-process-morphology", "article-transcription-notes", "article-hebrew-russian-sounds", "article-author-term-definitions", "article-channel-abbreviations", "article-transcription-symbol-systems", "article-transcription-symbols-print"].includes(currentId)
       ? "translation" : currentId;
 
     for (const link of links) {
@@ -789,8 +794,12 @@
   }
 
   for (const [id, path, error] of [
+    ["translation-prompt-content", "/data/prompt-general.html", "Не удалось загрузить промпт. Обновите страницу."],
     ["channel-suffix-methodology", "/data/suffix-methodology.html", "Не удалось загрузить методологию. Обновите страницу."],
     ["channel-suffix-dictionary-content", "/data/suffix-dictionary.html", "Не удалось загрузить словарь. Обновите страницу."],
+    ["translation-phonetics-content", "/data/prompt-phonetics.html", "Не удалось загрузить фонетический справочник. Обновите страницу."],
+    ["channel-abbreviations-content", "/data/abbreviations-dictionary.html", "Не удалось загрузить словарь сокращений. Обновите страницу."],
+    ["article-channel-abbreviations-content", "/data/abbreviations-article.html", "Не удалось загрузить словарь сокращений. Обновите страницу."],
   ]) {
     const container = document.getElementById(id);
     if (container && !container.children.length) {

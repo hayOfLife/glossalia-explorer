@@ -535,7 +535,7 @@
   function createInbox() {
     if (inbox || !localEnvironment) return;
     const dialog = document.createElement("dialog");
-    dialog.className = "chat-owner-dialog chat-inbox-dialog";
+    dialog.className = "chat-owner-dialog chat-inbox-dialog ym-hide-content ym-disable-clickmap ym-disable-submit";
     dialog.setAttribute("aria-label", "Сообщения автору");
     const heading = addText(dialog, "div", "chat-message-heading", "");
     addText(heading, "h3", "", "Сообщения автору");
@@ -567,6 +567,7 @@
     const replyFieldset = addText(replyForm, "fieldset", "", "");
     const label = addText(replyFieldset, "label", "", "Ответ автора user_001");
     const text = document.createElement("textarea");
+    text.className = "ym-disable-keys";
     text.rows = 5;
     text.maxLength = 4000;
     text.required = true;
@@ -946,12 +947,13 @@
     if (!localEnvironment) return;
     if (!adminDialog) {
       const dialog = document.createElement("dialog");
-      dialog.className = "chat-owner-dialog";
+      dialog.className = "chat-owner-dialog ym-hide-content ym-disable-clickmap ym-disable-submit";
       dialog.setAttribute("aria-label", "Пароль владельца");
       const form = addText(dialog, "form", "chat-owner-login", "");
       addText(form, "h3", "", "Пароль владельца");
       const label = addText(form, "label", "", "Пароль");
       const password = document.createElement("input");
+      password.className = "ym-disable-keys";
       password.type = "password";
       password.autocomplete = "off";
       password.maxLength = 1024;
@@ -1088,7 +1090,7 @@
     const container = document.getElementById("for-ai");
     if (!localEnvironment || !container) return;
     const root = document.createElement("section");
-    root.className = "chat-owner-panel";
+    root.className = "chat-owner-panel ym-hide-content ym-disable-clickmap ym-disable-submit";
     addText(root, "h3", "", "Управление чатами (локально)");
     const status = addText(root, "p", "chat-owner-status", "");
     status.setAttribute("role", "status");
@@ -1127,7 +1129,7 @@
   function mount(root) {
     if (states.has(root) || !keyPattern.test(root.dataset.transcriptionChat || "")) return;
     if (!root.children.length) root.append(...Array.from(templateRoot.childNodes, (node) => node.cloneNode(true)));
-    root.classList.add("transcription-chat");
+    root.classList.add("transcription-chat", "ym-hide-content", "ym-disable-clickmap", "ym-disable-submit");
     const form = root.querySelector("[data-chat-form]");
     if (!form || form.dataset.chatApi !== apiUrl) return;
 

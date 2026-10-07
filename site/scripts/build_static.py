@@ -29,6 +29,7 @@ ROUTES = {
     "situation-5": "/situations/agnosticism/",
     "situation-6": "/situations/life-partner/",
     "situation-7": "/situations/mental-health/",
+    "situation-8": "/situations/divine-guidance/",
     "translation": "/translation/",
     "help": "/help/",
     "help-glossolalia": "/help/glossolalia/",
@@ -40,9 +41,14 @@ ROUTES = {
     "article-glossolalia-hypothesis": "/articles/glossolalia-hypothesis/",
     "article-lurianic-soul-integrity": "/articles/lurianic-kabbalah-soul-integrity/",
     "article-glossolalia-kabbalah-common-points": "/articles/glossolalia-kabbalah-common-points/",
+    "article-self-writing-generative-archive": "/articles/self-writing-generative-archive/",
     "article-latin-greek-process-morphology": "/articles/latin-greek-process-morphology/",
     "article-transcription-notes": "/articles/transcription-notes/",
     "article-hebrew-russian-sounds": "/articles/hebrew-russian-sounds/",
+    "article-author-term-definitions": "/articles/author-term-definitions/",
+    "article-channel-abbreviations": "/articles/channel-abbreviations/",
+    "article-transcription-symbol-systems": "/articles/transcription-symbol-systems/",
+    "article-transcription-symbols-print": "/articles/transcription-symbols-print/",
     "help-ai": "/help/ai/",
     "help-author": "/help/author/",
     "help-eugenics": "/help/eugenics-vs-genetic-engineering/",
@@ -121,7 +127,7 @@ def plain_document_html(text: str) -> str:
     return "\n".join(result)
 
 
-def markdown_table(lines: list[str], source_url: str) -> str:
+def markdown_table(lines: list[str], source_url: str, literal: bool = False) -> str:
     rows = [[cell.strip() for cell in re.split(r"(?<!\\)\|", line.strip()[1:-1])] for line in lines]
     if len(rows) < 2 or not rows[0] or not all(len(row) == len(rows[0]) for row in rows):
         return '<pre class="source-table">' + html.escape("\n".join(lines)) + "</pre>"
@@ -130,14 +136,16 @@ def markdown_table(lines: list[str], source_url: str) -> str:
 
     def cells(row: list[str], tag: str) -> str:
         scope = ' scope="col"' if tag == "th" else ""
-        return "<tr>" + "".join(f"<{tag}{scope}>{inline(cell.replace(r'\|', '|'), source_url)}</{tag}>" for cell in row) + "</tr>"
+        values = [cell.replace(r'\|', '|') for cell in row]
+        content = [html.escape(html.unescape(cell)) if literal else inline(cell, source_url) for cell in values]
+        return "<tr>" + "".join(f"<{tag}{scope}>{cell}</{tag}>" for cell in content) + "</tr>"
 
     head = cells(rows[0], "th")
     body = "".join(cells(row, "td") for row in rows[2:])
     return f'<div class="source-table-wrap"><table class="source-table"><thead>{head}</thead><tbody>{body}</tbody></table></div>'
 
 
-def markdown_html(text: str, source_url: str) -> str:
+def markdown_html(text: str, source_url: str, literal_tables: bool = False) -> str:
     """Преобразовать обычные блоки Markdown, оставляя сложные таблицы без потери текста."""
     text = re.sub(r"^разбор транскрипции: (?:авто|ручной, 100%|(?:100|[1-9]?\d)%)\s*\n", "", text, count=1)
     result: list[str] = []
@@ -154,7 +162,7 @@ def markdown_html(text: str, source_url: str) -> str:
 
     def flush_table() -> None:
         if table:
-            result.append(markdown_table(table, source_url))
+            result.append(markdown_table(table, source_url, literal=literal_tables))
             table.clear()
 
     def flush_fence() -> None:
@@ -648,8 +656,19 @@ def dictionary_fields(title: str, content: str) -> list[list[str]]:
     return [list(dict.fromkeys(column)) for column in (writing, transcription, obtained, dictionary, interpretation, language)]
 
 
+def translation_material_html(markdown: str, source_url: str) -> str:
+    content = markdown_html(markdown, source_url)
+    # Ссылки на материалы сайта открываются в текущей локальной или боевой версии
+    content = content.replace(f'href="{BASE_URL}/', 'href="/')
+    # Материалы промпта вложены в общий сворачивающийся блок с заголовком h3
+    return re.sub(r'<(/?)h([2-6])>', lambda match: f'<{match.group(1)}h{min(int(match.group(2)) + 2, 6)}>', content)
+
+
 def dictionary_html(markdown: str, source_url: str) -> str:
+    markdown = markdown.replace("\r\n", "\n")
     headings = list(re.finditer(r"^## (.+)$", markdown, re.M))
+    introduction = markdown[:headings[0].start()] if headings else markdown
+    introduction = re.sub(r'^# [^\n]+\n', '', introduction, count=1)
     labels = ("Написание", "транскрипция", "Транскрипция получена", "перевод из словаря", "трактовка автора", "язык")
     rows = []
     for index, heading in enumerate(headings):
@@ -667,12 +686,18 @@ def dictionary_html(markdown: str, source_url: str) -> str:
             cells.append(f'<{tag}{attributes} data-label="{label}">{text}</{tag}>')
 
         rows.append('<tr>' + ''.join(cells) + '</tr>')
-    return ('<div class="dictionary-table-wrap"><table class="dictionary-table" aria-labelledby="channel-dictionary-title">'
+    return (translation_material_html(introduction, source_url)
+            + '<div class="dictionary-table-wrap"><table class="dictionary-table" aria-labelledby="channel-dictionary-title">'
             '<thead><tr>' + ''.join(f'<th scope="col">{label}</th>' for label in labels) + '</tr></thead>'
             '<tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 
 def suffix_dictionary_html(markdown: str, source_url: str) -> str:
+    markdown = markdown.replace("\r\n", "\n")
+    table_match = re.search(r'^\|[^\n]+\|(?:\n|$)(?:\|[^\n]+\|(?:\n|$))*', markdown, re.M)
+    if not table_match:
+        raise ValueError("Не найдена таблица словаря суффиксов")
+    introduction = re.sub(r'^# [^\n]+\n', '', markdown[:table_match.start()], count=1)
     lines = [line for line in markdown.splitlines() if line.startswith('|') and line.endswith('|')]
     rows = [[cell.strip() for cell in re.split(r'(?<!\\)\|', line[1:-1])] for line in lines]
     labels = ("Окончание", "Форма-источник", "Значение", "Слова")
@@ -690,9 +715,42 @@ def suffix_dictionary_html(markdown: str, source_url: str) -> str:
             content = inline(value.replace(r'\|', '|'), source_url)
             cells.append(f'<{tag}{scope} data-label="{label}">{content}</{tag}>')
         rendered_rows.append('<tr>' + ''.join(cells) + '</tr>')
-    return ('<div class="dictionary-table-wrap"><table class="dictionary-table suffix-dictionary-table" aria-labelledby="channel-suffix-dictionary-title">'
+    return (translation_material_html(introduction, source_url)
+            + '<div class="dictionary-table-wrap"><table class="dictionary-table suffix-dictionary-table" aria-labelledby="channel-suffix-dictionary-title">'
             '<thead><tr>' + ''.join(f'<th scope="col">{label}</th>' for label in labels) + '</tr></thead>'
-            '<tbody>' + ''.join(rendered_rows) + '</tbody></table></div>')
+            '<tbody>' + ''.join(rendered_rows) + '</tbody></table></div>'
+            + translation_material_html(markdown[table_match.end():], source_url))
+
+
+def abbreviation_dictionary_html(text: str) -> str:
+    text = text.replace("\r\n", "\n")
+    table_match = re.search(r'^\|[^\n]+\|(?:\n|$)(?:\|[^\n]+\|(?:\n|$))*', text, re.M)
+    if not table_match:
+        raise ValueError("Не найдена таблица словаря сокращений")
+    labels = ("запись в транскрипции", "пример вхождения в транскрипцию", "полное слово", "заметка", "язык")
+    lines = table_match.group(0).strip().splitlines()
+    rows = [[cell.strip() for cell in re.split(r'(?<!\\)\|', line[1:-1])] for line in lines]
+    if (len(rows) < 3 or tuple(rows[0]) != labels
+            or not all(len(row) == len(labels) for row in rows)
+            or not all(re.fullmatch(r':?-{3,}:?', cell) for cell in rows[1])):
+        raise ValueError("Неверная структура таблицы словаря сокращений")
+    introduction = re.sub(r'^# [^\n]+\n', '', text[:table_match.start()], count=1).strip()
+    rendered_rows = []
+    for row in rows[2:]:
+        cells = []
+        for index, (label, value) in enumerate(zip(labels, row)):
+            tag = 'th' if index == 0 else 'td'
+            scope = ' scope="row"' if index == 0 else ''
+            value = value.replace(r'\|', '|').replace('<br>', '\n')
+            content = plain_document_html(value) if value else ''
+            cells.append(f'<{tag}{scope} data-label="{label}">{content}</{tag}>')
+        rendered_rows.append('<tr>' + ''.join(cells) + '</tr>')
+
+    return (plain_document_html(introduction)
+            + '<div class="dictionary-table-wrap"><table class="dictionary-table abbreviation-dictionary-table" aria-labelledby="channel-abbreviations-title">'
+            '<thead><tr>' + ''.join(f'<th scope="col">{label}</th>' for label in labels) + '</tr></thead>'
+            '<tbody>' + ''.join(rendered_rows) + '</tbody></table></div>'
+            + translation_material_html(text[table_match.end():], SOURCE_URL + "docs/dictionary/abbreviations-source.txt"))
 
 
 def main() -> None:
@@ -786,9 +844,18 @@ def main() -> None:
     def insert_document(match: re.Match[str]) -> str:
         relative = html.unescape(match.group(1))
         document = (SOURCE / relative).resolve()
-        if not document.is_file() or document.suffix.lower() != ".txt" or not document.is_relative_to(SOURCE / "assets" / "documents"):
+        if not document.is_file() or document.suffix.lower() not in {".txt", ".md"} or not document.is_relative_to(SOURCE / "assets" / "documents"):
             raise ValueError(f"Нет публичного текстового документа: {relative}")
-        return '<div class="help-page">' + plain_document_html(document.read_text(encoding="utf-8-sig")) + '</div>'
+        text = document.read_text(encoding="utf-8-sig")
+        if document.suffix.lower() == ".md":
+            # Заголовок источника уже показан в шапке статьи
+            text = re.sub(r"^# [^\n]+\n", "", text, count=1)
+            # Знаки печатной таблицы должны оставаться текстом, включая похожий на Markdown-ссылку пример
+            literal_tables = relative == "assets/documents/transcription-symbols-print.md"
+            content = markdown_html(text, BASE_URL + "/" + quote(relative), literal_tables=literal_tables)
+        else:
+            content = plain_document_html(text)
+        return '<div class="help-page">' + content + '</div>'
 
     source = DOCUMENT_PLACEHOLDER.sub(insert_document, source)
     news_cards = []
@@ -807,29 +874,57 @@ def main() -> None:
     source = source.replace('<div class="collection-results" id="news-results"></div>',
                             '<div class="collection-results" id="news-results">' + "\n".join(news_cards) + '</div>', 1)
     methodology_path = ROOT / "docs" / "dictionary" / "methodology.md"
-    methodology_markdown = methodology_path.read_text(encoding="utf-8")
-    methodology = markdown_html(methodology_markdown, SOURCE_URL + "docs/dictionary/methodology.md")
-    # Методологии находятся внутри раздела «метод перевода» с заголовком h3
-    methodology = re.sub(r'<(/?)h([2-6])>', lambda match: f'<{match.group(1)}h{min(int(match.group(2)) + 2, 6)}>', methodology)
+    dictionary_path = ROOT / "docs" / "dictionary" / "combined.md"
+    suffix_methodology_path = ROOT / "docs" / "dictionary" / "suffix-methodology.md"
+    suffix_path = ROOT / "docs" / "dictionary" / "suffixes.md"
+    prompt_path = SOURCE / "data" / "promptForAlice_guessingTheMeaningOfTheGlossary.txt"
+    phonetics_path = SOURCE / "assets" / "documents" / "Звуки которых нет в иврите но есть в Русском языке.txt"
+    abbreviations_path = ROOT / "docs" / "dictionary" / "abbreviations-source.txt"
+    archive_sources = {
+        "PROMPT_general.txt": (prompt_path,),
+        "dictionary_of_words.txt": (methodology_path, dictionary_path),
+        "dictionary_of_suffixes_and_particles.txt": (suffix_methodology_path, suffix_path),
+        "phonetics_rus_vs_hebrew.txt": (phonetics_path,),
+        "dictionary_of_abbreviations.txt": (abbreviations_path,),
+    }
+    # Страница и архив используют один снимок исходников, чтобы их содержание совпадало
+    material_bytes = {path: path.read_bytes() for paths in archive_sources.values() for path in paths}
+    archive_contents = {name: b"".join(material_bytes[path] for path in paths) for name, paths in archive_sources.items()}
+    (SOURCE / "data" / "promptForAlice_guessingTheMeaningOfTheGlossary.min.txt").write_bytes(
+        b"".join(line for line in material_bytes[prompt_path].splitlines(keepends=True) if line.strip())
+    )
+    for identifier, filename, path in (
+        ("translation-prompt-content", "prompt-general.html", prompt_path),
+        ("translation-phonetics-content", "prompt-phonetics.html", phonetics_path),
+    ):
+        fragment = translation_material_html(material_bytes[path].decode("utf-8-sig"), SOURCE_URL + path.relative_to(ROOT).as_posix())
+        (SOURCE / "data" / filename).write_text(fragment, encoding="utf-8")
+        placeholder = f'<div class="help-page dictionary-methodology" id="{identifier}"></div>'
+        source = source.replace(placeholder, f'<div class="help-page dictionary-methodology" id="{identifier}">' + fragment + '</div>')
+    methodology_markdown = material_bytes[methodology_path].decode("utf-8-sig")
+    methodology = translation_material_html(methodology_markdown, SOURCE_URL + "docs/dictionary/methodology.md")
     (SOURCE / "data" / "dictionary-methodology.html").write_text(methodology, encoding="utf-8")
     source = source.replace('<div class="help-page dictionary-methodology" id="channel-dictionary-methodology"></div>',
                             '<div class="help-page dictionary-methodology" id="channel-dictionary-methodology">' + methodology + '</div>')
-    dictionary_path = ROOT / "docs" / "dictionary" / "combined.md"
-    dictionary = dictionary_html(dictionary_path.read_text(encoding="utf-8"), SOURCE_URL + "docs/dictionary/combined.md")
+    dictionary = dictionary_html(material_bytes[dictionary_path].decode("utf-8-sig"), SOURCE_URL + "docs/dictionary/combined.md")
     (SOURCE / "data" / "dictionary.html").write_text(dictionary, encoding="utf-8")
     source = source.replace('<div id="channel-dictionary-content"></div>', '<div id="channel-dictionary-content">' + dictionary + '</div>')
-    suffix_methodology_path = ROOT / "docs" / "dictionary" / "suffix-methodology.md"
-    suffix_path = ROOT / "docs" / "dictionary" / "suffixes.md"
-    suffix_methodology_markdown = suffix_methodology_path.read_text(encoding="utf-8")
-    suffix_methodology = markdown_html(suffix_methodology_markdown, SOURCE_URL + "docs/dictionary/suffix-methodology.md")
-    suffix_methodology = re.sub(r'<(/?)h([2-6])>', lambda match: f'<{match.group(1)}h{min(int(match.group(2)) + 2, 6)}>', suffix_methodology)
+    suffix_methodology_markdown = material_bytes[suffix_methodology_path].decode("utf-8-sig")
+    suffix_methodology = translation_material_html(suffix_methodology_markdown, SOURCE_URL + "docs/dictionary/suffix-methodology.md")
     suffix_methodology = suffix_methodology.replace(f'href="{SOURCE_URL}docs/dictionary/suffixes.md"', 'href="#channel-suffix-dictionary-title"')
-    suffix_dictionary = suffix_dictionary_html(suffix_path.read_text(encoding="utf-8"), SOURCE_URL + "docs/dictionary/suffixes.md")
+    suffix_dictionary = suffix_dictionary_html(material_bytes[suffix_path].decode("utf-8-sig"), SOURCE_URL + "docs/dictionary/suffixes.md")
     (SOURCE / "data" / "suffix-methodology.html").write_text(suffix_methodology, encoding="utf-8")
     (SOURCE / "data" / "suffix-dictionary.html").write_text(suffix_dictionary, encoding="utf-8")
     source = source.replace('<div class="help-page dictionary-methodology" id="channel-suffix-methodology"></div>',
                             '<div class="help-page dictionary-methodology" id="channel-suffix-methodology">' + suffix_methodology + '</div>')
     source = source.replace('<div id="channel-suffix-dictionary-content"></div>', '<div id="channel-suffix-dictionary-content">' + suffix_dictionary + '</div>')
+    abbreviations = abbreviation_dictionary_html(material_bytes[abbreviations_path].decode("utf-8-sig"))
+    (SOURCE / "data" / "abbreviations-dictionary.html").write_text(abbreviations, encoding="utf-8")
+    (SOURCE / "data" / "dictionary_of_abbreviations.txt").write_bytes(material_bytes[abbreviations_path])
+    source = source.replace('<div id="channel-abbreviations-content"></div>', '<div id="channel-abbreviations-content">' + abbreviations + '</div>')
+    article_abbreviations = abbreviations.replace('aria-labelledby="channel-abbreviations-title"', 'aria-labelledby="article-channel-abbreviations-title"')
+    (SOURCE / "data" / "abbreviations-article.html").write_text(article_abbreviations, encoding="utf-8")
+    source = source.replace('<div id="article-channel-abbreviations-content"></div>', '<div id="article-channel-abbreviations-content">' + article_abbreviations + '</div>')
     panels = {match.group(1): match.group(0) for match in PANEL.finditer(source)}
     if set(panels) != set(ROUTES):
         raise ValueError(f"Маршруты и разделы не совпадают: {set(panels) ^ set(ROUTES)}")
@@ -853,21 +948,32 @@ def main() -> None:
         json.dumps(calendar_transcriptions, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
 
-    archive_sources = {
-        "PROMPT_general.txt": (SOURCE / "data" / "promptForAlice_guessingTheMeaningOfTheGlossary.txt",),
-        "dictionary_of_words.txt": (methodology_path, dictionary_path),
-        "dictionary_of_suffixes_and_particles.txt": (suffix_methodology_path, suffix_path),
-        "phonetics_rus_vs_hebrew.txt": (SOURCE / "assets" / "documents" / "Звуки которых нет в иврите но есть в Русском языке.txt",),
-    }
     with zipfile.ZipFile(SOURCE / "data" / "translation_materials.zip", "w") as archive:
-        for name, paths in archive_sources.items():
+        for name, content in archive_contents.items():
             # Фиксированные метаданные сохраняют одинаковый хеш архива при неизменных исходниках
             archive_entry = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
             archive_entry.create_system = 0
-            archive.writestr(archive_entry, b"".join(path.read_bytes() for path in paths), compress_type=zipfile.ZIP_DEFLATED)
+            archive.writestr(archive_entry, content, compress_type=zipfile.ZIP_DEFLATED)
 
     shutil.copytree(SOURCE / "assets", OUTPUT / "assets", dirs_exist_ok=True)
+    # BOM у опубликованной копии позволяет браузеру определить UTF-8 без HTTP charset
+    published_theory = OUTPUT / "assets" / "documents" / "self-writing-generative-archive.md"
+    theory_bytes = published_theory.read_bytes()
+    if not theory_bytes.startswith(b"\xef\xbb\xbf"):
+        published_theory.write_bytes(b"\xef\xbb\xbf" + theory_bytes)
+
+    # Прежняя ссылка на теорию остаётся доступной после перехода на английский URL
+    shutil.copyfile(
+        published_theory,
+        OUTPUT / "assets" / "documents" / "Теория_канала_самопишущийся_генеративный_архив.md",
+    )
     shutil.copytree(SOURCE / "data", OUTPUT / "data", dirs_exist_ok=True)
+    # BOM сообщает браузеру кодировку TXT, если хостинг не передаёт HTTP charset
+    published_abbreviations = OUTPUT / "data" / "dictionary_of_abbreviations.txt"
+    abbreviations_bytes = published_abbreviations.read_bytes()
+    if not abbreviations_bytes.startswith(b"\xef\xbb\xbf"):
+        published_abbreviations.write_bytes(b"\xef\xbb\xbf" + abbreviations_bytes)
+
     verification_file = SOURCE / "yandex_1195bbe61e0c2002.html"
     shutil.copyfile(verification_file, OUTPUT / verification_file.name)
     llms_file = SOURCE / "llms.txt"
@@ -880,7 +986,7 @@ def main() -> None:
     shutil.copyfile(suffix_path, ai_directory / "suffixes.md")
     shutil.copyfile(suffix_methodology_path, ai_directory / "suffix-methodology.md")
     sources = [SOURCE / "index.html", verification_file, llms_file, Path(__file__), dictionary_path, methodology_path,
-               suffix_path, suffix_methodology_path, reaction_manifest_path]
+               suffix_path, suffix_methodology_path, abbreviations_path, reaction_manifest_path]
     sources.extend(sources_for_purposes)
     sources.extend(path for folder in ("assets", "data") for path in (SOURCE / folder).rglob("*") if path.is_file())
     urls = []
@@ -952,6 +1058,8 @@ def main() -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(page, encoding="utf-8")
         shutil.copyfile(source_path, path.with_suffix(".md"))
+        # Исходные относительные ссылки словаря требуют копии по пути Markdown-файла
+        shutil.copyfile(source_path, OUTPUT / relative.removeprefix("docs/"))
         urls.append(BASE_URL + route)
 
     manifest = {str(path.relative_to(ROOT)).replace("\\", "/"): digest_file(path) for path in sorted(set(sources))}

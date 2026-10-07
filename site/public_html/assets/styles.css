@@ -2,6 +2,7 @@
   color-scheme: light;
   --paper: #f5f1e8;
   --paper-light: #fffdf8;
+  --details-background: #edf5e8;
   --ink: #202725;
   --ink-soft: #5c625e;
   --line: #ded8cb;
@@ -34,6 +35,10 @@ a {
 a:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 4px;
+}
+
+details > summary {
+  background: var(--details-background);
 }
 
 details > summary {
@@ -415,6 +420,15 @@ details[open] > summary::before {
   margin: 0 0 25px;
 }
 
+#help-samarin .sos-item-body,
+#help-newberg .sos-item-body {
+  padding-top: 20px;
+}
+
+#translation-method-content .help-page {
+  overflow-wrap: anywhere;
+}
+
 #article-lurianic-soul-integrity .help-page,
 #article-glossolalia-kabbalah-common-points .help-page,
 #article-latin-greek-process-morphology .help-page,
@@ -639,6 +653,10 @@ details[open] > summary::before {
   margin-bottom: 10px;
 }
 
+.sos-item-body > .transcription-purpose:first-child {
+  margin-top: 12px;
+}
+
 .author-translation > summary,
 .transcription-purpose > summary {
   display: inline-flex;
@@ -648,7 +666,7 @@ details[open] > summary::before {
   padding: 2px 14px;
   border: 1px solid #a9d3a3;
   border-radius: 999px;
-  background: linear-gradient(180deg, #f4faef 0%, #d8eccc 46%, #c2e2b7 100%);
+  background: var(--details-background);
   box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.9), 0 2px 5px rgba(81, 125, 74, 0.16);
   color: #28543a;
   cursor: pointer;
@@ -1550,6 +1568,26 @@ p.analysis-mode {
 
 .dictionary-table > tbody > tr > th {
   font-weight: 500;
+}
+
+.abbreviation-dictionary-table > thead > tr > th:nth-child(1) {
+  width: 12%;
+}
+
+.abbreviation-dictionary-table > thead > tr > th:nth-child(2) {
+  width: 17%;
+}
+
+.abbreviation-dictionary-table > thead > tr > th:nth-child(3) {
+  width: 22%;
+}
+
+.abbreviation-dictionary-table > thead > tr > th:nth-child(4) {
+  width: 39%;
+}
+
+.abbreviation-dictionary-table > thead > tr > th:nth-child(5) {
+  width: 10%;
 }
 
 .dictionary-table td > :first-child {

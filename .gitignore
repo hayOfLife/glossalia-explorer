@@ -12,6 +12,8 @@ __pycache__/
 *.wma
 *.mp4
 *.txt
+!/docs/dictionary/abbreviations-source.txt
+!/site/public_html/data/dictionary_of_abbreviations.txt
 !/site/public_html/llms.txt
 !/docs/transcriptions/T00027/skript_22_pardes_polnyi_v3.txt
 !/docs/transcriptions/T00039/2026-09-23_fragment_2_analysis.txt
@@ -28,6 +30,7 @@ __pycache__/
 !/site/public_html/assets/documents/kontekst_morfologiya_part8.txt
 !/site/public_html/assets/documents/транскрипционные пометки.txt
 !/site/public_html/assets/documents/Звуки которых нет в иврите но есть в Русском языке.txt
+!/site/public_html/assets/documents/author-term-definitions.txt
 !/site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt
 !/site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt
 !/galilean.txt

@@ -12,7 +12,7 @@ import zipfile
 from html.parser import HTMLParser
 from pathlib import Path
 from unittest.mock import patch
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT / "site" / "scripts"))
 from build_static import BASE_URL, OUTPUT, ROUTES, CHAT_TEMPLATE, analysis_label, analysis_mode, attach_block_reactions, inline, markdown_html, author_translation_html, copy_texts, dictionary_fields, dictionary_html, digest_file, markdown_table, original_transcription, plain_document_html, purpose_html, reaction_key, sos_item_blocks, transcription_route, transcription_section  # noqa: E402
 from build_static import ai_page_markdown, PANEL, SOURCE_URL  # noqa: E402
 from build_static import acquisition_type, attach_acquisition_icons  # noqa: E402
-from build_static import suffix_dictionary_html  # noqa: E402
+from build_static import suffix_dictionary_html, translation_material_html  # noqa: E402
 
 
 class PageParser(HTMLParser):
@@ -62,6 +62,16 @@ class PageParser(HTMLParser):
 
 
 class StaticBuildTest(unittest.TestCase):
+    def test_theory_public_copy_has_utf8_bom_and_preserves_source_body(self) -> None:
+        filename = "self-writing-generative-archive.md"
+        source = (ROOT / "site/public_html/assets/documents" / filename).read_bytes()
+        published = (OUTPUT / "assets/documents" / filename).read_bytes()
+        bom = b"\xef\xbb\xbf"
+        self.assertTrue(published.startswith(bom))
+        self.assertEqual(source.removeprefix(bom), published[len(bom):])
+        legacy = OUTPUT / "assets/documents/Теория_канала_самопишущийся_генеративный_архив.md"
+        self.assertEqual(published, legacy.read_bytes())
+
     def test_acquisition_uses_explicit_metadata_and_author_default(self) -> None:
         for tag in ("T00001", "T00002", "T00003"):
             self.assertEqual("audio", acquisition_type((ROOT / f"docs/transcriptions/{tag}.md").read_text(encoding="utf-8")))
@@ -123,12 +133,36 @@ class StaticBuildTest(unittest.TestCase):
         for filename in ("suffix-methodology.md", "suffixes.md"):
             self.assertEqual((ROOT / "docs/dictionary" / filename).read_bytes(), (OUTPUT / "for-ai" / filename).read_bytes())
 
+        for filename in ("self-writing-generative-archive.md", "transcription-symbol-systems.md", "transcription-symbols-print.md"):
+            path = OUTPUT / "assets/documents" / filename
+            expected_markdown.add(path)
+            if filename != "self-writing-generative-archive.md":
+                self.assertEqual((ROOT / "site/public_html/assets/documents" / filename).read_bytes(), path.read_bytes())
+        legacy_theory = OUTPUT / "assets/documents/Теория_канала_самопишущийся_генеративный_архив.md"
+        expected_markdown.add(legacy_theory)
+        self.assertEqual((OUTPUT / "assets/documents/self-writing-generative-archive.md").read_bytes(), legacy_theory.read_bytes())
+
         for relative in public_sources:
             with self.subTest(source=relative):
                 path = OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.md"
                 self.assertEqual((ROOT / relative).read_bytes(), path.read_bytes())
                 expected_markdown.add(path)
+                alias = OUTPUT / relative.removeprefix("docs/")
+                self.assertTrue(alias.relative_to(OUTPUT).as_posix().isascii())
+                self.assertEqual((ROOT / relative).read_bytes(), alias.read_bytes())
+                expected_markdown.add(alias)
         self.assertEqual(expected_markdown, set(OUTPUT.rglob("*.md")))
+
+        dictionary = (OUTPUT / "for-ai/dictionary.md").read_text(encoding="utf-8")
+        dictionary_links = [link for link in re.findall(r'\]\(([^)]+)\)', dictionary) if link.startswith("../transcriptions/")]
+        self.assertEqual(24, len(dictionary_links))
+        self.assertEqual({"../transcriptions/T00045/part_1.md", "../transcriptions/T00045/part_2.md",
+                          "../transcriptions/T00046.md", "../transcriptions/T00049.md"}, set(dictionary_links))
+        for link in dictionary_links:
+            with self.subTest(dictionary_link=link):
+                parsed = urlsplit(urljoin(BASE_URL + "/for-ai/dictionary.md", link))
+                target = OUTPUT / unquote(parsed.path).lstrip("/")
+                self.assertEqual((ROOT / "docs" / target.relative_to(OUTPUT)).read_bytes(), target.read_bytes())
 
         for page in OUTPUT.rglob("index.html"):
             with self.subTest(page=page):
@@ -285,7 +319,7 @@ class StaticBuildTest(unittest.TestCase):
                 expected = parser.reactions + (["for-ai"] if path.parent == OUTPUT / "for-ai" else [])
                 self.assertCountEqual(expected, parser.chats)
                 self.assertTrue(all(parser.chat_hidden))
-                self.assertIn('/assets/comments.js?v=author-inbox-20261001', page)
+                self.assertIn('/assets/comments.js?v=metrika-private-20261005', page)
                 self.assertIn(f'href="/{stylesheet}"', page)
                 if parser.chats:
                     self.assertIn('data-chat-api="https://94-232-41-163.sslip.io/glossaliae/comments"', page)
@@ -421,6 +455,28 @@ class StaticBuildTest(unittest.TestCase):
                     else:
                         allowed = "'self'" in connect_sources
                     self.assertTrue(allowed, f"CSP не разрешает запросы к {endpoint}")
+
+    def test_metrika_is_wired_in_every_page_and_chats_are_masked(self) -> None:
+        script = "/assets/metrika.js?v=counter-20261005"
+        self.assertTrue((OUTPUT / "assets/metrika.js").is_file())
+        for path in OUTPUT.rglob("index.html"):
+            with self.subTest(page=path):
+                page = path.read_text(encoding="utf-8")
+                parser = PageParser()
+                parser.feed(page)
+                self.assertEqual(1, parser.links.count(script))
+                self.assertLess(page.index("/assets/site.js?"), page.index(script))
+                self.assertLess(page.index(script), page.index("/assets/comments.js?"))
+                directives = dict((tokens[0], tokens[1:]) for rule in parser.csp.split(";") if (tokens := rule.split()))
+                self.assertNotIn("'unsafe-inline'", directives["script-src"])
+                for rule in ("script-src", "img-src", "connect-src", "frame-src", "child-src"):
+                    for address in ("https://mc.yandex.ru", "https://mc.yandex.com", "https://mc.webvisor.com", "https://mc.webvisor.org"):
+                        self.assertIn(address, directives[rule])
+                self.assertIn("blob:", directives["frame-src"])
+                self.assertIn("wss://mc.webvisor.com", directives["connect-src"])
+                for attributes in re.findall(r'<div\b[^>]*data-transcription-chat="[^"]*"[^>]*>', page):
+                    self.assertIn("ym-hide-content", attributes)
+                self.assertRegex(page, r'<textarea\b[^>]*class="ym-disable-keys"[^>]*name="text"')
 
     def test_sos_part_seven_copies_both_source_blocks(self) -> None:
         source = (ROOT / "docs" / "transcriptions" / "T00027" / "part_7.md").read_text(encoding="utf-8")
@@ -589,9 +645,12 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
 
         purposes = json.loads((ROOT / "site" / "public_html" / "data" / "transcription-purposes.json").read_text(encoding="utf-8"))
-        self.assertEqual(32, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
+        self.assertEqual(35, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00033/part_1.md"])
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00034/part_1.md"])
+        for relative in ("docs/transcriptions/T00032/part_3.md", "docs/transcriptions/T00045/part_2.md", "docs/transcriptions/T00047/part_1.md"):
+            with self.subTest(purpose=relative):
+                self.assertEqual(purpose_html(ROOT / relative), purposes[relative])
 
     def test_author_help_page_links_verses_in_words(self) -> None:
         page = (OUTPUT / "help" / "author" / "index.html").read_text(encoding="utf-8")
@@ -640,7 +699,7 @@ class StaticBuildTest(unittest.TestCase):
     def test_translation_download_archive_preserves_source_files(self) -> None:
         page = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
         panel = re.search(r'<section[^>]+id="translation"[^>]*>(.*?)</section>', page, re.S).group(1)
-        download = re.search(r'<a\b([^>]*)>Скачать файл промпта</a>', panel)
+        download = re.search(r'<a\b([^>]*)>Скачать архив промпта</a>', panel)
         self.assertIsNotNone(download)
         self.assertIn('href="/data/translation_materials.zip"', download.group(1))
         self.assertIn('download="translation_materials.zip"', download.group(1))
@@ -651,6 +710,7 @@ class StaticBuildTest(unittest.TestCase):
             "dictionary_of_words.txt": ("docs/dictionary/methodology.md", "docs/dictionary/combined.md"),
             "dictionary_of_suffixes_and_particles.txt": ("docs/dictionary/suffix-methodology.md", "docs/dictionary/suffixes.md"),
             "phonetics_rus_vs_hebrew.txt": ("site/public_html/assets/documents/Звуки которых нет в иврите но есть в Русском языке.txt",),
+            "dictionary_of_abbreviations.txt": ("docs/dictionary/abbreviations-source.txt",),
         }
         with zipfile.ZipFile(archive_path) as archive:
             self.assertCountEqual(sources, archive.namelist())
@@ -660,6 +720,12 @@ class StaticBuildTest(unittest.TestCase):
                     content = archive.read(filename)
                     content.decode("utf-8")
                     self.assertEqual(b"".join((ROOT / relative).read_bytes() for relative in relatives), content)
+
+        abbreviations_source = (ROOT / "docs/dictionary/abbreviations-source.txt").read_bytes()
+        self.assertIn("| запись в транскрипции | пример вхождения в транскрипцию | полное слово | заметка | язык |".encode("utf-8"), abbreviations_source)
+        abbreviations_public = (OUTPUT / "data/dictionary_of_abbreviations.txt").read_bytes()
+        self.assertTrue(abbreviations_public.startswith(b"\xef\xbb\xbf"))
+        self.assertEqual(abbreviations_source.removeprefix(b"\xef\xbb\xbf"), abbreviations_public[3:])
 
     def test_dictionary_is_merged_and_built_into_translation_page(self) -> None:
         markdown = (ROOT / "docs/dictionary/combined.md").read_text(encoding="utf-8")
@@ -677,9 +743,11 @@ class StaticBuildTest(unittest.TestCase):
         self.assertIn("(альтернатива)", table)
         self.assertIn("ПОВТОРЯЮЩИЕСЯ", (ROOT / "docs/dictionary/slovar_kanala.md").read_text(encoding="utf-8"))
         self.assertIn("НИТЬ «СПАСИ!»", table)
+        self.assertIn("СТАТУС НАКОПЛЕННОЙ БАЗЫ", table)
+        self.assertIn("полностью не раскрытых слов НЕТ", table)
         self.assertLess(page.index('id="channel-dictionary-title"'), page.index('id="channel-dictionary-content"'))
 
-    def test_dictionary_methodology_is_visible_before_dictionary_without_javascript(self) -> None:
+    def test_dictionary_methodology_is_available_in_collapsible_block_without_javascript(self) -> None:
         relative = "docs/dictionary/methodology.md"
         markdown = (ROOT / relative).read_text(encoding="utf-8")
         expected = markdown_html(markdown, SOURCE_URL + relative)
@@ -691,12 +759,23 @@ class StaticBuildTest(unittest.TestCase):
         self.assertIn('<div class="help-page dictionary-methodology" id="channel-dictionary-methodology">' + expected + '</div>', page)
         notice = page.index("Если чат не открылся с отправленным промптом")
         separator = re.search(r'<hr\b[^>]*>', page[notice:])
-        heading = re.search(r'<h3\b[^>]*>метод перевода</h3>', page)
+        heading = re.search(r'<h3\b[^>]*>Промпт для ИИ \(тот-же что и в архиве выше\)</h3>', page)
         self.assertIsNotNone(separator)
         self.assertIsNotNone(heading)
         self.assertLess(notice + separator.start(), heading.start())
         self.assertLess(heading.start(), page.index('id="channel-dictionary-methodology"'))
-        self.assertLess(page.index(expected), page.index('id="channel-dictionary-title"'))
+        self.assertLess(page.index('id="channel-dictionary-title"'), page.index(expected))
+        self.assertLess(page.index(expected), page.index('id="channel-dictionary-content"'))
+        container = next(block for block in sos_item_blocks(page) if 'id="translation-method-content"' in block)
+        opening = re.match(r'<details\b([^>]*)>', container)
+        self.assertNotRegex(opening.group(1), r'\bopen(?:\s|=|$)')
+        for identifier in ("translation-method-title", "translation-prompt-content", "channel-dictionary-methodology", "channel-dictionary-content",
+                           "channel-suffix-methodology", "channel-suffix-dictionary-content", "translation-phonetics-content", "channel-abbreviations-content"):
+            self.assertIn(f'id="{identifier}"', container)
+        self.assertEqual(4, container.count('class="sos-item dictionary-section"'))
+        for title in ("channel-dictionary-title", "channel-suffix-dictionary-title", "translation-phonetics-title", "channel-abbreviations-title"):
+            self.assertRegex(container, rf'<details class="sos-item dictionary-section">\s*<summary id="{title}"')
+        self.assertNotIn('class="help-card"', container)
         self.assertEqual(6, fragment.count('<li value="'))
         overview = (OUTPUT / "for-ai/index.md").read_text(encoding="utf-8")
         self.assertNotIn(markdown.split("\n", 1)[1].strip(), overview)
@@ -720,16 +799,20 @@ class StaticBuildTest(unittest.TestCase):
         self.assertEqual(table, (OUTPUT / "data/suffix-dictionary.html").read_text(encoding="utf-8"))
         self.assertEqual(8, table.count('scope="row"'))
         self.assertEqual(4, table.count('scope="col"'))
-        self.assertLess(page.index('id="channel-dictionary-content"'), page.index('id="channel-suffix-methodology"'))
-        self.assertLess(page.index('id="channel-suffix-methodology"'), page.index('id="channel-suffix-dictionary-title"'))
+        self.assertIn("Таблица выверена на накопленной лексике канала", table)
+        self.assertLess(page.index('id="channel-dictionary-content"'), page.index('id="channel-suffix-dictionary-title"'))
+        self.assertLess(page.index('id="channel-suffix-dictionary-title"'), page.index('id="channel-suffix-methodology"'))
         self.assertLess(page.index('id="channel-suffix-dictionary-title"'), page.index('id="channel-suffix-dictionary-content"'))
         cards = re.findall(r'<a class="help-card" href="([^"]+)">\s*<h3>(.*?)</h3>', page, re.S)
         self.assertEqual([
             ("/articles/latin-greek-process-morphology/", "Родственные процессуальные системы латинского и греческого слоёв молитвы"),
             ("/articles/transcription-notes/", "Транскрипционные пометки"),
             ("/articles/hebrew-russian-sounds/", "Звуки которых нет в иврите но есть в Русском языке"),
+            ("/articles/author-term-definitions/", "Определения терминов (и религиозных), в понимании автора"),
+            ("/articles/transcription-symbol-systems/", "Старая и новая система знаков дополнительного обозначения смысла в транскрипциях"),
+            ("/articles/transcription-symbols-print/", "Таблица знаков для транскрипции для печати"),
         ], [(route, re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', title))).strip()) for route, title in cards])
-        self.assertLess(page.index('id="channel-suffix-dictionary-content"'), page.index('href="' + cards[0][0] + '"'))
+        self.assertLess(page.index('id="channel-suffix-dictionary-content"'), page.index('<a class="help-card" href="' + cards[0][0] + '"'))
         self.assertNotIn('data-transcription-chat="for-ai"', page)
         for route, _ in cards:
             article = (OUTPUT / route.lstrip("/") / "index.html").read_text(encoding="utf-8")
@@ -744,6 +827,40 @@ class StaticBuildTest(unittest.TestCase):
         manifest = json.loads((OUTPUT / "content-manifest.json").read_text(encoding="utf-8"))
         for relative in (method_relative, table_relative):
             self.assertEqual(digest_file(ROOT / relative), manifest["sources"][relative])
+
+    def test_translation_prompt_and_phonetics_match_archive_without_javascript(self) -> None:
+        page = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
+        container = next(block for block in sos_item_blocks(page) if 'id="translation-method-content"' in block)
+        sources = (
+            ("PROMPT_general.txt", "site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt", "prompt-general.html", "translation-prompt-content"),
+            ("phonetics_rus_vs_hebrew.txt", "site/public_html/assets/documents/Звуки которых нет в иврите но есть в Русском языке.txt", "prompt-phonetics.html", "translation-phonetics-content"),
+        )
+        with zipfile.ZipFile(OUTPUT / "data/translation_materials.zip") as archive:
+            for name, relative, filename, identifier in sources:
+                with self.subTest(file=name):
+                    text = archive.read(name).decode("utf-8-sig")
+                    expected = translation_material_html(text, SOURCE_URL + relative)
+                    self.assertEqual(expected, (OUTPUT / "data" / filename).read_text(encoding="utf-8"))
+                    self.assertIn(f'<div class="help-page dictionary-methodology" id="{identifier}">' + expected + '</div>', container)
+        prompt = (OUTPUT / "data/promptForAlice_guessingTheMeaningOfTheGlossary.txt").read_bytes()
+        compact = (OUTPUT / "data/promptForAlice_guessingTheMeaningOfTheGlossary.min.txt").read_bytes()
+        self.assertEqual(b"".join(line for line in prompt.splitlines(keepends=True) if line.strip()), compact)
+        self.assertIn("Что такое «канал» и «скрипты»", container)
+        self.assertIn("ВАЖНАЯ ОГОВОРКА ПРОТИВ ПЕРЕГИБА", container)
+        self.assertIn("Наршедроти", container)
+
+    def test_dictionary_preserves_notes_outside_tables(self) -> None:
+        words = dictionary_html('# Словарь\n\nПравило до статей.\n\n## Термин\n\n**Транскрипция:** Термин', SOURCE_URL)
+        self.assertIn('<p>Правило до статей.</p>', words)
+        suffix_source = (
+            '# Суффиксы\n\nОговорка до таблицы.\n\n'
+            '|Окончание|Форма-источник|Значение|Слова|\n|---|---|---|---|\n|-ент|форма|смысл|пример|\n\n'
+            'Оговорка после таблицы.'
+        )
+        suffixes = suffix_dictionary_html(suffix_source, SOURCE_URL)
+        self.assertLess(suffixes.index('Оговорка до таблицы.'), suffixes.index('<table'))
+        self.assertGreater(suffixes.index('Оговорка после таблицы.'), suffixes.index('</table>'))
+        self.assertEqual(suffixes, suffix_dictionary_html(suffix_source.replace('\n', '\r\n'), SOURCE_URL))
 
     def test_abortion_transcription_keeps_both_parts_in_one_last_block(self) -> None:
         relative = "docs/transcriptions/T00040/part_1.md"
@@ -872,7 +989,7 @@ class StaticBuildTest(unittest.TestCase):
                     if parsed.scheme or link.startswith("#"):
                         continue
                     self.assertFalse(link.startswith("#about"))
-                    target = OUTPUT / parsed.path.lstrip("/")
+                    target = OUTPUT / unquote(parsed.path).lstrip("/")
                     if parsed.path.endswith("/"):
                         target /= "index.html"
                     self.assertTrue(target.is_file(), f"{page}: {link}")
