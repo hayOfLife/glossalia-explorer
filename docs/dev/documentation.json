@@ -2,6 +2,34 @@
   "version": 1,
   "documents": [
     {
+      "path": "memory_chatGPT/README.md",
+      "title": "ChatGPT project memory",
+      "status": "reference",
+      "purpose": "Вход в личную рабочую память этого чата ChatGPT с маршрутами чтения и правилами сохранения контекста",
+      "tags": ["chatgptmemory"]
+    },
+    {
+      "path": "memory_chatGPT/project-context.md",
+      "title": "Project and chat context",
+      "status": "reference",
+      "purpose": "Датированные решения автора, владельцы материалов, порядок интеграции сайта и последние записи чата",
+      "tags": ["chatgptcontext"]
+    },
+    {
+      "path": "memory_chatGPT/decoding-workflow.md",
+      "title": "My transcription decoding workflow",
+      "status": "process",
+      "purpose": "Рабочие приёмы ChatGPT для поиска компонентов, проверки границ, сохранения альтернатив и построения предполагаемого перевода",
+      "tags": ["chatgptdecoding"]
+    },
+    {
+      "path": "memory_chatGPT/hypotheses.md",
+      "title": "My working hypotheses and saved cases",
+      "status": "reference",
+      "purpose": "Собственные гипотезы ChatGPT о сжатии и многослойности с сохранённым ходом разбора T00061 и последующим русским текстом T00062",
+      "tags": ["chatgpttheories"]
+    },
+    {
       "path": "docs/transcriptions/T00049.md",
       "title": "§T00049 — Е! Наофуми!",
       "status": "reference",
