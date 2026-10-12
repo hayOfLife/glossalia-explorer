@@ -8,6 +8,7 @@ import re
 import sys
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 import zipfile
 from html.parser import HTMLParser
 from pathlib import Path
@@ -18,9 +19,12 @@ from urllib.parse import unquote, urljoin, urlsplit
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "site" / "scripts"))
 from build_static import BASE_URL, OUTPUT, ROUTES, CHAT_TEMPLATE, analysis_label, analysis_mode, attach_block_reactions, inline, markdown_html, author_translation_html, copy_texts, dictionary_fields, dictionary_html, digest_file, markdown_table, original_transcription, plain_document_html, purpose_html, reaction_key, sos_item_blocks, transcription_route, transcription_section  # noqa: E402
-from build_static import ai_page_markdown, PANEL, SOURCE_URL  # noqa: E402
-from build_static import acquisition_type, attach_acquisition_icons  # noqa: E402
-from build_static import suffix_dictionary_html, translation_material_html  # noqa: E402
+from build_static import ai_page_markdown, PANEL, SOURCE_URL, PUBLISHED_LINK  # noqa: E402
+from build_static import acquisition_type, attach_acquisition_icons, calendar_entry  # noqa: E402
+from build_static import suffix_dictionary_html, translation_material_html, dictionary_entry_id, abbreviation_dictionary_html  # noqa: E402
+from build_static import TRANSCRIPTION_REDIRECTS  # noqa: E402
+from build_static import author_translation_markdown  # noqa: E402
+from transcription_sections import section_markdown  # noqa: E402
 
 
 class PageParser(HTMLParser):
@@ -116,6 +120,51 @@ class StaticBuildTest(unittest.TestCase):
             self.assertIn(f'data-acquisition-type="{kind}"', page)
             self.assertTrue((OUTPUT / f"assets/transcription-{kind}.svg").is_file())
 
+    def test_analysis_index_preserves_distinct_versions_and_links(self) -> None:
+        catalogue = ROOT / "docs/TRANSCRIPTION_ANALYSES.md"
+        links = re.findall(r'^- \[([^\n]+)\]\((https://[^)]+)\)', catalogue.read_text(encoding="utf-8"), re.M)
+        self.assertEqual(77, len(links))
+        self.assertEqual(len(links), len({url for _, url in links}))
+        fragment = (OUTPUT / "data/transcription-analyses.html").read_text(encoding="utf-8")
+        parser = PageParser()
+        parser.feed(fragment)
+        self.assertEqual([url.removeprefix(BASE_URL) if url.startswith(BASE_URL + "/") else url
+                          for _, url in links], parser.links)
+        for label, url in links:
+            with self.subTest(label=label):
+                self.assertIn(html.escape(label), fragment)
+                parsed = urlsplit(url)
+                if parsed.netloc == urlsplit(BASE_URL).netloc:
+                    target = OUTPUT / parsed.path.lstrip("/") / "index.html"
+                else:
+                    self.assertEqual("raw.githubusercontent.com", parsed.netloc)
+                    self.assertTrue(parsed.path.startswith("/hayOfLife/glossalia-explorer/main/"))
+                    relative = unquote(parsed.path.removeprefix("/hayOfLife/glossalia-explorer/main/"))
+                    target = ROOT / relative
+                self.assertTrue(target.is_file(), url)
+        urls = {url for _, url in links}
+        self.assertIn(BASE_URL + "/transcriptions/T00027/part_10/", urls)
+        self.assertIn(BASE_URL + "/transcriptions/T00032/part_1/", urls)
+        self.assertEqual(2, sum("/T00039/" in url for url in urls))
+        self.assertFalse(any("script1_full_analysis_T00014%20%283%29.md" in url for url in urls))
+        self.assertFalse(any("/T00051/" in url for url in urls))
+        page = (OUTPUT / "transcription-analyses/index.html").read_text(encoding="utf-8")
+        self.assertIn(fragment, page)
+        self.assertIn('<h2 id="article-transcription-analyses-title">Все разборы транскрипций</h2>', page)
+        manifest = json.loads((OUTPUT / "content-manifest.json").read_text(encoding="utf-8"))
+        self.assertEqual(digest_file(catalogue), manifest["sources"]["docs/TRANSCRIPTION_ANALYSES.md"])
+
+    def test_analysis_index_is_linked_from_prompt_and_ai_guide(self) -> None:
+        url = BASE_URL + "/transcription-analyses/"
+        prompt_path = ROOT / "site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt"
+        prompt = prompt_path.read_text(encoding="utf-8")
+        self.assertIn(url, prompt.split("## 9. Дополнительная информация", 1)[1])
+        with zipfile.ZipFile(OUTPUT / "data/translation_materials.zip") as archive:
+            self.assertEqual(prompt_path.read_bytes(), archive.read("PROMPT_general.txt"))
+        translation = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
+        self.assertIn('<a href="/transcription-analyses/">Все разборы транскрипций</a>', translation)
+        self.assertIn(url, (OUTPUT / "llms.txt").read_text(encoding="utf-8"))
+
     def test_ai_discovery_links_and_public_source_copies(self) -> None:
         guide = ROOT / "site/public_html/llms.txt"
         self.assertEqual(guide.read_bytes(), (OUTPUT / "llms.txt").read_bytes())
@@ -126,12 +175,21 @@ class StaticBuildTest(unittest.TestCase):
         public_sources = {entry["sourceUrl"].removeprefix(SOURCE_URL) for entry in entries
                           if entry.get("published") and entry.get("type") in {"analysis", "manual_transcription"}}
         public_sources.update(copy_texts(source))
-        expected_markdown = {OUTPUT / "for-ai/index.md", OUTPUT / "for-ai/dictionary.md", OUTPUT / "for-ai/dictionary-methodology.md",
-                             OUTPUT / "for-ai/suffix-methodology.md", OUTPUT / "for-ai/suffixes.md"}
-        self.assertEqual((ROOT / "docs/dictionary/combined.md").read_bytes(), (OUTPUT / "for-ai/dictionary.md").read_bytes())
-        self.assertEqual((ROOT / "docs/dictionary/methodology.md").read_bytes(), (OUTPUT / "for-ai/dictionary-methodology.md").read_bytes())
-        for filename in ("suffix-methodology.md", "suffixes.md"):
-            self.assertEqual((ROOT / "docs/dictionary" / filename).read_bytes(), (OUTPUT / "for-ai" / filename).read_bytes())
+        expected_markdown = {OUTPUT / "for-ai/index.md"}
+        for source_name, filename, legacy_filename in (
+            ("combined.md", "words.md", "dictionary.md"),
+            ("methodology.md", "methodology.md", "dictionary-methodology.md"),
+            ("suffixes.md", "suffixes.md", "suffixes.md"),
+            ("suffix-methodology.md", "suffix-methodology.md", "suffix-methodology.md"),
+        ):
+            original = (ROOT / "docs/dictionary" / source_name).read_bytes()
+            current = OUTPUT / "dictionaries" / filename
+            legacy = OUTPUT / "for-ai" / legacy_filename
+            self.assertEqual(original, current.read_bytes())
+            pointer = legacy.read_text(encoding="utf-8")
+            self.assertIn(f"{BASE_URL}/dictionaries/{filename}", pointer)
+            self.assertLess(len(pointer.encode("utf-8")), len(original))
+            expected_markdown.update((current, legacy))
 
         for filename in ("self-writing-generative-archive.md", "transcription-symbol-systems.md", "transcription-symbols-print.md"):
             path = OUTPUT / "assets/documents" / filename
@@ -151,26 +209,47 @@ class StaticBuildTest(unittest.TestCase):
                 self.assertTrue(alias.relative_to(OUTPUT).as_posix().isascii())
                 self.assertEqual((ROOT / relative).read_bytes(), alias.read_bytes())
                 expected_markdown.add(alias)
+        for relative in TRANSCRIPTION_REDIRECTS:
+            expected_markdown.add(OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.md")
+            expected_markdown.add(OUTPUT / relative.removeprefix("docs/"))
         self.assertEqual(expected_markdown, set(OUTPUT.rglob("*.md")))
 
-        dictionary = (OUTPUT / "for-ai/dictionary.md").read_text(encoding="utf-8")
+        dictionary = (OUTPUT / "dictionaries/words.md").read_text(encoding="utf-8")
         dictionary_links = [link for link in re.findall(r'\]\(([^)]+)\)', dictionary) if link.startswith("../transcriptions/")]
-        self.assertEqual(24, len(dictionary_links))
-        self.assertEqual({"../transcriptions/T00045/part_1.md", "../transcriptions/T00045/part_2.md",
-                          "../transcriptions/T00046.md", "../transcriptions/T00049.md"}, set(dictionary_links))
+        self.assertEqual({"../transcriptions/T00027/part_10.md", "../transcriptions/T00035/part_5.md",
+                          "../transcriptions/T00035/script12_analysis_full.md",
+                          "../transcriptions/T00035/script14_analysis.md", "../transcriptions/T00045/part_1.md",
+                          "../transcriptions/T00045/part_2.md", "../transcriptions/T00046.md",
+                          "../transcriptions/T00049.md", "../transcriptions/T00050/part_1.md", "../transcriptions/T00055.md", "../transcriptions/T00056.md",
+                          "../transcriptions/T00017.md", "../transcriptions/T00019.md", "../transcriptions/T00020.md",
+                          "../transcriptions/T00027/part_7.md", "../transcriptions/T00033/part_5.md",
+                          "../transcriptions/T00039.md", "../transcriptions/T00059.md",
+                          "../transcriptions/T00061.md", "../transcriptions/T00063.md",
+                          "../transcriptions/T00065.md"}, set(dictionary_links))
         for link in dictionary_links:
             with self.subTest(dictionary_link=link):
-                parsed = urlsplit(urljoin(BASE_URL + "/for-ai/dictionary.md", link))
+                parsed = urlsplit(urljoin(BASE_URL + "/dictionaries/words.md", link))
                 target = OUTPUT / unquote(parsed.path).lstrip("/")
                 self.assertEqual((ROOT / "docs" / target.relative_to(OUTPUT)).read_bytes(), target.read_bytes())
 
+        redirect_pages = {OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html"
+                          for relative in TRANSCRIPTION_REDIRECTS}
         for page in OUTPUT.rglob("index.html"):
+            if page in redirect_pages:
+                continue
             with self.subTest(page=page):
                 head = page.read_text(encoding="utf-8").split('</head>', 1)[0]
                 self.assertEqual(1, head.count('<link rel="describedby" href="/llms.txt">'))
                 alternate = re.findall(r'<link rel="alternate" type="text/markdown" href="([^"]+)">', head)
                 markdown_path = page.with_suffix(".md")
-                self.assertEqual(["/" + markdown_path.relative_to(OUTPUT).as_posix()] if markdown_path in expected_markdown else [], alternate)
+                dictionary_alternate = {
+                    OUTPUT / "dictionaries/words/index.html": "/dictionaries/words.md",
+                    OUTPUT / "dictionaries/suffixes-and-particles/index.html": "/dictionaries/suffixes.md",
+                }.get(page)
+                expected_alternate = [dictionary_alternate] if dictionary_alternate else (
+                    ["/" + markdown_path.relative_to(OUTPUT).as_posix()] if markdown_path in expected_markdown else []
+                )
+                self.assertEqual(expected_alternate, alternate)
 
         for text in (guide.read_text(encoding="utf-8"), (OUTPUT / "for-ai/index.md").read_text(encoding="utf-8")):
             for url in re.findall(r'\]\((https://[^)]+)\)', text):
@@ -213,22 +292,20 @@ class StaticBuildTest(unittest.TestCase):
             self.assertIn("### Text for copying\n\n```text\n" + copied[SOURCE_URL + relative]["copyText"] + "\n```", section)
             purpose_relative = re.search(r'data-purpose-source="([^"]+)"', block).group(1)
             purpose_source = (ROOT / purpose_relative).read_text(encoding="utf-8")
-            purpose = re.search(r'^## Назначение\s*\n(.*?)(?=^## |\Z)', purpose_source, re.M | re.S).group(1).strip()
+            purpose = section_markdown(purpose_source, "Назначение")
             self.assertIn("### Purpose (proposed)\n\n" + purpose, section)
             original = (ROOT / relative).read_text(encoding="utf-8")
-            translation = re.search(r'^## Перевод автора\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
-            if not translation:
-                translation = re.search(r'^## Перевод \(гипотеза\)\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
+            translation = author_translation_markdown(original)
             if translation:
-                self.assertIn("### Proposed translation\n\n" + translation.group(1).strip().removesuffix("---").strip(), section)
+                self.assertIn("### Proposed translation\n\n" + translation, section)
             else:
                 self.assertNotIn("### Proposed translation", section)
-            comments = re.search(r'^## Сопроводительные слова автора\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
+            comments = section_markdown(original, "Сопроводительные слова автора", levels=(2, 3))
             if comments:
-                self.assertIn("### Author comments\n\n" + comments.group(1).strip(), section)
-            notes = re.search(r'^## Якоря для нейронки\s*\n(.*?)(?=^## |\Z)', original, re.M | re.S)
+                self.assertIn("### Author comments\n\n" + comments, section)
+            notes = section_markdown(original, "Якоря для нейронки", levels=(2, 3))
             if notes:
-                self.assertIn("### Notes for AI\n\n" + notes.group(1).strip(), section)
+                self.assertIn("### Notes for AI\n\n" + notes, section)
 
     def test_new_ai_block_without_translation_or_date_is_not_filled_in(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -311,7 +388,11 @@ class StaticBuildTest(unittest.TestCase):
     def test_comments_are_hidden_and_share_each_transcription_key(self) -> None:
         source = (ROOT / "site/public_html/index.html").read_text(encoding="utf-8")
         stylesheet = re.search(r'<link rel="stylesheet" href="([^"]+)"', source).group(1)
+        redirect_pages = {OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html"
+                          for relative in TRANSCRIPTION_REDIRECTS}
         for path in OUTPUT.rglob("index.html"):
+            if path in redirect_pages:
+                continue
             with self.subTest(page=path):
                 parser = PageParser()
                 page = path.read_text(encoding="utf-8")
@@ -376,7 +457,7 @@ class StaticBuildTest(unittest.TestCase):
         manifest = json.loads((ROOT / "site/reactions-api/transcriptions.json").read_text(encoding="utf-8"))
         keys = manifest["keys"]
         self.assertEqual(len(keys), len(set(keys)))
-        self.assertTrue({"T00014", "T00016", "T00017", "T00018", "T00019", "T00020"}.issubset(keys))
+        self.assertTrue({"T00032-part_1", "T00016", "T00017", "T00018", "T00019", "T00020"}.issubset(keys))
         entries = json.loads((OUTPUT / "data/entries.json").read_text(encoding="utf-8"))
         for entry in entries:
             if entry.get("published") and entry["type"] in {"manual_transcription", "analysis"}:
@@ -391,7 +472,11 @@ class StaticBuildTest(unittest.TestCase):
             else:
                 self.assertNotIn("reactionKey", entry)
 
+        redirect_pages = {OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html"
+                          for relative in TRANSCRIPTION_REDIRECTS}
         for path in (OUTPUT / "transcriptions").rglob("index.html"):
+            if path in redirect_pages:
+                continue
             with self.subTest(page=path):
                 parser = PageParser()
                 parser.feed(path.read_text(encoding="utf-8"))
@@ -441,7 +526,11 @@ class StaticBuildTest(unittest.TestCase):
         self.assertEqual(2, len(endpoints))
         endpoints.append("https://94-232-41-163.sslip.io/glossaliae/comments")
 
+        redirect_pages = {OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html"
+                          for relative in TRANSCRIPTION_REDIRECTS}
         for path in OUTPUT.rglob("index.html"):
+            if path in redirect_pages:
+                continue
             with self.subTest(page=path):
                 parser = PageParser()
                 parser.feed(path.read_text(encoding="utf-8"))
@@ -459,7 +548,11 @@ class StaticBuildTest(unittest.TestCase):
     def test_metrika_is_wired_in_every_page_and_chats_are_masked(self) -> None:
         script = "/assets/metrika.js?v=counter-20261005"
         self.assertTrue((OUTPUT / "assets/metrika.js").is_file())
+        redirect_pages = {OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html"
+                          for relative in TRANSCRIPTION_REDIRECTS}
         for path in OUTPUT.rglob("index.html"):
+            if path in redirect_pages:
+                continue
             with self.subTest(page=path):
                 page = path.read_text(encoding="utf-8")
                 parser = PageParser()
@@ -482,7 +575,12 @@ class StaticBuildTest(unittest.TestCase):
         source = (ROOT / "docs" / "transcriptions" / "T00027" / "part_7.md").read_text(encoding="utf-8")
         first = re.search(r"^\*\*Блок 1[^\n]*\*\*\s*\n(.*?)(?=^\*\*Блок 2)", source, re.M | re.S).group(1).strip()
         second = re.search(r"^\*\*Блок 2[^\n]*\*\*\s*\n(.*?)(?=^---\s*$)", source, re.M | re.S).group(1).strip()
-        expected = html.escape(first + "\n\n" + second)
+        displayed = transcription_section(source, "Текст для копирования")
+        self.assertTrue(first.startswith("Де! Се(это)- Ешма!"))
+        self.assertTrue(second.startswith("Шалом Несуший!"))
+        self.assertIn("Де! Се⟐ Ешма!", displayed)
+        self.assertIn("Шалом Несуший!", displayed)
+        expected = html.escape(displayed, quote=False)
         page = (OUTPUT / "sos" / "index.html").read_text(encoding="utf-8")
 
         self.assertIn(f'<textarea id="sos-text-8" aria-label="Текст для копирования" readonly rows="6">{expected}</textarea>', page)
@@ -494,13 +592,63 @@ class StaticBuildTest(unittest.TestCase):
         self.assertIn('<thead><tr><th scope="col">Уровень</th><th scope="col">Суть</th></tr></thead>', result)
         self.assertIn("<tbody><tr><td>Пшат</td><td>Прямой, буквальный смысл</td></tr></tbody>", result)
 
-    def test_copy_falls_back_to_original_transcription(self) -> None:
-        markdown = (ROOT / "docs" / "transcriptions" / "T00014.md").read_text(encoding="utf-8")
+    def test_published_copy_uses_canonical_display_text(self) -> None:
+        relative = "docs/transcriptions/T00032/part_1.md"
+        markdown = (ROOT / relative).read_text(encoding="utf-8")
         original = original_transcription(markdown)
         self.assertTrue(original.startswith("Херувиме-н!"))
+        displayed = transcription_section(markdown, "Текст для копирования") or original
         parser = PageParser()
-        parser.feed((OUTPUT / "transcriptions" / "T00014" / "index.html").read_text(encoding="utf-8"))
-        self.assertEqual(original, parser.textarea)
+        parser.feed((OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html").read_text(encoding="utf-8"))
+        self.assertEqual(displayed, parser.textarea)
+
+    def test_removed_general_duplicates_keep_redirects_without_republishing_text(self) -> None:
+        expected = {
+            "docs/transcriptions/T00014.md": "docs/transcriptions/T00032/part_1.md",
+            "docs/transcriptions/T00028.md": "docs/transcriptions/T00027/part_5.md",
+            "docs/transcriptions/T00029.md": "docs/transcriptions/T00027/part_6.md",
+            "docs/transcriptions/T00032.md": "docs/transcriptions/T00032/part_2.md",
+        }
+        self.assertEqual(expected, TRANSCRIPTION_REDIRECTS)
+        entries = json.loads((OUTPUT / "data/entries.json").read_text(encoding="utf-8"))
+        entry_sources = {entry.get("sourceUrl") for entry in entries}
+        calendar = json.loads((OUTPUT / "data/calendar-transcriptions.json").read_text(encoding="utf-8"))
+        calendar_routes = {block["pageUrl"] for block in calendar.values()}
+        sitemap = ET.fromstring((OUTPUT / "sitemap.xml").read_text(encoding="utf-8"))
+        sitemap_urls = {node.text for node in sitemap.iter("{http://www.sitemaps.org/schemas/sitemap/0.9}loc")}
+
+        for deleted, retained in expected.items():
+            with self.subTest(source=deleted):
+                self.assertFalse((ROOT / deleted).exists())
+                self.assertTrue((ROOT / retained).is_file())
+                old_route = transcription_route(ROOT / deleted)
+                target_route = transcription_route(ROOT / retained)
+                self.assertTrue((OUTPUT / target_route.lstrip("/") / "index.html").is_file())
+                redirect = (OUTPUT / old_route.lstrip("/") / "index.html").read_text(encoding="utf-8")
+                self.assertIn(f'<meta http-equiv="refresh" content="0;url={target_route}">', redirect)
+                self.assertIn(f'<link rel="canonical" href="{BASE_URL}{target_route}">', redirect)
+                self.assertIn(f'href="{target_route}"', redirect)
+                parser = PageParser()
+                parser.feed(redirect)
+                self.assertEqual("", parser.textarea)
+                self.assertEqual([], parser.reactions)
+                self.assertEqual([], parser.chats)
+
+                original = original_transcription((ROOT / retained).read_text(encoding="utf-8"))
+                self.assertTrue(original)
+                for pointer in (OUTPUT / old_route.lstrip("/") / "index.md",
+                                OUTPUT / deleted.removeprefix("docs/")):
+                    content = pointer.read_text(encoding="utf-8")
+                    self.assertRegex(content, r"^# .+")
+                    self.assertIn(BASE_URL + target_route, content)
+                    self.assertNotIn("Необработанная транскрипция", content)
+                    self.assertNotIn(original, content)
+
+                self.assertNotIn(SOURCE_URL + deleted, entry_sources)
+                self.assertNotIn(SOURCE_URL + deleted, calendar)
+                self.assertNotIn(old_route, calendar_routes)
+                self.assertNotIn(BASE_URL + old_route, sitemap_urls)
+                self.assertIn(BASE_URL + target_route, sitemap_urls)
 
     def test_copy_section_is_separate_from_original(self) -> None:
         markdown = "## Необработанная транскрипция\n\n> Исходная строка\n\n## Текст для копирования\n\n```\nСтрока с маленькой корректировкой\n```\n"
@@ -527,8 +675,8 @@ class StaticBuildTest(unittest.TestCase):
 
     def test_three_level_connected_translation_preserves_source_sections(self) -> None:
         markdown = (ROOT / "docs/transcriptions/T00042/part_1.md").read_text(encoding="utf-8")
-        section = re.search(r'^## Всё послание связным текстом\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S).group(1)
-        expected = markdown_html(section.strip().removesuffix("---").strip(), BASE_URL)
+        section = author_translation_markdown(markdown)
+        expected = markdown_html(section, BASE_URL)
         rendered = author_translation_html(markdown, BASE_URL)
         self.assertEqual(expected, rendered)
         for heading in ("Пешат (буквально)", "Драш (толкование)", "Сод (тайна)"):
@@ -544,6 +692,51 @@ class StaticBuildTest(unittest.TestCase):
         self.assertIn('<ol start="7">\n<li value="7">Корень</li>\n</ol>\n<div class="source-table-wrap">', rendered)
         self.assertEqual(3, rendered.count("</ol>"))
 
+    def test_commentary_nested_lists_preserve_hierarchy_and_skipped_numbers(self) -> None:
+        source = (
+            "1. Первый\n2. Второй\n3. Третий\n4. Четвёртый\n6. Духовный смысл\n\n"
+            "- **Единство времен** отражает:\n"
+            "  - Вечность Божью\n"
+            "  - Неизменность Его присутствия\n"
+            "  - Постоянство Его заботы\n\n"
+            "7. Прошение о пребывании\n"
+        )
+        rendered = markdown_html(source, BASE_URL, nested_lists=True)
+        tree = ET.fromstring("<root>" + rendered + "</root>")
+        self.assertEqual(["ol", "ul", "ol"], [child.tag for child in tree])
+        self.assertEqual(["1", "2", "3", "4", "6", "7"], [item.get("value") for item in tree.findall("./ol/li")])
+        parent = tree.find("./ul/li")
+        self.assertIsNotNone(parent)
+        self.assertEqual("Единство времен", parent.find("strong").text)
+        children = parent.find("ul")
+        self.assertIsNotNone(children)
+        self.assertEqual(["Вечность Божью", "Неизменность Его присутствия", "Постоянство Его заботы"],
+                         [item.text for item in children.findall("li")])
+        self.assertEqual(1, len(tree.findall("./ul/li")))
+
+        legacy = ET.fromstring("<root>" + markdown_html(source, BASE_URL) + "</root>")
+        self.assertEqual(4, len(legacy.findall("./ul/li")))
+        self.assertIsNone(legacy.find("./ul/li/ul"))
+
+    def test_translation_preserves_nested_lists_with_or_without_commentary(self) -> None:
+        markdown = (
+            "## Перевод автора\n\n"
+            "- **Материальные дары** рассматриваются как:\n"
+            "  - Форма служения\n"
+            "  - Выражение веры\n"
+            "  - Инструмент духовного роста\n\n"
+            "## Комментарий к обращению\n\nПословный анализ отдельно\n"
+        )
+        rendered = author_translation_html(markdown, BASE_URL)
+        tree = ET.fromstring("<root>" + rendered + "</root>")
+        self.assertEqual(1, len(tree.findall("./ul/li")))
+        self.assertEqual(["Форма служения", "Выражение веры", "Инструмент духовного роста"],
+                         [item.text for item in tree.findall("./ul/li/ul/li")])
+        self.assertNotIn("Пословный анализ отдельно", rendered)
+
+        without_commentary = author_translation_html(markdown.replace("## Комментарий к обращению", "## Статус"), BASE_URL)
+        self.assertEqual(rendered, without_commentary)
+
     def test_empty_quote_separator_is_not_visible_text(self) -> None:
         rendered = markdown_html("> Послание\n>\n> Приписка\n\n1. Действие\n```text\n2. Исходная строка\n```\n# Конец", BASE_URL)
         self.assertIn('<blockquote>Послание</blockquote>\n<blockquote>Приписка</blockquote>', rendered)
@@ -553,10 +746,12 @@ class StaticBuildTest(unittest.TestCase):
 
     def test_word_by_word_translation_marks_labels_without_changing_text(self) -> None:
         markdown = (ROOT / "docs/transcriptions/T00041/part_1.md").read_text(encoding="utf-8")
-        section = re.search(r'^## Итоговый перевод\s*\n(.*)', markdown, re.S | re.M).group(1).strip()
+        section = author_translation_markdown(markdown)
         rendered = author_translation_html(markdown, BASE_URL)
         unmarked = re.sub(r'<mark class="transcription-term">(.*?)</mark>', r'\1', rendered, flags=re.S)
         self.assertEqual(markdown_html(section, BASE_URL), unmarked)
+        self.assertNotIn("Предполагаемый тип транскрипции", rendered)
+        self.assertNotIn("<h3>Автор:</h3>", rendered)
         for label in ("Еффа!", "Едро! Фиктим. Ишма!", "Шуея-нарратив, егоистед или Ещуа!", "Дерувинтриум!"):
             self.assertIn(f'<mark class="transcription-term">{label}</mark>', rendered)
         self.assertNotIn('<mark class="transcription-term">Я — факт!', rendered)
@@ -579,7 +774,7 @@ class StaticBuildTest(unittest.TestCase):
         ):
             relative = "docs/transcriptions/T00035/" + name
             markdown = (ROOT / relative).read_text(encoding="utf-8")
-            source = re.search(r'^## Перевод автора\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S).group(1).strip()
+            source = author_translation_markdown(markdown)
 
             rendered = author_translation_html(markdown, BASE_URL)
             unmarked = re.sub(r'<mark class="transcription-term">(.*?)</mark>', r'\1', rendered, flags=re.S)
@@ -645,7 +840,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
 
         purposes = json.loads((ROOT / "site" / "public_html" / "data" / "transcription-purposes.json").read_text(encoding="utf-8"))
-        self.assertEqual(35, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
+        self.assertEqual(38, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00033/part_1.md"])
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00034/part_1.md"])
         for relative in ("docs/transcriptions/T00032/part_3.md", "docs/transcriptions/T00045/part_2.md", "docs/transcriptions/T00047/part_1.md"):
@@ -686,7 +881,7 @@ class StaticBuildTest(unittest.TestCase):
             page = page_path.read_text(encoding="utf-8")
             fields = re.findall(r'<textarea\b(?=[^>]*\breadonly\b)[^>]*>.*?</textarea>(.*?)(?=<textarea|$)', page, re.S)
             for after_field in fields:
-                self.assertRegex(after_field, r'^\s*<p class="analysis-mode">Разбор транскрипции: (?:авто|(?:100|[1-9]?\d)%)</p>')
+                self.assertRegex(after_field, r'^\s*<p class="analysis-mode">Разбор транскрипции: (?:авто|не требуется|(?:100|[1-9]?\d)%)</p>')
         relative = "docs/transcriptions/T00027/part_8.md"
         page = (OUTPUT / "transcriptions/T00027/part_8/index.html").read_text(encoding="utf-8")
         self.assertIn("Разбор транскрипции: 100%", page)
@@ -695,6 +890,14 @@ class StaticBuildTest(unittest.TestCase):
         self.assertEqual("manual", entry["analysisMode"])
         template = (ROOT / "site/public_html/index.html").read_text(encoding="utf-8")
         self.assertIn(f'data-analysis-source="{relative}">Разбор транскрипции: 100%</p>', template)
+
+    def test_not_required_analysis_label_keeps_explicit_author_choice(self) -> None:
+        markdown = "разбор транскрипции: не требуется\n\n# Благодарение\n\nПометки автора: перевод не нужен."
+        self.assertEqual("not_required", analysis_mode(markdown))
+        self.assertEqual("Разбор транскрипции: не требуется", analysis_label("not_required"))
+        rendered = markdown_html(markdown, "https://example.com/")
+        self.assertNotIn("разбор транскрипции:", rendered)
+        self.assertIn("Пометки автора: перевод не нужен.", rendered)
 
     def test_translation_download_archive_preserves_source_files(self) -> None:
         page = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
@@ -727,106 +930,99 @@ class StaticBuildTest(unittest.TestCase):
         self.assertTrue(abbreviations_public.startswith(b"\xef\xbb\xbf"))
         self.assertEqual(abbreviations_source.removeprefix(b"\xef\xbb\xbf"), abbreviations_public[3:])
 
-    def test_dictionary_is_merged_and_built_into_translation_page(self) -> None:
+    def test_dictionaries_have_primary_pages_and_translation_only_links(self) -> None:
+        translation = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
+        container = next(block for block in sos_item_blocks(translation) if 'id="translation-method-content"' in block)
+        self.assertNotIn('<table class="dictionary-table', container)
+        for route in ("/dictionaries/words/", "/dictionaries/suffixes-and-particles/", "/articles/channel-abbreviations/"):
+            self.assertIn(f'<a class="help-card" href="{route}">', container)
+            page = (OUTPUT / route.lstrip("/") / "index.html").read_text(encoding="utf-8")
+            self.assertIn('<table class="dictionary-table', page)
+            self.assertIn('href="/translation/"', page)
+            self.assertEqual(1, page.count('<table class="dictionary-table'))
+            ids = re.findall(r'(?<![\w-])id="([^"]+)"', page)
+            self.assertEqual(len(ids), len(set(ids)))
+            self.assertTrue(all(identifier.isascii() for identifier in ids))
+        for identifier in ("channel-dictionary-title", "channel-dictionary-content", "channel-dictionary-methodology",
+                           "channel-suffix-dictionary-title", "channel-suffix-dictionary-content", "channel-suffix-methodology",
+                           "channel-abbreviations-title", "channel-abbreviations-content"):
+            self.assertNotIn(f'id="{identifier}"', translation)
+        self.assertIn('id="translation-phonetics-content"', container)
+        self.assertEqual(1, container.count('class="sos-item dictionary-section"'))
+        self.assertNotRegex(re.match(r'<details\b([^>]*)>', container).group(1), r'\bopen(?:\s|=|$)')
+        notice = translation.index("Если чат не открылся с отправленным промптом")
+        heading = translation.index('id="translation-method-title"')
+        self.assertLess(notice, translation.index('<hr', notice))
+        self.assertLess(translation.index('<hr', notice), heading)
+
+    def test_words_and_methodology_are_complete_on_primary_page_without_javascript(self) -> None:
+        page = (OUTPUT / "dictionaries/words/index.html").read_text(encoding="utf-8")
         markdown = (ROOT / "docs/dictionary/combined.md").read_text(encoding="utf-8")
         table = (OUTPUT / "data/dictionary.html").read_text(encoding="utf-8")
-        page = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
         embedded_table = re.sub(
             r'href="https://github\.com/hayOfLife/glossalia-explorer/blob/main/(docs/transcriptions/[^\"]+\.md)"',
-            lambda match: f'href="{transcription_route(ROOT / match.group(1))}"',
-            table,
+            lambda match: f'href="{transcription_route(ROOT / match.group(1))}"', table,
         )
-        self.assertTrue(embedded_table in page, "Встроенный словарь с локальными ссылками отсутствует на странице перевода")
+        self.assertIn(embedded_table, page)
         self.assertEqual(len(re.findall(r"^## ", markdown, re.M)), table.count('<th scope="row"'))
-        for term in ("Веритоне", "Едро", "Турефине"):
+        for term in ("Веритоне", "Едро", "Турефине", "НИТЬ «СПАСИ!»", "СТАТУС НАКОПЛЕННОЙ БАЗЫ"):
             self.assertIn(term, table)
-        self.assertIn("(альтернатива)", table)
-        self.assertIn("ПОВТОРЯЮЩИЕСЯ", (ROOT / "docs/dictionary/slovar_kanala.md").read_text(encoding="utf-8"))
-        self.assertIn("НИТЬ «СПАСИ!»", table)
-        self.assertIn("СТАТУС НАКОПЛЕННОЙ БАЗЫ", table)
-        self.assertIn("полностью не раскрытых слов НЕТ", table)
-        self.assertLess(page.index('id="channel-dictionary-title"'), page.index('id="channel-dictionary-content"'))
-
-    def test_dictionary_methodology_is_available_in_collapsible_block_without_javascript(self) -> None:
         relative = "docs/dictionary/methodology.md"
-        markdown = (ROOT / relative).read_text(encoding="utf-8")
-        expected = markdown_html(markdown, SOURCE_URL + relative)
-        expected = expected.replace('<h2>', '<h4>').replace('</h2>', '</h4>').replace('<h3>', '<h5>').replace('</h3>', '</h5>')
-        page = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
+        expected = translation_material_html((ROOT / relative).read_text(encoding="utf-8"), SOURCE_URL + relative)
         fragment = (OUTPUT / "data/dictionary-methodology.html").read_text(encoding="utf-8")
         self.assertEqual(expected, fragment)
-        self.assertIn('<h4>Метод составления словаря слов</h4>', fragment)
-        self.assertIn('<div class="help-page dictionary-methodology" id="channel-dictionary-methodology">' + expected + '</div>', page)
-        notice = page.index("Если чат не открылся с отправленным промптом")
-        separator = re.search(r'<hr\b[^>]*>', page[notice:])
-        heading = re.search(r'<h3\b[^>]*>Промпт для ИИ \(тот-же что и в архиве выше\)</h3>', page)
-        self.assertIsNotNone(separator)
-        self.assertIsNotNone(heading)
-        self.assertLess(notice + separator.start(), heading.start())
-        self.assertLess(heading.start(), page.index('id="channel-dictionary-methodology"'))
-        self.assertLess(page.index('id="channel-dictionary-title"'), page.index(expected))
-        self.assertLess(page.index(expected), page.index('id="channel-dictionary-content"'))
-        container = next(block for block in sos_item_blocks(page) if 'id="translation-method-content"' in block)
-        opening = re.match(r'<details\b([^>]*)>', container)
-        self.assertNotRegex(opening.group(1), r'\bopen(?:\s|=|$)')
-        for identifier in ("translation-method-title", "translation-prompt-content", "channel-dictionary-methodology", "channel-dictionary-content",
-                           "channel-suffix-methodology", "channel-suffix-dictionary-content", "translation-phonetics-content", "channel-abbreviations-content"):
-            self.assertIn(f'id="{identifier}"', container)
-        self.assertEqual(4, container.count('class="sos-item dictionary-section"'))
-        for title in ("channel-dictionary-title", "channel-suffix-dictionary-title", "translation-phonetics-title", "channel-abbreviations-title"):
-            self.assertRegex(container, rf'<details class="sos-item dictionary-section">\s*<summary id="{title}"')
-        self.assertNotIn('class="help-card"', container)
+        self.assertIn(expected, page)
+        self.assertLess(page.index('id="dictionary-words-title"'), page.index('id="dictionary-words-methodology"'))
+        self.assertLess(page.index(expected), page.index('id="dictionary-words-content"'))
         self.assertEqual(6, fragment.count('<li value="'))
-        overview = (OUTPUT / "for-ai/index.md").read_text(encoding="utf-8")
-        self.assertNotIn(markdown.split("\n", 1)[1].strip(), overview)
         manifest = json.loads((OUTPUT / "content-manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(digest_file(ROOT / relative), manifest["sources"][relative])
 
-    def test_suffix_section_and_document_cards_follow_word_dictionary(self) -> None:
+    def test_suffix_primary_page_and_translation_document_cards(self) -> None:
         method_relative = "docs/dictionary/suffix-methodology.md"
         table_relative = "docs/dictionary/suffixes.md"
         method_source = (ROOT / method_relative).read_text(encoding="utf-8")
         table_source = (ROOT / table_relative).read_text(encoding="utf-8")
-        method = markdown_html(method_source, SOURCE_URL + method_relative)
-        method = method.replace('<h2>', '<h4>').replace('</h2>', '</h4>').replace('<h3>', '<h5>').replace('</h3>', '</h5>')
-        method = method.replace(f'href="{SOURCE_URL}docs/dictionary/suffixes.md"', 'href="#channel-suffix-dictionary-title"')
-        table = suffix_dictionary_html(table_source, SOURCE_URL + table_relative)
-        page = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
+        method = translation_material_html(method_source, SOURCE_URL + method_relative)
+        method = method.replace(f'href="{SOURCE_URL}docs/dictionary/suffixes.md"', 'href="/dictionaries/suffixes-and-particles/"')
+        table = suffix_dictionary_html(table_source, SOURCE_URL + table_relative).replace(f'href="{BASE_URL}/', 'href="/')
+        page = (OUTPUT / "dictionaries/suffixes-and-particles/index.html").read_text(encoding="utf-8")
         self.assertIn(method, page)
-        self.assertIn('<h4>Метод Составления словаря суффиксов и частиц</h4>', page)
-        self.assertIn(table, page)
+        table_in_page = PUBLISHED_LINK.sub(lambda match: f'href="{transcription_route(ROOT / match.group(1))}"', table)
+        self.assertIn(table_in_page, page)
         self.assertEqual(method, (OUTPUT / "data/suffix-methodology.html").read_text(encoding="utf-8"))
         self.assertEqual(table, (OUTPUT / "data/suffix-dictionary.html").read_text(encoding="utf-8"))
-        self.assertEqual(8, table.count('scope="row"'))
-        self.assertEqual(4, table.count('scope="col"'))
-        self.assertIn("Таблица выверена на накопленной лексике канала", table)
-        self.assertLess(page.index('id="channel-dictionary-content"'), page.index('id="channel-suffix-dictionary-title"'))
-        self.assertLess(page.index('id="channel-suffix-dictionary-title"'), page.index('id="channel-suffix-methodology"'))
-        self.assertLess(page.index('id="channel-suffix-dictionary-title"'), page.index('id="channel-suffix-dictionary-content"'))
-        cards = re.findall(r'<a class="help-card" href="([^"]+)">\s*<h3>(.*?)</h3>', page, re.S)
-        self.assertEqual([
-            ("/articles/latin-greek-process-morphology/", "Родственные процессуальные системы латинского и греческого слоёв молитвы"),
-            ("/articles/transcription-notes/", "Транскрипционные пометки"),
-            ("/articles/hebrew-russian-sounds/", "Звуки которых нет в иврите но есть в Русском языке"),
-            ("/articles/author-term-definitions/", "Определения терминов (и религиозных), в понимании автора"),
-            ("/articles/transcription-symbol-systems/", "Старая и новая система знаков дополнительного обозначения смысла в транскрипциях"),
-            ("/articles/transcription-symbols-print/", "Таблица знаков для транскрипции для печати"),
-        ], [(route, re.sub(r'\s+', ' ', html.unescape(re.sub(r'<[^>]+>', ' ', title))).strip()) for route, title in cards])
-        self.assertLess(page.index('id="channel-suffix-dictionary-content"'), page.index('<a class="help-card" href="' + cards[0][0] + '"'))
-        self.assertNotIn('data-transcription-chat="for-ai"', page)
-        for route, _ in cards:
-            article = (OUTPUT / route.lstrip("/") / "index.html").read_text(encoding="utf-8")
-            self.assertRegex(article, r'<a class="help-back" href="/translation/">')
         rows = [line for line in table_source.splitlines() if line.startswith('|')][2:]
-        for row in rows:
-            for label, value in zip(("Окончание", "Форма-источник", "Значение", "Слова"), row.strip('|').split('|')):
-                self.assertIn(f'data-label="{label}">{inline(value.strip(), SOURCE_URL + table_relative)}<', table)
-        overview = (OUTPUT / "for-ai/index.md").read_text(encoding="utf-8")
-        body = re.sub(r'^(#{2,5}) ', r'#\1 ', method_source.split("\n", 1)[1].strip(), flags=re.M)
-        self.assertNotIn(body, overview)
-        manifest = json.loads((OUTPUT / "content-manifest.json").read_text(encoding="utf-8"))
-        for relative in (method_relative, table_relative):
-            self.assertEqual(digest_file(ROOT / relative), manifest["sources"][relative])
+        self.assertEqual(len(rows), table.count('scope="row"'))
+        self.assertEqual(4, table.count('scope="col"'))
+        self.assertLess(page.index('id="dictionary-suffixes-methodology"'), page.index('id="dictionary-suffixes-content"'))
+        translation = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
+        cards = re.findall(r'<a class="help-card" href="([^"]+)">\s*<h3>(.*?)</h3>', translation, re.S)
+        document_routes = (
+            "/articles/latin-greek-process-morphology/", "/articles/transcription-notes/", "/articles/hebrew-russian-sounds/",
+            "/articles/author-term-definitions/", "/articles/transcription-symbol-systems/", "/articles/transcription-symbols-print/",
+        )
+        self.assertEqual(list(document_routes), [route for route, _ in cards if route in document_routes])
+        for route in document_routes:
+            article = (OUTPUT / route.lstrip("/") / "index.html").read_text(encoding="utf-8")
+            self.assertIn('<a class="help-back" href="/translation/">', article)
+        self.assertNotIn('data-transcription-chat="for-ai"', translation)
+
+    def test_entry_links_and_particle_contexts_share_one_dictionary(self) -> None:
+        words = (ROOT / "docs/dictionary/combined.md").read_text(encoding="utf-8")
+        suffix_method = (ROOT / "docs/dictionary/suffix-methodology.md").read_text(encoding="utf-8")
+        abbreviations = (ROOT / "docs/dictionary/abbreviations-source.txt").read_text(encoding="utf-8")
+        for writing in ("Е!", "и на!", "На!", "Ла!", "Ма", "-фи!", "-фа", "фи"):
+            self.assertNotRegex(words, re.compile(rf'^## {re.escape(writing)}$', re.M), writing)
+        for reading in ("совершённый факт, уже факт", "на подходе, грядёт, в состоянии приближения", "Уста мои", "СТРАХ ГОСПОДЕНЬ"):
+            self.assertIn(reading, abbreviations)
+        self.assertNotIn("| Частица |", suffix_method)
+        sample = '| запись в транскрипции | пример вхождения в транскрипцию | полное слово | заметка | язык |\n| --- | --- | --- | --- | --- |\n| фи | Сион-фи! | Приближение | [Словарь](https://glossalia-explorer.tuqo.ru/dictionaries/words/) | |'
+        rendered = abbreviation_dictionary_html(sample)
+        self.assertIn('<a href="https://glossalia-explorer.tuqo.ru/dictionaries/words/">Словарь</a>', rendered)
+        self.assertIn(f'id="{dictionary_entry_id("abbreviation", "фи")}"', rendered)
+        self.assertEqual(dictionary_entry_id("word", "Едро"), dictionary_entry_id("word", "едро"))
+        self.assertRegex(dictionary_entry_id("word", "Едро"), r'^word-[a-f0-9]{16}$')
 
     def test_translation_prompt_and_phonetics_match_archive_without_javascript(self) -> None:
         page = (OUTPUT / "translation/index.html").read_text(encoding="utf-8")
@@ -867,6 +1063,7 @@ class StaticBuildTest(unittest.TestCase):
         source = (ROOT / relative).read_text(encoding="utf-8")
         context = (ROOT / "docs/transcriptions/T00040/index.md").read_text(encoding="utf-8")
         original = original_transcription(context)
+        displayed = transcription_section(source, "Текст для копирования") or original
         self.assertIn("Ендерванториум шафектум!", original)
         self.assertIn("Едро! Сефиктим! Невориблеториум! Набожность и суть.", original)
         page = (OUTPUT / "termination-of-pregnancy/index.html").read_text(encoding="utf-8")
@@ -874,7 +1071,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertEqual(1, len(blocks))
         field = re.search(r'<textarea\b[^>]*id="termination-text-1"[^>]*>(.*?)</textarea>', blocks[0], re.S)
         self.assertIsNotNone(field, "Нет поля для копирования новой транскрипции")
-        self.assertEqual(original, html.unescape(field.group(1)))
+        self.assertEqual(displayed, html.unescape(field.group(1)))
         parser = PageParser()
         parser.feed(blocks[0])
         self.assertEqual(["T00040-part_1"], parser.reactions)
@@ -887,7 +1084,7 @@ class StaticBuildTest(unittest.TestCase):
         matching = [entry for entry in entries if entry["sourceUrl"].endswith("/" + relative)]
         self.assertEqual(1, len(matching))
         self.assertEqual(original, matching[0]["bodyText"])
-        self.assertEqual(original, matching[0]["copyText"])
+        self.assertEqual(displayed, matching[0]["copyText"])
         self.assertEqual("2026-09-30", matching[0]["calendarDate"])
         self.assertEqual("manual", matching[0]["analysisMode"])
         self.assertNotIn("appearanceTime", matching[0])
@@ -916,6 +1113,22 @@ class StaticBuildTest(unittest.TestCase):
             self.assertIn(f'<th scope="col">{label}</th>', table)
         self.assertIn(markdown_html(source.strip(), BASE_URL), table)
         self.assertIn('<summary>Разборы и источники</summary>', table)
+
+    def test_dictionary_source_readings_are_visible_with_attribution(self) -> None:
+        source = ('**Транскрипция / форма разбора:** Ектур!\n'
+                  '**Предложенный перевод источника:** «я окружу / я увенчаю»\n'
+                  '**Статус:** Гипотеза источника, независимая проверка не выполнена\n')
+        columns = dictionary_fields('Другой заголовок', source)
+        self.assertEqual(['Ектур!'], columns[1])
+        self.assertEqual([], columns[3])
+        reading = 'Чтение источника (независимо не проверено): «я окружу / я увенчаю»'
+        self.assertEqual([reading], columns[4])
+        table = dictionary_html('# Словарь\n\n## Ектур\n\n' + source, SOURCE_URL)
+        summary = table.split('<summary>Разборы и источники</summary>', 1)[0]
+        self.assertIn(f'data-label="трактовка автора"><p>{reading}</p>', summary)
+        self.assertIn('data-label="транскрипция"><p>Ектур!</p>', summary)
+        mixed = '**Трактовка автора:** прежнее чтение\n' + source
+        self.assertEqual(['прежнее чтение', reading], dictionary_fields('Ектур', mixed)[4])
 
     def test_dictionary_language_reads_named_candidates_without_guessing(self) -> None:
         source = '**Язык:** иврит (гипотеза)\n**Языки:** греческий (гипотеза)\n'
@@ -976,14 +1189,17 @@ class StaticBuildTest(unittest.TestCase):
         published = {entry["sourceUrl"].split("/blob/main/", 1)[1] for entry in entries
                      if entry.get("published") and entry.get("type") in {"analysis", "manual_transcription"}}
         published.update(copy_texts(source))
-        self.assertEqual(len(ROUTES) + len(published), len(pages))
+        redirect_pages = {OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html"
+                          for relative in TRANSCRIPTION_REDIRECTS}
+        self.assertEqual(len(ROUTES) + len(published) + len(redirect_pages), len(pages))
         self.assertEqual(len(ROUTES), len([page for page in pages if "transcriptions" not in page.parts]))
 
         for page in pages:
             with self.subTest(page=page):
                 parser = PageParser()
                 parser.feed(page.read_text(encoding="utf-8"))
-                self.assertEqual(1, parser.panels)
+                if page not in redirect_pages:
+                    self.assertEqual(1, parser.panels)
                 for link in parser.links:
                     parsed = urlsplit(link)
                     if parsed.scheme or link.startswith("#"):
@@ -1017,29 +1233,124 @@ class StaticBuildTest(unittest.TestCase):
         purposes = json.loads((data_dir / "transcription-purposes.json").read_text(encoding="utf-8"))
         translations = json.loads((data_dir / "author-translations.json").read_text(encoding="utf-8"))
         expected = [entry for entry in entries if entry.get("published") and entry["type"] in {"manual_transcription", "analysis"}]
-        self.assertEqual({entry["sourceUrl"] for entry in expected}, set(blocks))
-        for entry in expected:
-            with self.subTest(entry=entry["externalKey"]):
-                relative = entry["sourceUrl"].split("/blob/main/", 1)[1]
-                block = blocks[entry["sourceUrl"]]
+        by_source = {entry["sourceUrl"]: entry for entry in expected}
+        source = (ROOT / "site/public_html/index.html").read_text(encoding="utf-8")
+        published = set(by_source) | {SOURCE_URL + relative for relative in copy_texts(source)}
+        self.assertEqual(published, set(blocks))
+        fields = {"type", "title", "group", "calendarDate", "appearanceTime", "dateNote", "sourceUrl",
+                  "reactionKey", "analysisMode", "acquisitionType"}
+        for source_url in published:
+            with self.subTest(source_url=source_url):
+                relative = source_url.removeprefix(SOURCE_URL)
+                block = blocks[source_url]
+                entry = block["entry"]
+                self.assertTrue(fields.issubset(entry))
+                self.assertEqual(source_url, entry["sourceUrl"])
+                self.assertEqual(reaction_key(relative, by_source.get(source_url)), entry["reactionKey"])
+                self.assertEqual(block["acquisitionType"], entry["acquisitionType"])
+                self.assertRegex(entry["appearanceTime"], r'^(?:|(?:[01]\d|2[0-3]):[0-5]\d)$')
                 page = OUTPUT / block["pageUrl"].lstrip("/") / "index.html"
                 parser = PageParser()
                 parser.feed(page.read_text(encoding="utf-8"))
                 self.assertEqual(parser.textarea, block["copyText"])
                 self.assertEqual(purposes[relative], block["purposeHtml"])
+                self.assertIsInstance(block["purposeText"], str)
+                self.assertNotRegex(block["purposeText"], r'<[^>]+>')
                 self.assertEqual(translations[relative], block["translationHtml"])
+                markdown = (ROOT / relative).read_text(encoding="utf-8")
+                self.assertEqual(original_transcription(markdown) or block["copyText"] or entry.get("bodyText", ""), block["originalText"])
+                for name, value in by_source.get(source_url, {}).items():
+                    preserved = value or "" if name in {"calendarDate", "appearanceTime"} else value
+                    self.assertEqual(preserved, entry[name], name)
 
         help_entry = next(entry for entry in expected if entry["externalKey"] == "T00042-part_1")
         help_block = blocks[help_entry["sourceUrl"]]
         self.assertEqual(help_entry["copyText"], help_block["copyText"])
         self.assertNotEqual(help_entry["bodyText"], help_block["copyText"])
 
+    def test_calendar_metadata_uses_received_field_and_keeps_unknowns(self) -> None:
+        relative = "docs/transcriptions/T00032/part_1.md"
+        panel = ('<section class="content-panel" id="situation-1" data-title="Иные языки / Глоссалия">'
+                 '<details class="sos-item"><textarea>Исходная строка</textarea>'
+                 f'<a href="{SOURCE_URL}{relative}">Подробнее</a></details></section>')
+        markdown = ("# §T00014 — **Первый скрипт**\n"
+                    "- Дата и время получения транскрипции: 24.09.2026; точное время неизвестно.\n"
+                    "- Дата и время получения уточнённого разбора: 27.09.2026, 18:00.\n")
+        entry = calendar_entry(relative, markdown, panel)
+        self.assertEqual("2026-09-24", entry["calendarDate"])
+        self.assertEqual("", entry["appearanceTime"])
+        self.assertEqual("Первый скрипт", entry["title"])
+        self.assertEqual("Иные языки / Глоссалия", entry["group"])
+        self.assertEqual("T00032-part_1", entry["reactionKey"])
+        for received, expected_date, expected_time in [
+            ("учётная дата 23.09.2026 (по указанию автора от 28.09.2026); фактическое время неизвестно", "2026-09-23", ""),
+            ("07.10.2026, 23:30 МСК — время записи", "2026-10-07", "23:30"),
+            ("07.10.2026, 00:00", "2026-10-07", "00:00"),
+            ("неизвестны; разбор предоставлен 08.10.2026, 12:00", "", ""),
+            ("Дата в разборе: 29.09.2026", "", ""),
+            ("31.09.2026, 23:30", "", ""),
+        ]:
+            with self.subTest(received=received):
+                entry = calendar_entry(relative, "- Дата и время получения транскрипции: " + received, panel)
+                self.assertEqual(expected_date, entry["calendarDate"])
+                self.assertEqual(expected_time, entry["appearanceTime"])
+        unknown = calendar_entry(relative, "# Скрипт\n- Дата разбора: 08.10.2026, 12:00", panel)
+        self.assertEqual("", unknown["calendarDate"])
+        self.assertEqual("", unknown["appearanceTime"])
+        self.assertEqual("", unknown["dateNote"])
+
+    def test_calendar_covers_inline_sources_with_received_metadata(self) -> None:
+        blocks = json.loads((OUTPUT / "data/calendar-transcriptions.json").read_text(encoding="utf-8"))
+        for number in range(1, 7):
+            source_url = SOURCE_URL + f"docs/transcriptions/T00027/part_{number}.md"
+            entry = blocks[source_url]["entry"]
+            self.assertEqual("2026-09-23", entry["calendarDate"])
+            self.assertEqual("", entry["appearanceTime"])
+            self.assertIn("учётная", entry["dateNote"])
+            self.assertIn("фактические дата и время первого получения неизвестны", entry["dateNote"])
+            self.assertEqual("Выход из оккультизма в христианство", entry["group"])
+        latest = blocks[SOURCE_URL + "docs/transcriptions/T00027/part_10.md"]["entry"]
+        self.assertEqual("2026-10-07", latest["calendarDate"])
+        self.assertEqual("23:30", latest["appearanceTime"])
+        self.assertEqual("80%", latest["analysisMode"])
+        revised = blocks[SOURCE_URL + "docs/transcriptions/T00032/part_1.md"]["entry"]
+        self.assertEqual("2026-09-24", revised["calendarDate"])
+        self.assertEqual("", revised["appearanceTime"])
+        self.assertEqual("Иные языки / Глоссалия", revised["group"])
+        self.assertEqual("T00032-part_1", revised["reactionKey"])
+
+    def test_calendar_search_uses_complete_original_without_translation(self) -> None:
+        blocks = json.loads((OUTPUT / "data/calendar-transcriptions.json").read_text(encoding="utf-8"))
+        instruction = blocks[SOURCE_URL + "docs/transcriptions/T00044/part_1.md"]
+        self.assertIn("согласованности", instruction["originalText"])
+        annotated = blocks[SOURCE_URL + "docs/transcriptions/T00045/part_1.md"]
+        self.assertIn("целенаправленое", annotated["originalText"])
+        self.assertNotIn("целенаправленое", annotated["copyText"])
+        self.assertNotIn("<table", annotated["originalText"])
+        self.assertNotIn("## Итоговый перевод", annotated["originalText"])
+        markdown = ("## Необработанная транскрипция\n\n```text\nТолько исходник\n```\n\n"
+                    "## Итоговый перевод\n\nПеревод, которого нет в исходнике\n")
+        self.assertEqual("Только исходник", original_transcription(markdown))
+
+    def test_calendar_purpose_search_uses_only_purpose(self) -> None:
+        relative = "docs/transcriptions/T00050/part_1.md"
+        blocks = json.loads((OUTPUT / "data/calendar-transcriptions.json").read_text(encoding="utf-8"))
+        text = blocks[SOURCE_URL + relative]["purposeText"]
+        self.assertEqual("просьба в Богу защитить оз зла при работе с людьми, и благодарение Бога за исправления грешного прошлого.", text)
+        self.assertNotIn("Ру-ви", text)
+        self.assertNotIn("Архангел", text)
+
     def test_sitemap_contains_each_page(self) -> None:
         sitemap = (OUTPUT / "sitemap.xml").read_text(encoding="utf-8")
+        redirect_pages = {OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html"
+                          for relative in TRANSCRIPTION_REDIRECTS}
         for page in OUTPUT.rglob("index.html"):
             route = "/" + str(page.parent.relative_to(OUTPUT)).replace("\\", "/").strip("/")
             route = "/" if route == "/." else route.rstrip("/") + "/"
-            self.assertIn(f"<loc>{BASE_URL}{route}</loc>", sitemap)
+            if page in redirect_pages:
+                self.assertNotIn(f"<loc>{BASE_URL}{route}</loc>", sitemap)
+            else:
+                self.assertIn(f"<loc>{BASE_URL}{route}</loc>", sitemap)
 
     def test_yandex_verification_is_copied_to_site_root(self) -> None:
         filename = "yandex_1195bbe61e0c2002.html"
@@ -1054,18 +1365,23 @@ class StaticBuildTest(unittest.TestCase):
         transcript = (OUTPUT / transcription_route(ROOT / relative).lstrip("/") / "index.html").read_text(encoding="utf-8")
         earlier_transcript = (OUTPUT / transcription_route(ROOT / earlier_relative).lstrip("/") / "index.html").read_text(encoding="utf-8")
         purpose = "прямое обращение канала к нейронке"
+        markdown = (ROOT / relative).read_text(encoding="utf-8")
+        displayed = transcription_section(markdown, "Текст для копирования")
+        fields = [html.unescape(value) for value in re.findall(r'<textarea[^>]*>(.*?)</textarea>', section, re.S)]
 
         self.assertIn("Все транскрипции здесь посвящены нейросетям", section)
         self.assertIn(purpose, section)
         self.assertIn(purpose, transcript)
-        self.assertIn("майлТу(отправка на почту", section)
+        self.assertIn(displayed, fields)
+        self.assertNotIn("майлТу(отправка на почту", displayed)
+        self.assertIn("майлТу(отправка на почту", original_transcription(markdown))
         self.assertIn("майлТу(отправка на почту", transcript)
         self.assertIn("Прямой телец", section)
         self.assertIn("Прямой телец", transcript)
         self.assertLess(section.index("25.09.2026 — О настроенном диалоге"), section.index("28.09.2026 — Послание о нейросети"))
-        self.assertIn("Ру-ви! Хи-де-ро! У-ще!", section)
+        self.assertIn("Ру⟐ви! Хи⟐де⟐ро! У⟐ще!", section)
         self.assertLess(section.index("28.09.2026 — Послание о нейросети"), section.index("29.09.2026 — Обращение к нейронке"))
-        self.assertIn("Элохим! Ру-ви-де!", section)
+        self.assertIn("Элохим! Ру⟐ви⟐де!", section)
         self.assertIn("Элохим! Ру-ви-де!", earlier_transcript)
         self.assertIn("Дух — приди — знай!", section)
         self.assertIn("пересказать Творение (Бытие 1) как молитву о рождении", earlier_transcript)

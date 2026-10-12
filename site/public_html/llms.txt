@@ -10,14 +10,19 @@ Relative links within verbatim Markdown copies refer to the original repository 
 
 - [For AI (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/index.md): Entry point with dated source cards for texts addressed to AI and links to public materials.
 - [For AI (HTML)](https://glossalia-explorer.tuqo.ru/for-ai/): Browser version of the same section.
-- [Translation method (HTML)](https://glossalia-explorer.tuqo.ru/translation/): Translation instructions, two dictionaries with their methodologies, and related document cards.
-- [Proposed dictionary (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/dictionary.md): Candidate forms and meanings supplied by the author.
-- [Dictionary methodology (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/dictionary-methodology.md): The author's supplied method for finding and classifying candidate readings.
-- [Suffix and particle methodology (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/suffix-methodology.md): Supplied context and confidence notes for the second dictionary section.
-- [Suffix dictionary (Markdown)](https://glossalia-explorer.tuqo.ru/for-ai/suffixes.md): The original four-column table of suffixes and examples.
+- [Translation prompt (HTML)](https://glossalia-explorer.tuqo.ru/translation/): Translation instructions, links to the current dictionaries, and related document cards.
+- [Proposed word dictionary (HTML)](https://glossalia-explorer.tuqo.ru/dictionaries/words/): Primary page for words and proposed meanings, with the methodology above the dictionary.
+- [Word dictionary (Markdown)](https://glossalia-explorer.tuqo.ru/dictionaries/words.md): Canonical word entries and their sources.
+- [Word dictionary methodology (Markdown)](https://glossalia-explorer.tuqo.ru/dictionaries/methodology.md): The author's supplied method for finding and classifying candidate readings.
+- [Suffix and particle dictionary (HTML)](https://glossalia-explorer.tuqo.ru/dictionaries/suffixes-and-particles/): Primary page for suffixes and particles, with their methodology and context.
+- [Suffix and particle dictionary (Markdown)](https://glossalia-explorer.tuqo.ru/dictionaries/suffixes.md): Canonical suffix and particle entries and examples.
+- [Suffix and particle methodology (Markdown)](https://glossalia-explorer.tuqo.ru/dictionaries/suffix-methodology.md): Supplied method and confidence notes.
+- [Channel abbreviations (HTML)](https://glossalia-explorer.tuqo.ru/articles/channel-abbreviations/): Primary page for abbreviations and full short words, retaining their contexts and reading statuses.
+- [Channel abbreviations (TXT table)](https://glossalia-explorer.tuqo.ru/data/dictionary_of_abbreviations.txt): Canonical abbreviation table included in the prompt archive.
 
 ## Public content
 
+- [All transcription analyses](https://glossalia-explorer.tuqo.ru/transcription-analyses/): Grouped links to individual analyses and distinct historical versions; labels use receipt dates or source group and part.
 - [Home](https://glossalia-explorer.tuqo.ru/): Site overview and navigation.
 - [Transcription calendar](https://glossalia-explorer.tuqo.ru/calendar/): Dated transcription cards and their source context.
 - [Situations](https://glossalia-explorer.tuqo.ru/situations/): Thematic pages with transcriptions and accompanying interpretations.

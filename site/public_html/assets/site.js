@@ -6,7 +6,7 @@
   const sectionPaths = new Set([
     "/", "/news/", "/calendar/", "/situations/", "/situations/glossolalia/",
     "/sos/", "/situations/help/", "/termination-of-pregnancy/", "/situations/agnosticism/",
-    "/situations/life-partner/", "/situations/mental-health/", "/situations/divine-guidance/", "/translation/", "/help/", "/help/glossolalia/",
+    "/situations/life-partner/", "/situations/mental-health/", "/situations/divine-guidance/", "/situations/occultism-support/", "/situations/temple-offering/", "/translation/", "/help/", "/help/glossolalia/",
     "/help/purpose/", "/help/churches/", "/help/theories/", "/help/library/", "/help/ai/", "/help/author/",
     "/articles/why-god-is-lord/", "/articles/glossolalia-hypothesis/",
     "/articles/lurianic-kabbalah-soul-integrity/",
@@ -17,14 +17,28 @@
     "/articles/hebrew-russian-sounds/",
     "/articles/author-term-definitions/",
     "/articles/channel-abbreviations/",
+    "/dictionaries/words/", "/dictionaries/suffixes-and-particles/", "/transcription-analyses/",
     "/articles/transcription-symbol-systems/",
     "/articles/transcription-symbols-print/",
     "/help/eugenics-vs-genetic-engineering/", "/donate/", "/for-ai/",
   ]);
   const panels = Array.from(document.querySelectorAll("[data-panel]"));
   const panelIds = new Set(panels.map((panel) => panel.id));
-  const calendarGrid = document.getElementById("calendar-grid");
-  const calendarMonthLabel = document.getElementById("calendar-month");
+  const transcriptionFilter = document.getElementById("transcription-filter");
+  const filterStatus = document.getElementById("transcription-filter-status");
+  const dateFrom = document.getElementById("transcription-date-from");
+  const dateTo = document.getElementById("transcription-date-to");
+  const timeFrom = document.getElementById("transcription-time-from");
+  const timeTo = document.getElementById("transcription-time-to");
+  const queryField = document.getElementById("transcription-query");
+  const purposeQueryField = document.getElementById("transcription-purpose-query");
+  const allDates = document.getElementById("transcription-all-dates");
+  const analysisAny = document.getElementById("transcription-analysis-any");
+  const analysisPercent = document.getElementById("transcription-analysis-percent");
+  const analysisLabelOption = document.getElementById("transcription-analysis-label");
+  const percentFrom = document.getElementById("transcription-percent-from");
+  const percentTo = document.getElementById("transcription-percent-to");
+  const analysisLabelValue = document.getElementById("transcription-analysis-label-value");
   const todayResults = document.getElementById("today-results");
   const newsResults = document.getElementById("news-results");
   const situationsResults = document.getElementById("situations-results");
@@ -36,9 +50,8 @@
   }).formatToParts(new Date());
   const todayParts = Object.fromEntries(moscowDateParts.map((part) => [part.type, part.value]));
   const todayDate = `${todayParts.year}-${todayParts.month}-${todayParts.day}`;
-  let selectedDate = todayDate;
-  let calendarYear = Number(todayParts.year);
-  let calendarMonth = Number(todayParts.month);
+  let transcriptionsLoaded = false;
+  let transcriptionsLoadFailed = false;
   let entries = [];
   let calendarTranscriptions = {};
   let loadFailed = false;
@@ -270,10 +283,6 @@
     }).format(new Date(`${date}T00:00:00Z`));
   }
 
-  function makeCalendarDate(year, month, day) {
-    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  }
-
   function addText(parent, tagName, className, value) {
     const element = document.createElement(tagName);
     element.className = className;
@@ -310,9 +319,14 @@
     parent.append(document.createTextNode(text.slice(offset)));
   }
 
+  function analysisModeValue(mode) {
+    if (mode === "not_required") return "не требуется";
+
+    return mode === "manual" ? "100%" : (/^(?:100|[1-9]?\d)%$/.test(mode) ? mode : "авто");
+  }
+
   function analysisLabel(mode) {
-    const label = mode === "manual" ? "100%" : (/^(?:100|[1-9]?\d)%$/.test(mode) ? mode : "авто");
-    return `Разбор транскрипции: ${label}`;
+    return `Разбор транскрипции: ${analysisModeValue(mode)}`;
   }
 
   function addAcquisitionIcon(heading, type) {
@@ -362,7 +376,7 @@
       addAcquisitionIcon(heading, calendarTranscriptions[entry.sourceUrl]?.acquisitionType ?? entry.acquisitionType ?? "written");
     }
 
-    const body = addText(card, "p", "entry-body", isNews ? "" : entry.bodyText);
+    const body = addText(card, "p", "entry-body", isNews ? "" : isTranscription ? (entry.copyText ?? entry.bodyText) : entry.bodyText);
     if (isNews) addNewsText(body, entry.bodyText);
 
     if (!isNews) addText(card, "p", "analysis-mode", analysisLabel(entry.analysisMode));
@@ -412,7 +426,8 @@
     addText(heading, "span", "transcription-heading", `${number}. ${entry.title}`);
     addAcquisitionIcon(heading, transcription?.acquisitionType ?? entry.acquisitionType ?? "written");
     const body = addText(item, "div", "sos-item-body", "");
-    addText(body, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote}`);
+    if (entry.group) addText(body, "p", "entry-meta", `Раздел сайта: ${entry.group}`);
+    addText(body, "p", "entry-meta", `Появление транскрипции: ${entry.dateNote || "Дата получения не установлена"}`);
 
     const purpose = addText(body, "details", "transcription-purpose", "");
     addText(purpose, "summary", "", "предполагаемое назначение");
@@ -457,40 +472,141 @@
       chat.hidden = true;
       body.append(chat);
     }
+    if (transcription?.commentaryHtml) {
+      const commentary = addText(body, "div", "help-page transcription-commentary", "");
+      commentary.innerHTML = transcription.commentaryHtml;
+    }
     return item;
   }
 
-  function renderDayResults() {
-    if (!todayResults) return;
+  function normalizeSearchText(value) {
+    return String(value ?? "").toLocaleLowerCase("ru-RU").replace(/\s+/g, " ").trim();
+  }
+
+  function updateFilterFields() {
+    if (!transcriptionFilter) return;
+
+    dateFrom.disabled = allDates.checked;
+    dateTo.disabled = allDates.checked;
+    percentFrom.disabled = !analysisPercent.checked;
+    percentTo.disabled = !analysisPercent.checked;
+    analysisLabelValue.disabled = !analysisLabelOption.checked;
+    const percentFields = document.getElementById("transcription-percent-fields");
+    const labelField = document.getElementById("transcription-analysis-label-field");
+    if (percentFields) percentFields.hidden = !analysisPercent.checked;
+    if (labelField) labelField.hidden = !analysisLabelOption.checked;
+  }
+
+  function resetTranscriptionFilter() {
+    if (!transcriptionFilter) return;
+
+    dateFrom.value = todayDate;
+    dateTo.value = todayDate;
+    timeFrom.value = "00:00";
+    timeTo.value = "23:59";
+    queryField.value = "";
+    purposeQueryField.value = "";
+    allDates.checked = false;
+    analysisAny.checked = true;
+    analysisPercent.checked = false;
+    analysisLabelOption.checked = false;
+    percentFrom.value = "0";
+    percentTo.value = "100";
+    analysisLabelValue.value = "auto";
+    updateFilterFields();
+  }
+
+  function readTranscriptionFilter() {
+    const filter = {
+      allDates: allDates.checked,
+      dateFrom: dateFrom.value,
+      dateTo: dateTo.value,
+      timeFrom: timeFrom.value,
+      timeTo: timeTo.value,
+      query: normalizeSearchText(queryField.value),
+      purposeQuery: normalizeSearchText(purposeQueryField.value),
+      analysis: analysisPercent.checked ? "percent" : analysisLabelOption.checked ? "label" : "any",
+      percentFrom: Number(percentFrom.value),
+      percentTo: Number(percentTo.value),
+      label: analysisLabelValue.value,
+    };
+
+    if (!filter.allDates) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(filter.dateFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(filter.dateTo)) {
+        return { error: "Укажите обе даты получения." };
+      }
+      if (filter.dateFrom > filter.dateTo) return { error: "Дата начала не может быть позже даты окончания." };
+    }
+    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(filter.timeFrom) || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(filter.timeTo)) {
+      return { error: "Укажите время от 00:00 до 23:59." };
+    }
+    if (filter.timeFrom > filter.timeTo) return { error: "Время начала не может быть позже времени окончания." };
+    if (filter.analysis === "percent") {
+      if (!/^\d{1,3}$/.test(percentFrom.value) || !/^\d{1,3}$/.test(percentTo.value)
+        || filter.percentFrom > 100 || filter.percentTo > 100) {
+        return { error: "Укажите целые проценты от 0 до 100." };
+      }
+      if (filter.percentFrom > filter.percentTo) return { error: "Начальный процент не может быть больше конечного." };
+    }
+    return filter;
+  }
+
+  function renderFilteredResults() {
+    if (!todayResults || !transcriptionFilter || !filterStatus) return;
 
     todayResults.replaceChildren();
-    addText(todayResults, "h3", "day-results-heading", formatCalendarDate(selectedDate));
-
-    if (loadFailed) {
-      addText(todayResults, "p", "day-empty", "Не удалось загрузить материалы. Обновите страницу позже.");
+    const filter = readTranscriptionFilter();
+    filterStatus.classList.toggle("is-error", Boolean(filter.error || transcriptionsLoadFailed));
+    if (filter.error) {
+      filterStatus.textContent = filter.error;
+      return;
+    }
+    if (transcriptionsLoadFailed) {
+      filterStatus.textContent = "Не удалось загрузить транскрипции для поиска. Обновите страницу позже.";
+      return;
+    }
+    if (!transcriptionsLoaded) {
+      filterStatus.textContent = "Загружаем транскрипции…";
       return;
     }
 
-    const selectedEntries = entries
-      .filter((entry) => entry.published && entry.calendarDate === selectedDate)
+    const fullDay = filter.timeFrom === "00:00" && filter.timeTo === "23:59";
+    const selectedEntries = Object.values(calendarTranscriptions)
+      .filter((transcription) => {
+        const entry = transcription.entry;
+        if (!entry.published || !["manual_transcription", "analysis"].includes(entry.type)) return false;
+        if (!filter.allDates && (!entry.calendarDate || entry.calendarDate < filter.dateFrom || entry.calendarDate > filter.dateTo)) return false;
+        if (!entry.appearanceTime) {
+          if (!fullDay) return false;
+        } else if (entry.appearanceTime < filter.timeFrom || entry.appearanceTime > filter.timeTo) return false;
+        if (filter.query && ![transcription.originalText, transcription.copyText]
+          .some((text) => normalizeSearchText(text).includes(filter.query))) return false;
+        if (filter.purposeQuery && !normalizeSearchText(transcription.purposeText).includes(filter.purposeQuery)) return false;
+
+        const mode = analysisModeValue(entry.analysisMode);
+        if (filter.analysis === "percent" && (!mode.endsWith("%")
+          || Number(mode.slice(0, -1)) < filter.percentFrom || Number(mode.slice(0, -1)) > filter.percentTo)) return false;
+        if (filter.analysis === "label" && mode !== analysisModeValue(filter.label)) return false;
+        return true;
+      })
+      .map((transcription) => transcription.entry)
       .sort((left, right) => {
-        if (!left.appearanceTime && !right.appearanceTime) return 0;
-        if (!left.appearanceTime) return 1;
-        if (!right.appearanceTime) return -1;
-        return left.appearanceTime.localeCompare(right.appearanceTime);
+        const dateOrder = (left.calendarDate || "9999-12-31").localeCompare(right.calendarDate || "9999-12-31");
+        return dateOrder || (left.appearanceTime || "24:00").localeCompare(right.appearanceTime || "24:00");
       });
 
+    filterStatus.textContent = `Найдено транскрипций: ${selectedEntries.length}.`;
+    const period = filter.allDates ? "Все даты" : filter.dateFrom === filter.dateTo
+      ? formatCalendarDate(filter.dateFrom)
+      : `${formatCalendarDate(filter.dateFrom)} — ${formatCalendarDate(filter.dateTo)}`;
+    addText(todayResults, "h3", "day-results-heading", `${period}, ${filter.timeFrom}–${filter.timeTo}`);
     if (selectedEntries.length === 0) {
-      addText(todayResults, "p", "day-empty", "На эту дату опубликованных записей пока нет.");
+      addText(todayResults, "p", "day-empty", "По выбранным условиям транскрипций не найдено.");
       return;
     }
 
-    let transcriptionNumber = 0;
-    for (const entry of selectedEntries) {
-      todayResults.append(entry.type === "manual_transcription" || entry.type === "analysis"
-        ? createCalendarTranscription(entry, ++transcriptionNumber)
-        : createEntryCard(entry, "h4"));
-    }
+    selectedEntries.forEach((entry, index) => todayResults.append(createCalendarTranscription(entry, index + 1)));
+    loadReactions();
   }
 
   function renderCollection(container, type, emptyMessage) {
@@ -522,60 +638,10 @@
     renderCollection(situationsResults, "situation", "");
   }
 
-  function renderCalendar() {
-    if (!calendarGrid || !calendarMonthLabel) return;
-
-    calendarGrid.replaceChildren();
-    const monthName = new Intl.DateTimeFormat("ru-RU", {
-      month: "long",
-      timeZone: "UTC",
-    }).format(new Date(Date.UTC(calendarYear, calendarMonth - 1, 1)));
-    calendarMonthLabel.textContent = `${monthName[0].toUpperCase()}${monthName.slice(1)} ${calendarYear}`;
-
-    const firstWeekday = (new Date(Date.UTC(calendarYear, calendarMonth - 1, 1)).getUTCDay() + 6) % 7;
-    const daysInMonth = new Date(Date.UTC(calendarYear, calendarMonth, 0)).getUTCDate();
-
-    for (let blank = 0; blank < firstWeekday; blank++) {
-      const spacer = document.createElement("span");
-      spacer.className = "calendar-blank";
-      spacer.setAttribute("aria-hidden", "true");
-      calendarGrid.append(spacer);
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = makeCalendarDate(calendarYear, calendarMonth, day);
-      const count = entries.filter((entry) => entry.published && entry.calendarDate === date).length;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "calendar-day";
-      button.textContent = String(day);
-      button.setAttribute("aria-label", `${formatCalendarDate(date)}${count ? `, записей: ${count}` : ""}`);
-      button.setAttribute("aria-pressed", String(date === selectedDate));
-      button.classList.toggle("is-selected", date === selectedDate);
-      button.classList.toggle("has-entries", count > 0);
-      button.addEventListener("click", () => {
-        selectedDate = date;
-        renderCalendar();
-      });
-      calendarGrid.append(button);
-    }
-
-    renderDayResults();
-  }
-
-  function shiftMonth(offset) {
-    const nextMonth = new Date(Date.UTC(calendarYear, calendarMonth - 1 + offset, 1));
-    calendarYear = nextMonth.getUTCFullYear();
-    calendarMonth = nextMonth.getUTCMonth() + 1;
-    const selectedDay = Math.min(Number(selectedDate.slice(8)), new Date(Date.UTC(calendarYear, calendarMonth, 0)).getUTCDate());
-    selectedDate = makeCalendarDate(calendarYear, calendarMonth, selectedDay);
-    renderCalendar();
-  }
-
   function showCurrentSection() {
     const hash = window.location.hash.slice(1);
     const currentId = document.body.dataset.pageId || (panelIds.has(hash) ? hash : "about");
-    const currentTabId = ["article-latin-greek-process-morphology", "article-transcription-notes", "article-hebrew-russian-sounds", "article-author-term-definitions", "article-channel-abbreviations", "article-transcription-symbol-systems", "article-transcription-symbols-print"].includes(currentId)
+    const currentTabId = ["dictionary-words", "dictionary-suffixes", "article-transcription-analyses", "article-latin-greek-process-morphology", "article-transcription-notes", "article-hebrew-russian-sounds", "article-author-term-definitions", "article-channel-abbreviations", "article-transcription-symbol-systems", "article-transcription-symbols-print"].includes(currentId)
       ? "translation" : currentId;
 
     for (const link of links) {
@@ -596,13 +662,13 @@
     }
 
     const currentPanel = document.getElementById(currentId);
-    if (currentPanel) document.title = `${currentPanel.dataset.title} — Глоссалия`;
+    if (currentPanel) document.title = currentPanel.dataset.pageTitle || `${currentPanel.dataset.title} — Глоссалия`;
     document.documentElement.classList.add("site-ready");
   }
 
   function documentHeading() {
     const currentId = document.body.dataset.pageId || window.location.hash.slice(1);
-    return currentId.startsWith("article-") || ["help-eugenics", "help-churches"].includes(currentId)
+    return currentId.startsWith("article-") || currentId.startsWith("dictionary-") || ["help-eugenics", "help-churches"].includes(currentId)
       ? document.getElementById(`${currentId}-title`)
       : null;
   }
@@ -764,14 +830,25 @@
     });
   }
 
-  document.getElementById("calendar-previous")?.addEventListener("click", () => shiftMonth(-1));
-  document.getElementById("calendar-next")?.addEventListener("click", () => shiftMonth(1));
+  transcriptionFilter?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    renderFilteredResults();
+  });
+  allDates?.addEventListener("change", updateFilterFields);
+  for (const radio of [analysisAny, analysisPercent, analysisLabelOption]) {
+    radio?.addEventListener("change", updateFilterFields);
+  }
+  document.getElementById("transcription-filter-reset")?.addEventListener("click", () => {
+    resetTranscriptionFilter();
+    renderFilteredResults();
+  });
+  resetTranscriptionFilter();
   showCurrentSection();
-  renderCalendar();
+  renderFilteredResults();
   renderCollections();
   prepareTranscriptionReactions();
 
-  const methodologyContainer = document.getElementById("channel-dictionary-methodology");
+  const methodologyContainer = document.getElementById("dictionary-words-methodology");
   if (methodologyContainer && !methodologyContainer.children.length) {
     fetch("/data/dictionary-methodology.html", { credentials: "omit", cache: "no-store" })
       .then((response) => {
@@ -782,7 +859,7 @@
       .catch(() => { methodologyContainer.textContent = "Не удалось загрузить методологию. Обновите страницу."; });
   }
 
-  const dictionaryContainer = document.getElementById("channel-dictionary-content");
+  const dictionaryContainer = document.getElementById("dictionary-words-content");
   if (dictionaryContainer && !dictionaryContainer.children.length) {
     fetch("/data/dictionary.html", { credentials: "omit", cache: "no-store" })
       .then((response) => {
@@ -795,10 +872,10 @@
 
   for (const [id, path, error] of [
     ["translation-prompt-content", "/data/prompt-general.html", "Не удалось загрузить промпт. Обновите страницу."],
-    ["channel-suffix-methodology", "/data/suffix-methodology.html", "Не удалось загрузить методологию. Обновите страницу."],
-    ["channel-suffix-dictionary-content", "/data/suffix-dictionary.html", "Не удалось загрузить словарь. Обновите страницу."],
+    ["transcription-analyses-content", "/data/transcription-analyses.html", "Не удалось загрузить список разборов. Обновите страницу."],
+    ["dictionary-suffixes-methodology", "/data/suffix-methodology.html", "Не удалось загрузить методологию. Обновите страницу."],
+    ["dictionary-suffixes-content", "/data/suffix-dictionary.html", "Не удалось загрузить словарь. Обновите страницу."],
     ["translation-phonetics-content", "/data/prompt-phonetics.html", "Не удалось загрузить фонетический справочник. Обновите страницу."],
-    ["channel-abbreviations-content", "/data/abbreviations-dictionary.html", "Не удалось загрузить словарь сокращений. Обновите страницу."],
     ["article-channel-abbreviations-content", "/data/abbreviations-article.html", "Не удалось загрузить словарь сокращений. Обновите страницу."],
   ]) {
     const container = document.getElementById(id);
@@ -858,41 +935,43 @@
       for (const field of purposeFields) field.textContent = "Пока не заполнено";
     });
 
-  const calendarTranscriptionsReady = todayResults
-    ? fetch("/data/calendar-transcriptions.json", { credentials: "omit", cache: "no-store" })
-      .then((response) => {
-        if (!response.ok) throw new Error("Calendar transcriptions unavailable");
-        return response.json();
-      })
-      .then((data) => {
-        if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error("Invalid calendar transcriptions");
-        calendarTranscriptions = data;
-      })
-      .catch(() => {})
-    : Promise.resolve();
-
-  if (calendarGrid || newsResults || situationsResults) fetch("/data/entries.json", { credentials: "omit", cache: "no-store" })
+  if (transcriptionFilter && todayResults) fetch("/data/calendar-transcriptions.json", { credentials: "omit", cache: "no-store" })
     .then((response) => {
-      if (!response.ok) {
-        throw new Error("Data request failed");
-      }
-
+      if (!response.ok) throw new Error("Transcriptions unavailable");
       return response.json();
     })
-    .then(async (data) => {
-      if (!Array.isArray(data)) {
-        throw new Error("Invalid data format");
-      }
+    .then((data) => {
+      if (!data || typeof data !== "object" || Array.isArray(data)
+        || !Object.entries(data).every(([sourceUrl, transcription]) => transcription
+          && typeof transcription === "object" && transcription.entry
+          && transcription.entry.sourceUrl === sourceUrl
+          && typeof transcription.copyText === "string"
+          && typeof transcription.originalText === "string"
+          && typeof transcription.purposeText === "string")) throw new Error("Invalid transcription search data");
+
+      calendarTranscriptions = data;
+      transcriptionsLoaded = true;
+      renderFilteredResults();
+    })
+    .catch(() => {
+      transcriptionsLoadFailed = true;
+      renderFilteredResults();
+    });
+
+  if (newsResults || situationsResults) fetch("/data/entries.json", { credentials: "omit", cache: "no-store" })
+    .then((response) => {
+      if (!response.ok) throw new Error("Data request failed");
+      return response.json();
+    })
+    .then((data) => {
+      if (!Array.isArray(data)) throw new Error("Invalid data format");
 
       entries = data;
-      await calendarTranscriptionsReady;
-      renderCalendar();
       renderCollections();
       loadReactions();
     })
     .catch(() => {
       loadFailed = true;
-      renderDayResults();
       renderCollections();
     });
 })();

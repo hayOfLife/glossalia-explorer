@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from urllib.parse import quote
 
+from transcription_sections import section_markdown, transcription_text
+
 
 REPOSITORY = Path(__file__).resolve().parents[2]
 TRANSCRIPTIONS = REPOSITORY / "docs" / "transcriptions"
@@ -32,21 +34,11 @@ def transcription_paths() -> list[str]:
 
 
 def source_section(text: str) -> str:
-    match = re.search(r"^## (?:Необработанная транскрипция|Исходная строка)\s*$", text, re.MULTILINE)
-    if not match:
-        raise ValueError("нет раздела «Необработанная транскрипция» или «Исходная строка»")
-
-    section = re.split(r"^##\s", text[match.end():], maxsplit=1, flags=re.MULTILINE)[0].strip()
-    fenced = re.search(r"^```[^\n]*\n(.*?)^```", section, re.MULTILINE | re.DOTALL)
-    if fenced:
-        return fenced.group(1).strip()
-
-    lines = section.splitlines()
-    quoted = [line.removeprefix(">").strip() for line in lines if line.startswith(">")]
-    if quoted:
-        return "\n".join(quoted).strip()
-
-    return re.split(r"^\s*(?:-{3,}|\*{3,})\s*$", section, maxsplit=1, flags=re.MULTILINE)[0].strip()
+    headings = ("Исходная транскрипция", "Необработанная транскрипция", "Исходная строка")
+    section = section_markdown(text, headings)
+    if section is None:
+        raise ValueError("нет раздела «Исходная транскрипция», «Необработанная транскрипция» или «Исходная строка»")
+    return transcription_text(text, headings)
 
 
 def entry_from_file(relative_path: str) -> dict:

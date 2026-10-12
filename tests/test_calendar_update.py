@@ -2,6 +2,7 @@
 
 import importlib.util
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +10,7 @@ from unittest.mock import patch
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "site" / "scripts" / "update_calendar.py"
+sys.path.insert(0, str(SCRIPT.parent))
 SPEC = importlib.util.spec_from_file_location("update_calendar", SCRIPT)
 calendar = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(calendar)

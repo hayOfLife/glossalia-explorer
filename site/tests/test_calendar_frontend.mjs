@@ -39,16 +39,23 @@ const fixtures = [
 ];
 const metadata = {
   [stableSource]: {
+    entry: { ...fixtures[1] },
+    originalText: 'Ранняя исходная строка!\nСЛОВО  \n\t ПРОБУЖДЕНИЕ. Буквально [a+b].',
     copyText: 'Карта: особая строка для копирования!\nВторая строка.',
+    purposeText: 'Назначение ранней записи. ВОССТАНОВЛЕНИЕ  \n\t ПАМЯТИ.',
     purposeHtml: '<p>Назначение ранней записи.</p>',
     translationHtml: '<p><mark class="transcription-term">Карта!</mark> Предполагаемый перевод.</p>',
     pageUrl: '/transcriptions/T00042/part_2/',
   },
   [laterSource]: {
+    entry: { ...fixtures[0] }, originalText: 'Поздняя исходная строка!',
+    purposeText: 'Назначение поздней записи.',
     copyText: 'Карта: поздняя строка!', purposeHtml: '<p>Назначение поздней записи.</p>',
     translationHtml: '<p>Перевод поздней записи.</p>', pageUrl: '/transcriptions/T00041/part_1/',
   },
   [nextSource]: {
+    entry: { ...fixtures[2] }, originalText: 'Исходная строка второго дня!',
+    purposeText: 'Назначение второго дня.',
     copyText: 'Карта: второй день!', purposeHtml: '<p>Назначение второго дня.</p>',
     translationHtml: '<p>Перевод второго дня.</p>', pageUrl: '/transcriptions/T00040/part_1/',
   },
@@ -82,6 +89,8 @@ class Element {
     this._text = '';
     this._html = '';
     this.value = '';
+    this.checked = false;
+    this.disabled = false;
     this.hidden = false;
     this.open = false;
     this.classList = { add() {}, remove() {}, toggle() {} };
@@ -127,21 +136,52 @@ class Element {
   select() { this.selected = true; }
 }
 
-class FixedDate extends Date {
-  constructor(...args) { super(...(args.length ? args : ['2026-10-01T09:00:00Z'])); }
-}
-
 function browser(options = {}) {
+  class FixedDate extends Date {
+    constructor(...args) { super(...(args.length ? args : [options.now || '2026-10-01T09:00:00Z'])); }
+  }
+
   const body = new Element('body');
   body.dataset.pageId = options.newsOnly ? 'news' : 'today';
   const news = new Element('div');
   news.id = 'news-results';
   body.append(news);
-  const ids = options.newsOnly ? [] : ['calendar-grid', 'calendar-month', 'today-results', 'calendar-previous', 'calendar-next'];
-  for (const id of ids) {
-    const element = new Element(id.startsWith('calendar-previous') || id.startsWith('calendar-next') ? 'button' : 'div');
-    element.id = id;
-    body.append(element);
+  if (!options.newsOnly) {
+    const form = new Element('form');
+    form.id = 'transcription-filter';
+    body.append(form);
+    for (const id of ['date-from', 'date-to', 'time-from', 'time-to', 'query', 'purpose-query', 'all-dates', 'percent-from', 'percent-to']) {
+      const field = new Element('input');
+      field.id = `transcription-${id}`;
+      field.type = id === 'all-dates' ? 'checkbox' : id.startsWith('date-') ? 'date' : id.startsWith('time-') ? 'time' : id.startsWith('percent-') ? 'number' : 'text';
+      form.append(field);
+    }
+
+    for (const mode of ['any', 'percent', 'label']) {
+      const radio = new Element('input');
+      radio.id = `transcription-analysis-${mode}`;
+      radio.type = 'radio';
+      radio.name = 'transcription-analysis-mode';
+      radio.value = mode;
+      form.append(radio);
+    }
+
+    const label = new Element('select');
+    label.id = 'transcription-analysis-label-value';
+    label.value = 'auto';
+    form.append(label);
+
+    const reset = new Element('button');
+    reset.id = 'transcription-filter-reset';
+    reset.type = 'button';
+    reset.textContent = 'Сегодня';
+    form.append(reset);
+
+    for (const id of ['transcription-filter-status', 'today-results']) {
+      const element = new Element('div');
+      element.id = id;
+      body.append(element);
+    }
   }
   const handlers = new Map();
   const requests = [];
@@ -174,9 +214,17 @@ function browser(options = {}) {
       if (options.copyFails) throw new Error('Clipboard blocked');
       copied.push(text);
     } } },
-    fetch: (url, settings) => new Promise((resolve, reject) => requests.push({ url: String(url), settings, resolve, reject })),
+    fetch: (url, settings) => {
+      assert.ok(['GET', 'HEAD'].includes(settings?.method || 'GET'), 'Unexpected external write request');
+      assert.equal(settings?.body, undefined);
+      return new Promise((resolve, reject) => requests.push({ url: String(url), settings, resolve, reject }));
+    },
   });
-  runInContext(source, context);
+  const script = options.exposeEntryCard
+    ? source.replace('  function createEntryCard(entry, headingTag) {',
+      '  globalThis.testEntryCard = createEntryCard;\n  function createEntryCard(entry, headingTag) {')
+    : source;
+  runInContext(script, context);
 
   async function settle() { await new Promise((resolve) => setImmediate(resolve)); }
   async function reply(url, data, ok = true) {
@@ -186,19 +234,64 @@ function browser(options = {}) {
     request.resolve({ ok, json: async () => data });
     await settle();
   }
-  async function click(element) {
+  async function dispatch(element, name) {
     assert.ok(element);
     const event = { target: element, button: 0, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
-    for (const handler of element.listeners.get('click') || []) await handler(event);
-    for (const handler of handlers.get('click') || []) await handler(event);
+    for (const handler of element.listeners.get(name) || []) await handler(event);
+    for (const handler of handlers.get(name) || []) await handler(event);
     await settle();
   }
+  async function submit(values = {}) {
+    for (const [name, value] of Object.entries(values)) {
+      const field = document.getElementById(`transcription-${name}`);
+      assert.ok(field);
+      if (name === 'all-dates') field.checked = value;
+      else field.value = value;
+    }
+    await dispatch(document.getElementById('transcription-filter'), 'submit');
+  }
+  async function fail(url) {
+    const request = requests.find((item) => item.url === url && !item.answered);
+    assert.ok(request, `Missing mocked request ${url}`);
+    request.answered = true;
+    request.reject(new Error('Network unavailable'));
+    await settle();
+  }
+  async function selectAnalysis(mode) {
+    for (const value of ['any', 'percent', 'label']) document.getElementById(`transcription-analysis-${value}`).checked = value === mode;
+    await dispatch(document.getElementById(`transcription-analysis-${mode}`), 'change');
+  }
   const dayResults = document.getElementById('today-results');
-  return { body, news, dayResults, document, requests, copied, reply, click, settle };
+  const filterStatus = document.getElementById('transcription-filter-status');
+  return {
+    body, news, dayResults, filterStatus, document, requests, copied, reply, fail, submit, selectAnalysis, settle,
+    createEntryCard: context.testEntryCard,
+    click: (element) => dispatch(element, 'click'),
+    change: (element) => dispatch(element, 'change'),
+  };
 }
 
 function cards(page) { return page.dayResults.children.filter((element) => element.tagName === 'DETAILS' && element.className === 'sos-item'); }
 function summary(card) { return card.children.find((element) => element.tagName === 'SUMMARY'); }
+function titles(page) { return cards(page).map((card) => summary(card).querySelector('.transcription-heading').textContent); }
+async function load(page, calendarData = metadata, entries = fixtures) {
+  await page.reply('/data/entries.json', entries);
+  await page.reply('/data/calendar-transcriptions.json', calendarData);
+}
+
+test('карточка использует текст для вывода и сохраняет полный исходник в данных', () => {
+  const page = browser({ exposeEntryCard: true });
+  const entry = { ...fixtures[1], copyText: 'Ру⟐ви! <слово> & смысл' };
+  const card = page.createEntryCard(entry, 'h3');
+  assert.equal(card.querySelector('.entry-body').textContent, entry.copyText);
+  assert.equal(card.querySelector('.entry-body').innerHTML, '');
+  assert.equal(entry.bodyText, fixtures[1].bodyText);
+  const fallback = { ...entry };
+  delete fallback.copyText;
+  assert.equal(page.createEntryCard(fallback, 'h3').querySelector('.entry-body').textContent, fallback.bodyText);
+  const empty = { ...entry, copyText: '' };
+  assert.equal(page.createEntryCard(empty, 'h3').querySelector('.entry-body').textContent, '');
+});
 
 test('календарные транскрипции раскрываются и сохраняют текст, назначение, перевод, порядок и ключ', async () => {
   const page = browser();
@@ -245,6 +338,8 @@ test('календарные транскрипции раскрываются �
 test('данные блоков применяются независимо от порядка загрузки JSON', async () => {
   const page = browser();
   await page.reply('/data/calendar-transcriptions.json', metadata);
+  assert.equal(cards(page).length, 2);
+  assert.equal(cards(page)[0].querySelector('textarea').value, metadata[stableSource].copyText);
   await page.reply('/data/entries.json', fixtures);
   assert.equal(cards(page)[0].querySelector('textarea').value, metadata[stableSource].copyText);
   assert.equal(cards(page)[1].querySelector('.author-translation-body').innerHTML, metadata[laterSource].translationHtml);
@@ -258,9 +353,11 @@ test('значок получения зависит от acquisitionType, со�
     analysisMode: entry.sourceUrl === stableSource ? 'auto' : '100%',
   }));
   const acquisitionMetadata = {
-    ...metadata,
-    [stableSource]: { ...metadata[stableSource], acquisitionType: 'audio' },
-    [laterSource]: { ...metadata[laterSource], acquisitionType: 'written' },
+    ...Object.fromEntries(Object.entries(metadata).map(([key, value]) => [key, {
+      ...value, entry: acquisitionEntries.find((entry) => entry.sourceUrl === key),
+    }])),
+    [stableSource]: { ...metadata[stableSource], entry: acquisitionEntries[1], acquisitionType: 'audio' },
+    [laterSource]: { ...metadata[laterSource], entry: acquisitionEntries[0], acquisitionType: 'written' },
   };
   function checkIcon(card, type) {
     const heading = summary(card);
@@ -289,17 +386,16 @@ test('значок получения зависит от acquisitionType, со�
   assert.equal(cards(page)[1].querySelector('.analysis-mode').textContent, 'Разбор транскрипции: 100%');
   assert.equal(page.news.querySelector('.transcription-acquisition'), null);
 
-  const dayButtons = page.document.getElementById('calendar-grid').children.filter((element) => element.tagName === 'BUTTON');
-  await page.click(dayButtons.find((element) => element.textContent === '2'));
+  await page.submit({ 'date-from': '2026-10-02', 'date-to': '2026-10-02' });
   assert.equal(cards(page).length, 1);
   checkIcon(cards(page)[0], 'audio');
-  await page.click(page.document.getElementById('calendar-grid').children.find((element) => element.tagName === 'BUTTON' && element.textContent === '1'));
+  await page.submit({ 'date-from': '2026-10-01', 'date-to': '2026-10-01' });
   assert.equal(cards(page).length, 2);
   checkIcon(cards(page)[0], 'audio');
   checkIcon(cards(page)[1], 'written');
 });
 
-test('смена дня заново нумерует абзацы, а динамическая кнопка копирует свою строку', async () => {
+test('фильтр даты заново нумерует абзацы, а динамическая кнопка копирует свою строку', async () => {
   const page = browser();
   await page.reply('/data/entries.json', fixtures);
   await page.reply('/data/calendar-transcriptions.json', metadata);
@@ -307,8 +403,7 @@ test('смена дня заново нумерует абзацы, а дина�
   assert.deepEqual(page.copied, [metadata[stableSource].copyText]);
   assert.equal(cards(page)[0].querySelector('[data-copy-status]').textContent, 'Скопировано');
 
-  const day = page.document.getElementById('calendar-grid').children.find((element) => element.tagName === 'BUTTON' && element.textContent === '2');
-  await page.click(day);
+  await page.submit({ 'date-from': '2026-10-02', 'date-to': '2026-10-02' });
   assert.equal(cards(page).length, 1);
   assert.equal(summary(cards(page)[0]).textContent, '1. Запись другого дня');
   assert.equal(cards(page)[0].querySelector('textarea').value, metadata[nextSource].copyText);
@@ -319,37 +414,275 @@ test('смена дня заново нумерует абзацы, а дина�
   assert.equal(cards(page)[0].querySelector('[data-copy-status]').textContent, 'Скопировано');
 });
 
-test('отказ календарных метаданных сохраняет исходные строки и пустые сведения без поломки календаря', async () => {
-  const page = browser();
-  await page.reply('/data/entries.json', fixtures);
-  await page.reply('/data/calendar-transcriptions.json', null, false);
-  const items = cards(page);
-  assert.equal(items.length, 2);
-  assert.equal(items[0].querySelector('textarea').value, fixtures[1].copyText);
-  assert.equal(items[1].querySelector('textarea').value, fixtures[0].bodyText);
-  assert.equal(items[0].querySelector('.sos-actions').querySelector('a').href, stableSource);
-  assert.equal(items[0].querySelector('.sos-actions').querySelector('a').target, '_blank');
-  for (const item of items) {
-    assert.equal(item.querySelector('.transcription-purpose-body').textContent, 'Пока не заполнено');
-    assert.equal(item.querySelector('.author-translation-body').textContent, 'Пока не заполнено');
-    assert.equal(summary(item).querySelector('.transcription-acquisition').querySelector('img').src, '/assets/transcription-written.svg');
-  }
-  assert.ok(page.document.getElementById('calendar-grid').children.some((element) => element.tagName === 'BUTTON'));
-  assert.ok(page.news.querySelector('article').textContent.includes('Новость проекта'));
+test('загрузка и отказ календарного JSON дают понятный статус, а новости остаются доступны', async (context) => {
+  for (const failure of ['http', 'invalid', 'network']) await context.test(failure, async () => {
+    const page = browser();
+    assert.match(page.filterStatus.textContent, /загруз|загруж/i);
+    assert.equal(cards(page).length, 0);
+    await page.reply('/data/entries.json', fixtures);
+    assert.match(page.filterStatus.textContent, /загруз|загруж/i);
+    assert.equal(cards(page).length, 0);
+    if (failure === 'network') await page.fail('/data/calendar-transcriptions.json');
+    else await page.reply('/data/calendar-transcriptions.json', failure === 'invalid' ? [] : null, failure !== 'http');
+    assert.equal(cards(page).length, 0);
+    assert.match(page.filterStatus.textContent, /не удалось|ошиб|недоступ/i);
+    assert.ok(page.news.querySelector('article').textContent.includes('Новость проекта'));
+    await page.submit({ 'all-dates': true });
+    assert.equal(cards(page).length, 0);
+    assert.match(page.filterStatus.textContent, /не удалось|ошиб|недоступ/i);
+  });
 });
 
-test('неполный JSON оставляет fallback для отсутствующей карточки, а отказ буфера предлагает ручное копирование', async () => {
+test('неполные блоки карточки используют исходный текст, а отказ буфера предлагает ручное копирование', async () => {
   const page = browser({ copyFails: true });
   await page.reply('/data/entries.json', fixtures);
-  await page.reply('/data/calendar-transcriptions.json', { [stableSource]: metadata[stableSource] });
+  await page.reply('/data/calendar-transcriptions.json', {
+    [stableSource]: metadata[stableSource],
+    [laterSource]: { entry: fixtures[0], originalText: fixtures[0].bodyText, copyText: fixtures[0].bodyText, purposeText: '' },
+  });
   const items = cards(page);
   assert.equal(items[0].querySelector('textarea').value, metadata[stableSource].copyText);
   assert.equal(items[1].querySelector('textarea').value, fixtures[0].bodyText);
   assert.equal(items[1].querySelector('.author-translation-body').textContent, 'Пока не заполнено');
+  assert.equal(items[1].querySelector('.transcription-purpose-body').textContent, 'Пока не заполнено');
+  assert.equal(items[1].querySelector('.sos-actions').querySelector('a').href, laterSource);
+  assert.equal(items[1].querySelector('.sos-actions').querySelector('a').target, '_blank');
+  assert.equal(summary(items[1]).querySelector('.transcription-acquisition').querySelector('img').src, '/assets/transcription-written.svg');
   await page.click(items[0].querySelector('[data-copy-target]'));
   assert.equal(items[0].querySelector('textarea').selected, true);
   assert.equal(items[0].querySelector('[data-copy-status]').textContent, 'Скопируйте выделенный текст вручную');
   assert.deepEqual(page.copied, []);
+});
+
+test('поля по умолчанию используют текущий московский день, полный день и все режимы разбора', async () => {
+  const page = browser({ now: '2026-09-30T22:15:00Z' });
+  for (const id of ['date-from', 'date-to']) {
+    assert.equal(page.document.getElementById(`transcription-${id}`).value, '2026-10-01');
+    assert.equal(page.document.getElementById(`transcription-${id}`).disabled, false);
+  }
+  assert.equal(page.document.getElementById('transcription-time-from').value, '00:00');
+  assert.equal(page.document.getElementById('transcription-time-to').value, '23:59');
+  assert.equal(page.document.getElementById('transcription-query').value, '');
+  assert.equal(page.document.getElementById('transcription-purpose-query').value, '');
+  assert.equal(page.document.getElementById('transcription-all-dates').checked, false);
+  assert.equal(page.document.getElementById('transcription-analysis-any').checked, true);
+  assert.equal(page.document.getElementById('transcription-percent-from').value, '0');
+  assert.equal(page.document.getElementById('transcription-percent-to').value, '100');
+  assert.equal(page.document.getElementById('transcription-percent-from').disabled, true);
+  assert.equal(page.document.getElementById('transcription-percent-to').disabled, true);
+  assert.equal(page.document.getElementById('transcription-analysis-label-value').value, 'auto');
+  assert.equal(page.document.getElementById('transcription-analysis-label-value').disabled, true);
+  assert.equal(page.document.getElementById('calendar-grid'), null);
+  await load(page);
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
+  assert.match(page.filterStatus.textContent, /2/);
+});
+
+test('выдача берёт все опубликованные транскрипции из календарного JSON независимо от entries', async () => {
+  const page = browser();
+  const additionalSource = `${sourcePrefix}T00098/part_1.md`;
+  const additionalEntry = {
+    ...fixtures[0], sourceUrl: additionalSource, reactionKey: 'T00098-part_1', externalKey: 'T00098',
+    appearanceTime: '11:30', title: 'Есть только в календарном JSON',
+  };
+  await page.reply('/data/calendar-transcriptions.json', {
+    [stableSource]: metadata[stableSource],
+    [additionalSource]: { ...metadata[laterSource], entry: additionalEntry, pageUrl: '/transcriptions/T00098/part_1/' },
+    [fixtures[4].sourceUrl]: { ...metadata[laterSource], entry: fixtures[4] },
+    [fixtures[3].sourceUrl]: { ...metadata[laterSource], entry: fixtures[3] },
+  });
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Есть только в календарном JSON']);
+  assert.equal(cards(page)[1].querySelector('[data-reaction-key]').dataset.reactionKey, 'T00098-part_1');
+  await page.reply('/data/entries.json', fixtures);
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Есть только в календарном JSON']);
+  await page.submit({ 'all-dates': true });
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Есть только в календарном JSON']);
+  assert.ok(page.news.querySelector('article').textContent.includes('Новость проекта'));
+});
+
+test('изменения применяются по submit, все даты отключают поля, Сегодня восстанавливает полный фильтр', async () => {
+  const page = browser();
+  await load(page);
+  const dateFrom = page.document.getElementById('transcription-date-from');
+  const dateTo = page.document.getElementById('transcription-date-to');
+  dateFrom.value = '2026-10-02';
+  dateTo.value = '2026-10-02';
+  await page.change(dateFrom);
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
+  await page.submit();
+  assert.deepEqual(titles(page), ['1. Запись другого дня']);
+
+  const allDates = page.document.getElementById('transcription-all-dates');
+  allDates.checked = true;
+  await page.change(allDates);
+  assert.equal(dateFrom.disabled, true);
+  assert.equal(dateTo.disabled, true);
+  assert.deepEqual(titles(page), ['1. Запись другого дня']);
+  await page.submit();
+  assert.equal(cards(page).length, 3);
+  await page.selectAnalysis('percent');
+  assert.equal(page.document.getElementById('transcription-percent-from').disabled, false);
+  assert.equal(page.document.getElementById('transcription-analysis-label-value').disabled, true);
+  await page.submit({ query: 'нет совпадений', 'purpose-query': 'нет назначения', 'time-from': '12:00', 'time-to': '13:00', 'percent-from': '20', 'percent-to': '40' });
+  assert.equal(cards(page).length, 0);
+
+  await page.click(page.document.getElementById('transcription-filter-reset'));
+  assert.equal(dateFrom.value, '2026-10-01');
+  assert.equal(dateTo.value, '2026-10-01');
+  assert.equal(dateFrom.disabled, false);
+  assert.equal(dateTo.disabled, false);
+  assert.equal(allDates.checked, false);
+  assert.equal(page.document.getElementById('transcription-time-from').value, '00:00');
+  assert.equal(page.document.getElementById('transcription-time-to').value, '23:59');
+  assert.equal(page.document.getElementById('transcription-query').value, '');
+  assert.equal(page.document.getElementById('transcription-purpose-query').value, '');
+  assert.equal(page.document.getElementById('transcription-analysis-any').checked, true);
+  assert.equal(page.document.getElementById('transcription-percent-from').value, '0');
+  assert.equal(page.document.getElementById('transcription-percent-to').value, '100');
+  assert.equal(page.document.getElementById('transcription-percent-from').disabled, true);
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
+});
+
+test('буквальный поиск учитывает регистр и пробелы в полном исходнике и тексте копирования, но не перевод', async () => {
+  const page = browser();
+  await load(page);
+  await page.submit({ query: '  слово   пробуждение  ' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись']);
+  await page.submit({ query: '[a+b]' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись']);
+  await page.submit({ query: 'вторая   строка.' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись']);
+  await page.submit({ query: 'Предполагаемый перевод' });
+  assert.equal(cards(page).length, 0);
+  assert.match(page.filterStatus.textContent, /не найден|0/i);
+  await page.submit({ query: '', 'purpose-query': '  восстановление   памяти  ' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись']);
+});
+
+test('диапазон дат включает границы и применяет одно окно времени к каждому дню', async () => {
+  const page = browser();
+  await load(page);
+  await page.submit({ 'date-from': '2026-10-01', 'date-to': '2026-10-02', 'time-from': '08:00', 'time-to': '09:00' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Запись другого дня']);
+  await page.submit({ 'time-from': '09:00', 'time-to': '09:00' });
+  assert.deepEqual(titles(page), ['1. Запись другого дня']);
+  await page.submit({ 'time-from': '17:00', 'time-to': '17:00' });
+  assert.deepEqual(titles(page), ['1. Поздняя запись']);
+});
+
+test('неизвестное время допускается только за полный день, неизвестная дата только без ограничения дат', async () => {
+  const page = browser();
+  const unknownTimeSource = `${sourcePrefix}T00097/part_1.md`;
+  const unknownDateSource = `${sourcePrefix}T00096/part_1.md`;
+  await load(page, {
+    ...metadata,
+    [unknownTimeSource]: { ...metadata[laterSource], entry: { ...fixtures[0], sourceUrl: unknownTimeSource, title: 'Без времени', appearanceTime: '' } },
+    [unknownDateSource]: { ...metadata[laterSource], entry: { ...fixtures[0], sourceUrl: unknownDateSource, title: 'Без даты', calendarDate: '', appearanceTime: '09:15' } },
+  });
+  assert.equal(cards(page).length, 3);
+  assert.ok(titles(page).some((title) => title.endsWith('Без времени')));
+  assert.equal(titles(page).some((title) => title.endsWith('Без даты')), false);
+  await page.submit({ 'time-from': '08:00', 'time-to': '18:00' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
+  await page.submit({ 'all-dates': true, 'time-from': '00:00', 'time-to': '23:59' });
+  assert.equal(cards(page).length, 5);
+  assert.ok(titles(page).some((title) => title.endsWith('Без даты')));
+  await page.submit({ 'time-from': '09:00', 'time-to': '10:00' });
+  assert.equal(cards(page).length, 2);
+  assert.ok(titles(page).some((title) => title.endsWith('Без даты')));
+  assert.equal(titles(page).some((title) => title.endsWith('Без времени')), false);
+});
+
+test('пустые и обратные интервалы показывают ошибку и не оставляют старые карточки', async () => {
+  const page = browser();
+  await load(page);
+  await page.submit({ 'date-from': '2026-10-02', 'date-to': '2026-10-01' });
+  assert.equal(page.filterStatus.textContent, 'Дата начала не может быть позже даты окончания.');
+  assert.equal(cards(page).length, 0);
+  await page.submit({ 'date-from': '2026-10-01', 'date-to': '2026-10-01', 'time-from': '18:00', 'time-to': '08:00' });
+  assert.equal(page.filterStatus.textContent, 'Время начала не может быть позже времени окончания.');
+  assert.equal(cards(page).length, 0);
+  await page.submit({ 'date-from': '', 'time-from': '00:00' });
+  assert.match(page.filterStatus.textContent, /дат/i);
+  assert.equal(cards(page).length, 0);
+  await page.submit({ 'all-dates': true, 'date-to': '', 'time-to': '23:59' });
+  assert.equal(cards(page).length, 3);
+  await page.submit({ 'time-to': '' });
+  assert.match(page.filterStatus.textContent, /врем/i);
+  assert.equal(cards(page).length, 0);
+  await page.click(page.document.getElementById('transcription-filter-reset'));
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
+});
+
+test('назначение, исходный текст и проценты пересекаются, manual равен 100%, а неизвестная метка отображается как авто', async () => {
+  const page = browser();
+  const automaticSource = `${sourcePrefix}T00095/part_1.md`;
+  const unknownSource = `${sourcePrefix}T00094/part_1.md`;
+  await load(page, {
+    ...metadata,
+    [automaticSource]: { ...metadata[laterSource], entry: { ...fixtures[0], sourceUrl: automaticSource, title: 'Автоматическая запись', appearanceTime: '10:00', analysisMode: 'auto' } },
+    [unknownSource]: { ...metadata[laterSource], entry: { ...fixtures[0], sourceUrl: unknownSource, title: 'Метка неизвестна', appearanceTime: '11:00', analysisMode: '' } },
+  });
+  assert.equal(cards(page).length, 4);
+  assert.equal(cards(page).find((card) => summary(card).textContent.includes('Метка неизвестна')).querySelector('.analysis-mode').textContent, 'Разбор транскрипции: авто');
+  await page.selectAnalysis('percent');
+  await page.submit({ 'percent-from': '95', 'percent-to': '100' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
+  await page.submit({ 'percent-from': '100', 'percent-to': '100' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись']);
+  await page.submit({ 'percent-from': '95', 'percent-to': '95' });
+  assert.deepEqual(titles(page), ['1. Поздняя запись']);
+  await page.submit({ 'percent-to': '100', query: 'Карта', 'purpose-query': 'поздней' });
+  assert.deepEqual(titles(page), ['1. Поздняя запись']);
+  await page.submit({ query: 'слово пробуждение', 'purpose-query': 'восстановление памяти' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись']);
+  await page.selectAnalysis('label');
+  assert.equal(page.document.getElementById('transcription-percent-from').disabled, true);
+  assert.equal(page.document.getElementById('transcription-percent-to').disabled, true);
+  assert.equal(page.document.getElementById('transcription-analysis-label-value').disabled, false);
+  await page.submit({ query: '', 'purpose-query': '' });
+  assert.deepEqual(titles(page), ['1. Автоматическая запись', '2. Метка неизвестна']);
+});
+
+test('не требующая разбора запись сохраняет словесную метку в карточках и фильтре, не попадая в проценты', async () => {
+  const page = browser({ exposeEntryCard: true });
+  const russianSource = `${sourcePrefix}T00064.md`;
+  const russianEntry = {
+    ...fixtures[0], sourceUrl: russianSource, reactionKey: 'T00064', externalKey: 'T00064',
+    title: 'Молитва благодарения', appearanceTime: '13:29', analysisMode: 'not_required',
+  };
+  const template = readFileSync(new URL('../public_html/index.html', import.meta.url), 'utf8');
+  assert.match(template, /<option value="not_required">не требуется<\/option>/);
+  assert.equal(page.createEntryCard(russianEntry, 'h3').querySelector('.analysis-mode').textContent, 'Разбор транскрипции: не требуется');
+
+  await load(page, {
+    ...metadata,
+    [russianSource]: { ...metadata[laterSource], entry: russianEntry },
+  });
+  const russianCard = cards(page).find((card) => summary(card).textContent.includes('Молитва благодарения'));
+  assert.equal(russianCard.querySelector('.analysis-mode').textContent, 'Разбор транскрипции: не требуется');
+  await page.selectAnalysis('label');
+  await page.submit({ 'analysis-label-value': 'not_required' });
+  assert.deepEqual(titles(page), ['1. Молитва благодарения']);
+  await page.submit({ 'analysis-label-value': 'auto' });
+  assert.equal(cards(page).length, 0);
+  await page.selectAnalysis('percent');
+  await page.submit({ 'percent-from': '0', 'percent-to': '100' });
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
+});
+
+test('процентный интервал принимает только целые числа от 0 до 100 и проверяет порядок', async () => {
+  const page = browser();
+  await load(page);
+  await page.selectAnalysis('percent');
+  for (const [from, to] of [['', '100'], ['abc', '100'], ['1.5', '100'], ['-1', '100'], ['0', '101'], ['96', '95']]) {
+    await page.submit({ 'percent-from': from, 'percent-to': to });
+    assert.equal(cards(page).length, 0, `${from}–${to}`);
+    assert.match(page.filterStatus.textContent, /процент|разбор|цел|100|начала/i);
+  }
+  await page.selectAnalysis('any');
+  await page.submit();
+  assert.deepEqual(titles(page), ['1. Ранняя запись', '2. Поздняя запись']);
 });
 
 test('новость показывает безопасные ссылки и дату публикации без метки разбора и календарных данных', async () => {

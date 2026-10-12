@@ -73,6 +73,29 @@ try {
     Write-Fixture "docs/dev/documentation.json" $registryText
     Assert-Audit
 
+    $inlineCodeExamples = @(
+        '`[↓][-]`',
+        '``[↓][-]``',
+        '``literal ` [↓][-]``',
+        '\\`[↓][-]`',
+        '`[Broken](missing.md)`',
+        '`![](missing.md)`'
+    )
+    foreach ($example in $inlineCodeExamples) {
+        Write-Fixture "README.md" ($readme + "`n$example`n")
+        Assert-Audit
+    }
+    Write-Fixture "README.md" ($readme + "`n" + '`[↓][-]` [x][-]' + "`n")
+    Assert-Audit -ExpectedError "missing link definition -"
+    Write-Fixture "README.md" ($readme + "`n" + '``[↓][-]`` [x][-]' + "`n")
+    Assert-Audit -ExpectedError "missing link definition -"
+    Write-Fixture "README.md" ($readme + "`n" + '`unclosed [x][-]' + "`n")
+    Assert-Audit -ExpectedError "missing link definition -"
+    Write-Fixture "README.md" ($readme + "`n" + '\`[x][-]\`' + "`n")
+    Assert-Audit -ExpectedError "missing link definition -"
+    Write-Fixture "README.md" $readme
+    Assert-Audit
+
     $mapPath = Join-Path $fixtureRoot "docs/dev/tag-map.md"
     $mapText = [IO.File]::ReadAllText($mapPath)
 
@@ -106,6 +129,34 @@ try {
     Write-Fixture "new.md" "# New`n"
     Assert-Audit -ExpectedError "Unregistered Markdown"
     Write-Fixture ".gitignore" "private/`nnew.md`n"
+    Assert-Audit
+
+    Write-Fixture "docs/deleted.md" "# Deleted`n"
+    & git -C $fixtureRoot add -- "docs/deleted.md"
+    if ($LASTEXITCODE -ne 0) { throw "Fixture git add failed" }
+
+    $deletedDocument = @{path="docs/deleted.md"; title="Deleted"; status="reference"; purpose="Deleted tracked document"; tags=@()}
+    $registry.documents += $deletedDocument
+    Write-Fixture "docs/dev/documentation.json" ($registry | ConvertTo-Json -Depth 6)
+    Assert-Audit -Generate
+    Assert-Audit
+
+    Remove-Item -LiteralPath (Join-Path $fixtureRoot "docs/deleted.md")
+    $null = & git -C $fixtureRoot ls-files --error-unmatch -- "docs/deleted.md"
+    if ($LASTEXITCODE -ne 0) { throw "Deleted fixture document must remain in Git index" }
+
+    Assert-Audit -ExpectedError "docs/deleted.md : missing or excluded document"
+    Assert-Audit -ExpectedError "docs/deleted.md : missing or excluded document" -Generate
+
+    $registry.documents = @($registry.documents | Where-Object { $_.path -cne $deletedDocument.path })
+    Write-Fixture "docs/dev/documentation.json" ($registry | ConvertTo-Json -Depth 6)
+    Assert-Audit -Generate
+    Assert-Audit
+
+    Write-Fixture "README.md" ($readme + "`n[Deleted](docs/deleted.md)`n")
+    Assert-Audit -ExpectedError "missing or excluded link"
+    Assert-Audit -ExpectedError "missing or excluded link" -Generate
+    Write-Fixture "README.md" $readme
     Assert-Audit
 
     $registry.documents[3].tags = @("entry")

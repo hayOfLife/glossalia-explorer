@@ -36,7 +36,12 @@ try {
 } finally {
     [Console]::OutputEncoding = $previousEncoding
 }
-$gitFiles = @($gitFiles | Where-Object { $_ -cnotin $excluded } | Sort-Object -Unique)
+
+# Индекс Git может содержать уже удалённые на диске файлы
+$gitFiles = @($gitFiles | Where-Object {
+    $_ -cnotin $excluded -and (Test-Path -LiteralPath (Join-Path $Root $_) -PathType Leaf)
+} | Sort-Object -Unique)
+
 if ($registryPath -cnotin $gitFiles) { throw "Registry is missing or excluded: $registryPath" }
 $registry = [IO.File]::ReadAllText((Join-Path $Root $registryPath), $utf8) | ConvertFrom-Json
 if ($registry.version -ne 1) { throw "Unsupported documentation registry version" }
@@ -175,18 +180,20 @@ foreach ($path in @($contents.Keys)) {
     foreach ($match in [regex]::Matches($body, '§([a-z][a-z0-9]*|T[0-9]{5})(?![A-Za-z0-9])')) {
         if (-not $tagOwners.ContainsKey($match.Groups[1].Value)) { Add-Issue "$path : unknown tag $($match.Value)" }
     }
+    # Обозначения внутри встроенного кода не являются Markdown-ссылками
+    $linkBody = [regex]::Replace($body, '(?<![`\\])(?:\\\\)*(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)', ' ')
     $definitions = @{}
-    foreach ($match in [regex]::Matches($body, '(?m)^\s{0,3}\[([^\]]+)\]:\s*(?:<([^>]+)>|(\S+))')) {
+    foreach ($match in [regex]::Matches($linkBody, '(?m)^\s{0,3}\[([^\]]+)\]:\s*(?:<([^>]+)>|(\S+))')) {
         $target = if ($match.Groups[2].Success) { $match.Groups[2].Value } else { $match.Groups[3].Value }
         $definitions[$match.Groups[1].Value.ToLowerInvariant()] = $target
         Test-LocalLink -Source $path -Target $target
     }
     $inlinePattern = '(?<image>!)?\[(?<label>[^\]\r\n]*)\]\((?:<(?<path>[^>\r\n]+)>|(?<path>[^()\s]+(?:\([^()\r\n]*\)[^()\s]*)*))(?:\s+"[^"]*")?\)'
-    foreach ($match in [regex]::Matches($body, $inlinePattern)) {
+    foreach ($match in [regex]::Matches($linkBody, $inlinePattern)) {
         if ($match.Groups["image"].Success -and -not $match.Groups["label"].Value.Trim()) { Add-Issue "$path : image has no alt text" }
         Test-LocalLink -Source $path -Target $match.Groups["path"].Value
     }
-    foreach ($match in [regex]::Matches($body, '(?<image>!)?\[(?<label>[^\]\r\n]*)\]\[(?<id>[^\]\r\n]*)\]')) {
+    foreach ($match in [regex]::Matches($linkBody, '(?<image>!)?\[(?<label>[^\]\r\n]*)\]\[(?<id>[^\]\r\n]*)\]')) {
         $id = $match.Groups["id"].Value
         if (-not $id) { $id = $match.Groups["label"].Value }
         if (-not $definitions.ContainsKey($id.ToLowerInvariant()) -and

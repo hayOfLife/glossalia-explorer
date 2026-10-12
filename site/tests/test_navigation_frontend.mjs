@@ -10,6 +10,7 @@ assert.ok(routeBlock);
 const routeIds = new Map([...routeBlock.matchAll(/"([a-z0-9-]+)": "([^"]+)"/g)].map((match) => [match[2], match[1]]));
 const sectionRoutes = [...routeIds.keys()];
 const documentRoutes = sectionRoutes.filter((route) => routeIds.get(route).startsWith('article-')
+  || routeIds.get(route).startsWith('dictionary-')
   || ['help-eugenics', 'help-churches'].includes(routeIds.get(route)));
 const scrollKey = 'glossaliae-scroll-to-tabs';
 

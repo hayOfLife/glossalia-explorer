@@ -101,3 +101,47 @@ The unresolved «ронедернед» and «Енториум-ектим» must
 After this case, the author reported praying for the same transcription in Russian and receiving «Русский текст не сможет сделать всего что надо.». The record and exact purpose are retained in [project context](project-context.md).
 
 A possible working interpretation is that a short Russian paraphrase loses distinctions retained in a compressed, layered record. This is my hypothesis about representation. One reported sentence does not demonstrate that limitation of Russian, or prove any mechanism behind the transcription.
+
+## Saved case: T00063, interpretation developed on 12 October 2026
+
+Source and the current full analysis: [T00063](../docs/transcriptions/T00063.md). The author initially described it as a possible continuation of the preceding transcription. Its acquisition metadata belongs to that source; this date records the discussion and memory update. The author asked to finish the translation before saving it, then explicitly authorised saving the word analysis, coherent translation and useful reasoning here.
+
+### What the author selected
+
+| Recorded component | Selected reading in this case | Evidence boundary |
+| --- | --- | --- |
+| «Рефинотериум-лост» | Access to a place of cleansing and renewal has been lost | The author explained the place through a bath-like image; this does not establish the full etymology |
+| «факт-еррор» | «Ошибка обнаружена» | Explicit author clarification; do not retain «ошибочный факт» as the current reading |
+| «ен · фикт · ендед» | Examination of what has been formed is complete | The author chose «фикт» as formed; «ен» is associated with examination, and «ендед» with English ended |
+| «инфе» | The author's image of a painful inner fire with a feeling of confinement | In this case inferno is an interpretive image; no external entity or medical cause is established |
+| «нки» | A state of freedom from that fire | Hebrew נְקִי, free from or clean, is a lexical candidate; the author's choice fixes the working role, not the etymology |
+| «терен» | Protect and preserve the freed state | Greek τηρεῖν, keep, guard or preserve, is the preferred lexical branch in this context |
+| «дино · ен · териум» | A place of examining a case or decision | דין gives a judgment/case candidate; עַיֵּן gives an examination candidate; the relationship and whole composite remain a reconstruction |
+| «Едро-шеон-рест» | «Восстановить внутреннюю основу, находящуюся в смятении» | The author accepted «шеон» as turmoil and «рест» as restoration; the connecting Russian syntax is supplied for readability |
+| «инфектитерред» | «Ошибка допущена. Незавершённый путь — восстановить» | The author called this the correct direct reading; keep that attribution distinct from an independently established linguistic decoding |
+
+The proposed full partition `инфе | нки | терен | дино | ен | териум` preserves the letters and order of `инфенкитерендиноентериум`. It supplies one possible set of boundaries, not additional original sounds. The proposed star in «дино*ен» belongs only to this analysis.
+
+### Clipping and recombination that proved useful
+
+For «ен», the candidate was Hebrew עַיֵּן, examine, study or consider. The proposed sound route is `а-йен → йен → ен`: an initial portion is clipped, while Cyrillic `е` can encode [je] at the beginning or after a vowel. This explains a possibility without inventing a detachable «ай» prefix; ע belongs to the root. No independently established channel-wide shortening rule is claimed.
+
+The author's acceptance of «Енториум» as «Место рассмотрения / изучения» made that component worth following across records. It does not settle the segmentation of «эконтиментериум», whose `ен` could be part of a longer component. Check the source context before extending the reading.
+
+For «инфектитерред», the Latin-associated branch was `инфект | итер | ред`: infectus in its undone or unfinished sense, iter as a path, and a proposed clipping of reddere as restore or return. The earlier analytical partition `ин | фект | и*тер | ред` also rejoins the original. The English-associated branch `in fact | it | erred` suggested that an error had occurred. The written resemblance is stronger than a demonstrated full pronunciation match. The author accepted both the diagnostic and restorative meanings in one composite reading; their coexistence is a chosen interpretation, not proof of intentional multilingual encoding.
+
+### Earlier branches worth retaining
+
+- The initial infection/interred reading of «инфектитерред» did not explain the author's preferred path-restoration meaning and was not selected.
+- Greek τέρεν, soft or delicate, suggested gentle cleansing. The author instead selected a freed state protected by «терен»; gentleness is not the chosen lexical meaning here.
+- The author's initial transfer or convoy image for «нки» guided the investigation, but the later clarification selected a state of freedom. Keep this change visible rather than describing transfer as independently translated.
+- «Шион + шеол» was explored for «шеон», then the author selected the Hebrew turmoil candidate. The blend is historical, not the preferred reading in this record.
+- The earlier Latin terendī grinding or wearing candidate used different boundaries inside the long word. It remains an earlier hypothesis, not the selected «терен» + «диноен» reading.
+
+### Relations still supplied by interpretation
+
+The author selected mercy as the way the case should be considered. The lexical meaning of עַיֵּן supplies consideration, not mercy or repeated consideration. Those details come from the author's prayer interpretation and the thematic discussion; they are not extra sounds secretly supplied by the gloss.
+
+The relation between protecting the freed state and examining the case was not resolved grammatically. The coherent version therefore uses separate sentences rather than asserting that one operation causes the other. It describes a diagnosis and requested restoration, without asserting that restoration has already succeeded.
+
+The author's explanation connected the imagery to personal anxiety and to a religious account of review. Record the imagery as the author's account. The transcription does not establish a medical cause, literal heavenly proceedings, angelic identities, or the effectiveness of a command. This case helped me generate and revise textual hypotheses; it is not a new verified explanatory theory.

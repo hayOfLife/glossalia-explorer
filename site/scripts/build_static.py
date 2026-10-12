@@ -8,15 +8,25 @@ import json
 import re
 import shutil
 import zipfile
+from datetime import date
 from difflib import SequenceMatcher
 from pathlib import Path
 from urllib.parse import quote, urljoin, urlparse
+
+from transcription_sections import TRANSLATION_HEADINGS, section_markdown, transcription_text
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "site" / "public_html"
 OUTPUT = ROOT / "site" / "build"
 BASE_URL = "https://glossalia-explorer.tuqo.ru"
+TRANSCRIPTION_REDIRECTS = {
+    "docs/transcriptions/T00014.md": "docs/transcriptions/T00032/part_1.md",
+    "docs/transcriptions/T00028.md": "docs/transcriptions/T00027/part_5.md",
+    "docs/transcriptions/T00029.md": "docs/transcriptions/T00027/part_6.md",
+    "docs/transcriptions/T00032.md": "docs/transcriptions/T00032/part_2.md",
+}
+
 ROUTES = {
     "about": "/",
     "news": "/news/",
@@ -30,7 +40,12 @@ ROUTES = {
     "situation-6": "/situations/life-partner/",
     "situation-7": "/situations/mental-health/",
     "situation-8": "/situations/divine-guidance/",
+    "situation-9": "/situations/occultism-support/",
+    "situation-10": "/situations/temple-offering/",
     "translation": "/translation/",
+    "article-transcription-analyses": "/transcription-analyses/",
+    "dictionary-words": "/dictionaries/words/",
+    "dictionary-suffixes": "/dictionaries/suffixes-and-particles/",
     "help": "/help/",
     "help-glossolalia": "/help/glossolalia/",
     "help-purpose": "/help/purpose/",
@@ -85,10 +100,12 @@ def html_document(source: str, panel: str, panel_id: str, title: str, descriptio
 
     page = source[: matches[0].start()] + panel + source[matches[-1].end() :]
     page = page.replace('<body>', f'<body data-page-id="{panel_id}">', 1)
-    page = re.sub(r'<title>.*?</title>', f'<title>{html.escape(title)} — Глоссалия</title>', page, count=1)
+    page_title_match = re.search(r'\bdata-page-title="([^"]+)"', panel.split(">", 1)[0])
+    page_title = html.unescape(page_title_match.group(1)) if page_title_match else f"{title} — Глоссалия"
+    page = re.sub(r'<title>.*?</title>', f'<title>{html.escape(page_title)}</title>', page, count=1)
     page = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{html.escape(description, quote=True)}">', page, count=1)
     canonical = f'{BASE_URL}{route}'
-    page = re.sub(r'<meta property="og:title" content="[^"]*">', f'<meta property="og:title" content="{html.escape(title, quote=True)} — Глоссалия">', page, count=1)
+    page = re.sub(r'<meta property="og:title" content="[^"]*">', f'<meta property="og:title" content="{html.escape(page_title, quote=True)}">', page, count=1)
     page = re.sub(r'<meta property="og:description" content="[^"]*">', f'<meta property="og:description" content="{html.escape(description, quote=True)}">', page, count=1)
     page = re.sub(r'<meta property="og:url" content="[^"]*">', f'<meta property="og:url" content="{canonical}">', page, count=1)
     page = page.replace('</head>', f'    <link rel="canonical" href="{canonical}">\n  </head>', 1)
@@ -145,15 +162,50 @@ def markdown_table(lines: list[str], source_url: str, literal: bool = False) -> 
     return f'<div class="source-table-wrap"><table class="source-table"><thead>{head}</thead><tbody>{body}</tbody></table></div>'
 
 
-def markdown_html(text: str, source_url: str, literal_tables: bool = False) -> str:
+def nested_lists_html(lines: list[str], source_url: str) -> str:
+    items = []
+    for line in lines:
+        expanded = line.expandtabs(4)
+        stripped = expanded.strip()
+        ordered = re.match(r'^(\d{1,9})[.)]\s+(.+)$', stripped)
+        indent = len(expanded) - len(expanded.lstrip())
+        items.append((indent, "ol" if ordered else "ul", int(ordered.group(1)) if ordered else None,
+                      ordered.group(2) if ordered else stripped[2:]))
+
+    def render_level(index: int) -> tuple[str, int]:
+        indent, kind, number, _ = items[index]
+        start = f' start="{number}"' if number is not None and number != 1 else ""
+        result = [f"<{kind}{start}>"]
+        while index < len(items) and items[index][0] == indent and items[index][1] == kind:
+            _, _, number, content = items[index]
+            value = f' value="{number}"' if number is not None else ""
+            item = f"<li{value}>" + inline(content, source_url)
+            index += 1
+            while index < len(items) and items[index][0] > indent:
+                children, index = render_level(index)
+                item += "\n" + children
+            result.append(item + "</li>")
+        result.append(f"</{kind}>")
+        return "\n".join(result), index
+
+    result = []
+    index = 0
+    while index < len(items):
+        block, index = render_level(index)
+        result.append(block)
+    return "\n".join(result)
+
+
+def markdown_html(text: str, source_url: str, literal_tables: bool = False, nested_lists: bool = False) -> str:
     """Преобразовать обычные блоки Markdown, оставляя сложные таблицы без потери текста."""
-    text = re.sub(r"^разбор транскрипции: (?:авто|ручной, 100%|(?:100|[1-9]?\d)%)\s*\n", "", text, count=1)
+    text = re.sub(r"^разбор транскрипции: (?:авто|не требуется|ручной, 100%|(?:100|[1-9]?\d)%)\s*\n", "", text, count=1)
     result: list[str] = []
     paragraph: list[str] = []
     listing = ""
     fence = 0
     fence_lines: list[str] = []
     table: list[str] = []
+    nested_listing: list[str] = []
 
     def flush_paragraph() -> None:
         if paragraph:
@@ -170,8 +222,20 @@ def markdown_html(text: str, source_url: str, literal_tables: bool = False) -> s
         result.append("<pre><code>" + html.escape(content) + "</code></pre>")
         fence_lines.clear()
 
+    def flush_nested_listing() -> None:
+        if nested_listing:
+            result.append(nested_lists_html(nested_listing, source_url))
+            nested_listing.clear()
+
     for line in text.splitlines():
         stripped = line.strip()
+        if nested_lists and not fence:
+            if re.match(r'^(\d{1,9})[.)]\s+.+$', stripped) or stripped.startswith(("- ", "* ")):
+                flush_paragraph()
+                flush_table()
+                nested_listing.append(line)
+                continue
+            flush_nested_listing()
         if fence:
             if re.fullmatch(rf'`{{{fence},}}', stripped):
                 flush_fence()
@@ -244,6 +308,7 @@ def markdown_html(text: str, source_url: str, literal_tables: bool = False) -> s
             continue
         paragraph.append(stripped)
 
+    flush_nested_listing()
     flush_paragraph()
     flush_table()
     if listing:
@@ -287,6 +352,22 @@ def copy_texts(source: str) -> dict[str, str]:
         if relative and field:
             result[relative] = html.unescape(field.group(1))
     return result
+
+
+def synchronize_copy_fields(source: str, texts: dict[str, str], keys: dict[str, str] | None = None) -> str:
+    key_sources = {key: relative for relative, key in (keys or {}).items()}
+    for block in sos_item_blocks(source):
+        link = PUBLISHED_LINK.search(block)
+        translation = AUTHOR_TRANSLATION.search(block)
+        relative = link.group(1) if link else translation.group(1) if translation else ""
+        previous = re.search(r'data-transcription-reaction="([^"]+)"', block)
+        if not relative and previous:
+            relative = key_sources.get(previous.group(1), "")
+        field = re.search(r'(<textarea\b[^>]*>)(.*?)(</textarea>)', block, re.S)
+        if relative in texts and field:
+            replacement = field.group(1) + html.escape(texts[relative], quote=False) + field.group(3)
+            source = source.replace(block, block.replace(field.group(0), replacement, 1), 1)
+    return source
 
 
 def attach_acquisition_icons(source: str, types: dict[str, str]) -> str:
@@ -333,6 +414,12 @@ def chat_markup(key: str, template: str) -> str:
 
 
 def attach_block_reactions(source: str, keys: dict[str, str], texts: dict[str, str]) -> tuple[str, set[str]]:
+    previous_keys = {}
+    for block in sos_item_blocks(source):
+        field = re.search(r'<textarea\b[^>]*id="([^"]+)"', block)
+        previous = re.search(r'data-transcription-reaction="([^"]+)"', block)
+        if field and previous and previous.group(1) in keys.values():
+            previous_keys[field.group(1)] = previous.group(1)
     source = REACTION_PLACEHOLDER.sub("", source)
     text_keys = {re.sub(r"\s+", " ", text).strip(): keys[relative] for relative, text in texts.items()}
     inline_keys = {"sos-text-1": "T00027-sos-text-1"}
@@ -347,7 +434,7 @@ def attach_block_reactions(source: str, keys: dict[str, str], texts: dict[str, s
         translation = AUTHOR_TRANSLATION.search(block)
         relative = link.group(1) if link else translation.group(1) if translation else ""
         text = re.sub(r"\s+", " ", html.unescape(field.group(2))).strip()
-        key = keys.get(relative) or text_keys.get(text) or inline_keys.get(field.group(1))
+        key = keys.get(relative) or previous_keys.get(field.group(1)) or text_keys.get(text) or inline_keys.get(field.group(1))
         if not key:
             raise ValueError(f"Не задан постоянный ключ транскрипции: {field.group(1)}")
 
@@ -364,24 +451,66 @@ def attach_block_reactions(source: str, keys: dict[str, str], texts: dict[str, s
 
 
 def transcription_section(markdown: str, heading: str) -> str:
-    section = re.search(rf'^## {re.escape(heading)}\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
-    if not section:
-        return ""
-    lines = section.group(1).strip().splitlines()
-    if lines and lines[0].strip().startswith("```"):
-        lines = lines[1:]
-    if lines and lines[-1].strip().startswith("```"):
-        lines = lines[:-1]
-    lines = [re.sub(r'^\s*>\s?', '', line) for line in lines]
-    return "\n".join(lines).strip()
+    return transcription_text(markdown, heading)
 
 
 def original_transcription(markdown: str) -> str:
     return transcription_section(markdown, "Необработанная транскрипция")
 
 
-def translation_labels_html(content: str, source_url: str, transcription: str) -> str:
-    rendered = markdown_html(content, source_url)
+def resolve_copy_text(markdown: str, entry: dict, inline_text: str = "") -> str:
+    if section_markdown(markdown, ("Транскрипция для вывода",)) is not None:
+        return transcription_section(markdown, "Транскрипция для вывода")
+    return (entry.get("copyText") or transcription_section(markdown, "Текст для копирования")
+            or inline_text or original_transcription(markdown) or entry.get("bodyText", ""))
+
+
+def calendar_entry(relative: str, markdown: str, panel_source: str, existing: dict | None = None) -> dict:
+    received = re.search(r'^-?\s*Дата и время получения транскрипции:\s*([^\n]+)', markdown, re.M)
+    date_note = received.group(1).strip() if received else ""
+    calendar_date = ""
+    appearance_time = ""
+    # Дата разбора и дата повторной передачи не заменяют дату получения
+    received_date = re.match(r'(?:уч[её]тная дата\s+)?(\d{2})\.(\d{2})\.(\d{4})(.*)', date_note, re.I)
+    if received_date:
+        try:
+            calendar_date = date(int(received_date.group(3)), int(received_date.group(2)), int(received_date.group(1))).isoformat()
+        except ValueError:
+            pass
+        received_time = re.match(r'(?:\s*,\s*|\s+)(\d{1,2}):(\d{2})(?::\d{2})?', received_date.group(4))
+        if calendar_date and received_time and int(received_time.group(1)) < 24 and int(received_time.group(2)) < 60:
+            appearance_time = f"{int(received_time.group(1)):02d}:{received_time.group(2)}"
+
+    heading = re.search(r'^#\s+(.+)$', markdown, re.M)
+    title = html.unescape(re.sub(r'<[^>]+>', '', inline(heading.group(1), SOURCE_URL + relative))) if heading else Path(relative).stem
+    title = re.sub(r'^§T\d{5}\s*[—–-]\s*', '', title)
+    group = ""
+    for panel in PANEL.finditer(panel_source):
+        if relative in copy_texts(panel.group(0)):
+            panel_title = re.search(r'data-title="([^"]+)"', panel.group(0))
+            group = html.unescape(panel_title.group(1)) if panel_title else ""
+            break
+
+    entry = dict(existing or {})
+    entry.update({
+        "type": entry.get("type", "analysis"),
+        "title": entry.get("title") or title,
+        "group": entry.get("group") or group,
+        "calendarDate": (entry.get("calendarDate") or "") if existing is not None else calendar_date,
+        "appearanceTime": (entry.get("appearanceTime") or "") if existing is not None else appearance_time,
+        "dateNote": entry.get("dateNote") or date_note,
+        "sourceUrl": SOURCE_URL + relative,
+        "reactionKey": reaction_key(relative, existing),
+        "analysisMode": analysis_mode(markdown),
+        "acquisitionType": acquisition_type(markdown),
+    })
+    entry.setdefault("published", True)
+    entry.setdefault("externalKey", entry["reactionKey"])
+    return entry
+
+
+def translation_labels_html(content: str, source_url: str, transcription: str, *, nested_lists: bool = False) -> str:
+    rendered = markdown_html(content, source_url, nested_lists=nested_lists)
 
     def words(text: str) -> set[str]:
         return set(re.findall(r"[^\W\d_]+(?:-[^\W\d_]+)*", text.casefold().replace("‑", "-")))
@@ -443,42 +572,53 @@ def translation_labels_html(content: str, source_url: str, transcription: str) -
 
 
 def author_translation_markdown(markdown: str) -> str:
-    for heading in ("Перевод автора", "Авторский перевод", "Сводный перевод Автор№1", "Итоговый перевод", "Связный перевод", "Перевод (гипотеза)", "Всё послание связным текстом"):
-        section = re.search(rf'^## {re.escape(heading)}(?:\s*\([^\n]*\))?\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
-        if section:
-            content = section.group(1).strip().removesuffix("---").strip()
-            if content:
-                return content
+    for heading in TRANSLATION_HEADINGS:
+        content = section_markdown(markdown, (heading,), levels=(2, 3), parenthetical=True)
+        if content:
+            return content
     return ""
+
+
+def commentary_markdown(markdown: str) -> str:
+    legacy = section_markdown(markdown, ("Комментарий к обращению",), levels=(2, 3))
+    if legacy is not None:
+        return legacy
+    comments = section_markdown(markdown, ("Комментарии и варианты",))
+    if comments is None:
+        return ""
+    words = section_markdown(markdown, ("Пословный разбор",))
+    return "\n\n".join(section for section in (words, comments) if section)
 
 
 def author_translation_html(markdown: str, source_url: str, copy_text: str = "") -> str:
     content = author_translation_markdown(markdown)
     if content:
         transcription = "\n".join((original_transcription(markdown), transcription_section(markdown, "Текст для копирования"), copy_text))
-        return translation_labels_html(content, source_url, transcription)
+        has_commentary = bool(commentary_markdown(markdown))
+        has_nested_translation = re.search(r'(?m)^[ \t]{2,}[-*] ', content) is not None
+        return translation_labels_html(content, source_url, transcription, nested_lists=has_commentary or has_nested_translation)
     return '<p>Пока не заполнено</p>'
 
 
 def purpose_html(source_path: Path) -> str:
     markdown = source_path.read_text(encoding="utf-8")
-    section = re.search(r'^## Назначение\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
-    if section and section.group(1).strip():
+    section = section_markdown(markdown, "Назначение")
+    if section:
         relative = source_path.relative_to(ROOT).as_posix()
-        return markdown_html(section.group(1).strip(), SOURCE_URL + relative)
+        return markdown_html(section, SOURCE_URL + relative)
     return '<p>Пока не заполнено</p>'
 
 
 def analysis_mode(markdown: str) -> str:
-    marker = re.search(r"^разбор транскрипции: (авто|ручной, 100%|(?:100|[1-9]?\d)%)$", markdown, re.M)
+    marker = re.search(r"^разбор транскрипции: (авто|не требуется|ручной, 100%|(?:100|[1-9]?\d)%)$", markdown, re.M)
     if marker:
         value = marker.group(1)
-        return {"ручной, 100%": "manual", "авто": "auto"}.get(value, value)
+        return {"ручной, 100%": "manual", "авто": "auto", "не требуется": "not_required"}.get(value, value)
     return "manual" if re.search(r"пометки\s+автора|\bуточнено\b", markdown, re.I) else "auto"
 
 
 def analysis_label(mode: str) -> str:
-    label = "100%" if mode == "manual" else mode if re.fullmatch(r"(?:100|[1-9]?\d)%", mode) else "авто"
+    label = {"manual": "100%", "not_required": "не требуется"}.get(mode, mode if re.fullmatch(r"(?:100|[1-9]?\d)%", mode) else "авто")
     return "Разбор транскрипции: " + label
 
 
@@ -529,9 +669,9 @@ def ai_page_markdown(panel: str, entries: dict[str, dict], copy_texts: dict[str,
         purpose = PURPOSE_PLACEHOLDER.search(block)
         purpose_relative = purpose.group(1) if purpose else entry.get("purposeSource", relative)
         purpose_markdown = (ROOT / purpose_relative).read_text(encoding="utf-8")
-        purpose_section = re.search(r'^## Назначение\s*\n(.*?)(?=^## |\Z)', purpose_markdown, re.M | re.S | re.I)
-        if purpose_section and purpose_section.group(1).strip():
-            parts.extend(("### Purpose (proposed)", purpose_section.group(1).strip()))
+        purpose_section = section_markdown(purpose_markdown, "Назначение")
+        if purpose_section:
+            parts.extend(("### Purpose (proposed)", purpose_section))
             if purpose_relative != relative:
                 parts.append(f"[Purpose source]({SOURCE_URL}{purpose_relative})")
 
@@ -545,11 +685,14 @@ def ai_page_markdown(panel: str, entries: dict[str, dict], copy_texts: dict[str,
         if translation_text:
             parts.extend(("### Proposed translation", translation_text))
         for source_heading, heading in (("Сопроводительные слова автора", "Author comments"), ("Якоря для нейронки", "Notes for AI")):
-            section = re.search(rf'^## {re.escape(source_heading)}\s*\n(.*?)(?=^## |\Z)', markdown, re.M | re.S | re.I)
-            if section and section.group(1).strip():
-                parts.extend((f"### {heading}", section.group(1).strip()))
+            section = section_markdown(markdown, source_heading, levels=(2, 3))
+            if section:
+                parts.extend((f"### {heading}", section))
 
-    parts.extend(("## Translation method", f"[Methodologies, dictionaries and related documents (HTML)]({BASE_URL}{ROUTES['translation']})"))
+    parts.extend(("## Translation method", f"[Methodologies, dictionaries and related documents (HTML)]({BASE_URL}{ROUTES['translation']})",
+                  f"[Word dictionary (HTML)]({BASE_URL}{ROUTES['dictionary-words']})",
+                  f"[Suffix dictionary (HTML)]({BASE_URL}{ROUTES['dictionary-suffixes']})",
+                  f"[Abbreviations and full short words (HTML)]({BASE_URL}{ROUTES['article-channel-abbreviations']})"))
     return "\n\n".join(part for part in parts if part) + "\n"
 
 
@@ -614,13 +757,16 @@ def dictionary_fields(title: str, content: str) -> list[list[str]]:
         return list(dict.fromkeys(value for label in labels for value in fields.get(label, [])))
 
     writing = values(("написание", "корень", "иврит", "японский", "славянский"))
-    transcription = values(("транскрипция", "слово", "ручная форма", "форма автора", "звук", "точная форма и движок", "ручная форма f7", "ручная форма и контекст")) or [title]
+    transcription = values(("транскрипция", "слово", "ручная форма", "форма автора", "звук", "точная форма и движок", "ручная форма f7", "ручная форма и контекст", "транскрипция / форма разбора")) or [title]
     engine_marker = r",\s*(ZIPA|W2V2|Allosaurus)\b"
     obtained = [engine for text in transcription for engine in re.findall(engine_marker, text)] or ["ручная"]
     transcription = [re.sub(engine_marker, "", text).strip() for text in transcription]
 
     dictionary = values(("перевод из словаря",))
     interpretation = values(("трактовка автора", "толкование автора", "авторское толкование", "образ пользователя"))
+    # Чтение составителя показывается с указанием источника, отдельно от словарного перевода
+    interpretation.extend(f"Чтение источника (независимо не проверено): {value}"
+                          for value in values(("предложенный перевод источника",)))
     language = values(("язык", "языки")) or dictionary_languages(content)
     dictionary_notes = re.findall(r"^Словарная гипотеза: [^\n]+", content, re.M)
     if not dictionary:
@@ -664,6 +810,12 @@ def translation_material_html(markdown: str, source_url: str) -> str:
     return re.sub(r'<(/?)h([2-6])>', lambda match: f'<{match.group(1)}h{min(int(match.group(2)) + 2, 6)}>', content)
 
 
+def dictionary_entry_id(namespace: str, writing: str) -> str:
+    # Якорь зависит от написания, чтобы изменение толкования не меняло ссылку
+    key = writing.casefold().strip().encode("utf-8")
+    return namespace + "-" + hashlib.sha256(key).hexdigest()[:16]
+
+
 def dictionary_html(markdown: str, source_url: str) -> str:
     markdown = markdown.replace("\r\n", "\n")
     headings = list(re.finditer(r"^## (.+)$", markdown, re.M))
@@ -685,9 +837,10 @@ def dictionary_html(markdown: str, source_url: str) -> str:
                          '<div class="dictionary-source-body">' + markdown_html(content, source_url) + '</div></details>')
             cells.append(f'<{tag}{attributes} data-label="{label}">{text}</{tag}>')
 
-        rows.append('<tr>' + ''.join(cells) + '</tr>')
+        anchor = dictionary_entry_id("word", heading.group(1))
+        rows.append(f'<tr id="{anchor}">' + ''.join(cells) + '</tr>')
     return (translation_material_html(introduction, source_url)
-            + '<div class="dictionary-table-wrap"><table class="dictionary-table" aria-labelledby="channel-dictionary-title">'
+            + '<div class="dictionary-table-wrap"><table class="dictionary-table" aria-labelledby="dictionary-words-title">'
             '<thead><tr>' + ''.join(f'<th scope="col">{label}</th>' for label in labels) + '</tr></thead>'
             '<tbody>' + ''.join(rows) + '</tbody></table></div>')
 
@@ -714,9 +867,10 @@ def suffix_dictionary_html(markdown: str, source_url: str) -> str:
             scope = ' scope="row"' if index == 0 else ''
             content = inline(value.replace(r'\|', '|'), source_url)
             cells.append(f'<{tag}{scope} data-label="{label}">{content}</{tag}>')
-        rendered_rows.append('<tr>' + ''.join(cells) + '</tr>')
+        anchor = dictionary_entry_id("suffix", row[0])
+        rendered_rows.append(f'<tr id="{anchor}">' + ''.join(cells) + '</tr>')
     return (translation_material_html(introduction, source_url)
-            + '<div class="dictionary-table-wrap"><table class="dictionary-table suffix-dictionary-table" aria-labelledby="channel-suffix-dictionary-title">'
+            + '<div class="dictionary-table-wrap"><table class="dictionary-table suffix-dictionary-table" aria-labelledby="dictionary-suffixes-title">'
             '<thead><tr>' + ''.join(f'<th scope="col">{label}</th>' for label in labels) + '</tr></thead>'
             '<tbody>' + ''.join(rendered_rows) + '</tbody></table></div>'
             + translation_material_html(markdown[table_match.end():], source_url))
@@ -741,13 +895,17 @@ def abbreviation_dictionary_html(text: str) -> str:
         for index, (label, value) in enumerate(zip(labels, row)):
             tag = 'th' if index == 0 else 'td'
             scope = ' scope="row"' if index == 0 else ''
-            value = value.replace(r'\|', '|').replace('<br>', '\n')
-            content = plain_document_html(value) if value else ''
+            value = value.replace(r'\|', '|').replace('<br>', '\n\n')
+            content = markdown_html(value, SOURCE_URL + "docs/dictionary/abbreviations-source.txt") if value else ''
+            if index == 3 and len(value) > 500:
+                content = ('<details class="dictionary-sources"><summary>Заметки, контексты и источники</summary>'
+                           '<div class="dictionary-source-body">' + content + '</div></details>')
             cells.append(f'<{tag}{scope} data-label="{label}">{content}</{tag}>')
-        rendered_rows.append('<tr>' + ''.join(cells) + '</tr>')
+        anchor = dictionary_entry_id("abbreviation", row[0])
+        rendered_rows.append(f'<tr id="{anchor}">' + ''.join(cells) + '</tr>')
 
-    return (plain_document_html(introduction)
-            + '<div class="dictionary-table-wrap"><table class="dictionary-table abbreviation-dictionary-table" aria-labelledby="channel-abbreviations-title">'
+    return (translation_material_html(introduction, SOURCE_URL + "docs/dictionary/abbreviations-source.txt")
+            + '<div class="dictionary-table-wrap"><table class="dictionary-table abbreviation-dictionary-table" aria-labelledby="article-channel-abbreviations-title">'
             '<thead><tr>' + ''.join(f'<th scope="col">{label}</th>' for label in labels) + '</tr></thead>'
             '<tbody>' + ''.join(rendered_rows) + '</tbody></table></div>'
             + translation_material_html(text[table_match.end():], SOURCE_URL + "docs/dictionary/abbreviations-source.txt"))
@@ -779,18 +937,19 @@ def main() -> None:
     translations = {}
     purposes = {}
     resolved_copy_texts = {}
+    source_markdowns = {}
     sources_for_purposes: set[Path] = set()
     for relative in sorted(published_paths | translation_sources | purpose_sources):
         source_path = ROOT / relative
         if not relative.startswith("docs/transcriptions/") or not source_path.is_file() or not source_path.is_relative_to(ROOT / "docs" / "transcriptions"):
             raise ValueError(f"Нет исходника перевода: {relative}")
         markdown = source_path.read_text(encoding="utf-8")
+        source_markdowns[relative] = markdown
         entry = by_source.get(relative, {})
-        resolved_copy_texts[relative] = (entry.get("copyText") or transcription_section(markdown, "Текст для копирования")
-                                         or text_for_copy.get(relative) or original_transcription(markdown) or entry.get("bodyText", ""))
+        resolved_copy_texts[relative] = resolve_copy_text(markdown, entry, text_for_copy.get(relative, ""))
         analysis_modes[relative] = analysis_mode(markdown)
         acquisition_types[relative] = acquisition_type(markdown)
-        translations[relative] = author_translation_html(markdown, SOURCE_URL + relative, text_for_copy.get(relative, ""))
+        translations[relative] = author_translation_html(markdown, SOURCE_URL + relative, resolved_copy_texts[relative])
         purpose_relative = by_source.get(relative, {}).get("purposeSource", relative)
         purpose_path = ROOT / purpose_relative
         if not purpose_relative.startswith("docs/transcriptions/") or not purpose_path.is_file() or not purpose_path.is_relative_to(ROOT / "docs" / "transcriptions"):
@@ -815,6 +974,7 @@ def main() -> None:
         source,
     )
     source = attach_acquisition_icons(source, acquisition_types)
+    source = synchronize_copy_fields(source, resolved_copy_texts, reaction_keys)
     (SOURCE / "index.html").write_text(source, encoding="utf-8")
 
     source = re.sub(
@@ -830,6 +990,8 @@ def main() -> None:
             entry["analysisMode"] = analysis_modes.get(relative, "auto")
         if entry.get("type") in {"manual_transcription", "analysis"}:
             entry["acquisitionType"] = acquisition_types.get(relative, "written")
+            if relative in source_markdowns and section_markdown(source_markdowns[relative], ("Транскрипция для вывода",)) is not None:
+                entry["copyText"] = resolved_copy_texts[relative]
         if entry.get("published") and entry.get("type") in {"manual_transcription", "analysis"} and relative in reaction_keys:
             entry["reactionKey"] = reaction_keys[relative]
         else:
@@ -904,27 +1066,36 @@ def main() -> None:
     methodology_markdown = material_bytes[methodology_path].decode("utf-8-sig")
     methodology = translation_material_html(methodology_markdown, SOURCE_URL + "docs/dictionary/methodology.md")
     (SOURCE / "data" / "dictionary-methodology.html").write_text(methodology, encoding="utf-8")
-    source = source.replace('<div class="help-page dictionary-methodology" id="channel-dictionary-methodology"></div>',
-                            '<div class="help-page dictionary-methodology" id="channel-dictionary-methodology">' + methodology + '</div>')
-    dictionary = dictionary_html(material_bytes[dictionary_path].decode("utf-8-sig"), SOURCE_URL + "docs/dictionary/combined.md")
+    source = source.replace('<div class="help-page dictionary-methodology" id="dictionary-words-methodology"></div>',
+                            '<div class="help-page dictionary-methodology" id="dictionary-words-methodology">' + methodology + '</div>')
+    dictionary = dictionary_html(material_bytes[dictionary_path].decode("utf-8-sig"), SOURCE_URL + "docs/dictionary/combined.md").replace(f'href="{BASE_URL}/', 'href="/')
     (SOURCE / "data" / "dictionary.html").write_text(dictionary, encoding="utf-8")
-    source = source.replace('<div id="channel-dictionary-content"></div>', '<div id="channel-dictionary-content">' + dictionary + '</div>')
+    source = source.replace('<div id="dictionary-words-content"></div>', '<div id="dictionary-words-content">' + dictionary + '</div>')
     suffix_methodology_markdown = material_bytes[suffix_methodology_path].decode("utf-8-sig")
     suffix_methodology = translation_material_html(suffix_methodology_markdown, SOURCE_URL + "docs/dictionary/suffix-methodology.md")
-    suffix_methodology = suffix_methodology.replace(f'href="{SOURCE_URL}docs/dictionary/suffixes.md"', 'href="#channel-suffix-dictionary-title"')
-    suffix_dictionary = suffix_dictionary_html(material_bytes[suffix_path].decode("utf-8-sig"), SOURCE_URL + "docs/dictionary/suffixes.md")
+    suffix_methodology = suffix_methodology.replace(f'href="{SOURCE_URL}docs/dictionary/suffixes.md"', 'href="/dictionaries/suffixes-and-particles/"')
+    suffix_dictionary = suffix_dictionary_html(material_bytes[suffix_path].decode("utf-8-sig"), SOURCE_URL + "docs/dictionary/suffixes.md").replace(f'href="{BASE_URL}/', 'href="/')
     (SOURCE / "data" / "suffix-methodology.html").write_text(suffix_methodology, encoding="utf-8")
     (SOURCE / "data" / "suffix-dictionary.html").write_text(suffix_dictionary, encoding="utf-8")
-    source = source.replace('<div class="help-page dictionary-methodology" id="channel-suffix-methodology"></div>',
-                            '<div class="help-page dictionary-methodology" id="channel-suffix-methodology">' + suffix_methodology + '</div>')
-    source = source.replace('<div id="channel-suffix-dictionary-content"></div>', '<div id="channel-suffix-dictionary-content">' + suffix_dictionary + '</div>')
-    abbreviations = abbreviation_dictionary_html(material_bytes[abbreviations_path].decode("utf-8-sig"))
+    source = source.replace('<div class="help-page dictionary-methodology" id="dictionary-suffixes-methodology"></div>',
+                            '<div class="help-page dictionary-methodology" id="dictionary-suffixes-methodology">' + suffix_methodology + '</div>')
+    source = source.replace('<div id="dictionary-suffixes-content"></div>', '<div id="dictionary-suffixes-content">' + suffix_dictionary + '</div>')
+    abbreviations = abbreviation_dictionary_html(material_bytes[abbreviations_path].decode("utf-8-sig")).replace(f'href="{BASE_URL}/', 'href="/')
     (SOURCE / "data" / "abbreviations-dictionary.html").write_text(abbreviations, encoding="utf-8")
     (SOURCE / "data" / "dictionary_of_abbreviations.txt").write_bytes(material_bytes[abbreviations_path])
-    source = source.replace('<div id="channel-abbreviations-content"></div>', '<div id="channel-abbreviations-content">' + abbreviations + '</div>')
-    article_abbreviations = abbreviations.replace('aria-labelledby="channel-abbreviations-title"', 'aria-labelledby="article-channel-abbreviations-title"')
+    article_abbreviations = abbreviations
     (SOURCE / "data" / "abbreviations-article.html").write_text(article_abbreviations, encoding="utf-8")
     source = source.replace('<div id="article-channel-abbreviations-content"></div>', '<div id="article-channel-abbreviations-content">' + article_abbreviations + '</div>')
+
+    analyses_path = ROOT / "docs" / "TRANSCRIPTION_ANALYSES.md"
+    analyses_markdown = re.sub(r"^# [^\n]+\n", "", analyses_path.read_text(encoding="utf-8"), count=1)
+    analyses = markdown_html(analyses_markdown, BASE_URL + ROUTES["article-transcription-analyses"])
+    analyses = analyses.replace(f'href="{BASE_URL}/', 'href="/')
+    analyses = re.sub(r'<(/?)h([2-5])>', lambda match: f'<{match.group(1)}h{int(match.group(2)) + 1}>', analyses)
+    (SOURCE / "data" / "transcription-analyses.html").write_text(analyses, encoding="utf-8")
+    placeholder = '<div class="help-page" id="transcription-analyses-content"></div>'
+    source = source.replace(placeholder, '<div class="help-page" id="transcription-analyses-content">' + analyses + '</div>')
+
     panels = {match.group(1): match.group(0) for match in PANEL.finditer(source)}
     if set(panels) != set(ROUTES):
         raise ValueError(f"Маршруты и разделы не совпадают: {set(panels) ^ set(ROUTES)}")
@@ -933,17 +1104,26 @@ def main() -> None:
     translation_data.write_text(json.dumps(translations, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     purpose_data = SOURCE / "data" / "transcription-purposes.json"
     purpose_data.write_text(json.dumps(purposes, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    calendar_transcriptions = {
-        entry["sourceUrl"]: {
+    calendar_transcriptions = {}
+    for relative in sorted(published_paths):
+        markdown = source_markdowns[relative]
+        entry = calendar_entry(relative, markdown, source, by_source.get(relative))
+        entry.setdefault("bodyText", original_transcription(markdown) or resolved_copy_texts[relative])
+        calendar_transcriptions[SOURCE_URL + relative] = {
+            "entry": entry,
+            "originalText": original_transcription(markdown) or resolved_copy_texts[relative] or entry.get("bodyText", ""),
             "copyText": resolved_copy_texts[relative],
             "purposeHtml": purposes[relative],
+            "purposeText": " ".join(html.unescape(re.sub(r'<[^>]+>', ' ', purposes[relative])).split()),
             "translationHtml": translations[relative],
             "pageUrl": transcription_route(ROOT / relative),
             "acquisitionType": acquisition_types[relative],
         }
-        for relative, entry in by_source.items()
-        if entry.get("type") in {"manual_transcription", "analysis"}
-    }
+        commentary = commentary_markdown(markdown)
+        if commentary:
+            calendar_transcriptions[SOURCE_URL + relative]["commentaryHtml"] = markdown_html(
+                commentary, SOURCE_URL + relative, nested_lists=True
+            )
     (SOURCE / "data" / "calendar-transcriptions.json").write_text(
         json.dumps(calendar_transcriptions, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
@@ -981,12 +1161,21 @@ def main() -> None:
     ai_directory = OUTPUT / ROUTES["for-ai"].lstrip("/")
     ai_directory.mkdir(parents=True, exist_ok=True)
     (ai_directory / "index.md").write_text(ai_page_markdown(ai_panel, by_source, resolved_copy_texts), encoding="utf-8")
-    shutil.copyfile(dictionary_path, ai_directory / "dictionary.md")
-    shutil.copyfile(methodology_path, ai_directory / "dictionary-methodology.md")
-    shutil.copyfile(suffix_path, ai_directory / "suffixes.md")
-    shutil.copyfile(suffix_methodology_path, ai_directory / "suffix-methodology.md")
-    sources = [SOURCE / "index.html", verification_file, llms_file, Path(__file__), dictionary_path, methodology_path,
-               suffix_path, suffix_methodology_path, abbreviations_path, reaction_manifest_path]
+    dictionary_directory = OUTPUT / "dictionaries"
+    dictionary_directory.mkdir(parents=True, exist_ok=True)
+    for path, filename, legacy_filename, route in (
+        (dictionary_path, "words.md", "dictionary.md", ROUTES["dictionary-words"]),
+        (methodology_path, "methodology.md", "dictionary-methodology.md", ROUTES["dictionary-words"]),
+        (suffix_path, "suffixes.md", "suffixes.md", ROUTES["dictionary-suffixes"]),
+        (suffix_methodology_path, "suffix-methodology.md", "suffix-methodology.md", ROUTES["dictionary-suffixes"]),
+    ):
+        shutil.copyfile(path, dictionary_directory / filename)
+        pointer = ("# Current dictionary material\n\n"
+                   f"[Current page]({BASE_URL}{route})\n\n"
+                   f"[Current Markdown]({BASE_URL}/dictionaries/{filename})\n")
+        (ai_directory / legacy_filename).write_text(pointer, encoding="utf-8")
+    sources = [SOURCE / "index.html", verification_file, llms_file, Path(__file__), Path(__file__).with_name("transcription_sections.py"), dictionary_path, methodology_path,
+               suffix_path, suffix_methodology_path, abbreviations_path, analyses_path, reaction_manifest_path]
     sources.extend(sources_for_purposes)
     sources.extend(path for folder in ("assets", "data") for path in (SOURCE / folder).rglob("*") if path.is_file())
     urls = []
@@ -994,9 +1183,17 @@ def main() -> None:
         panel = PUBLISHED_LINK.sub(lambda match: f'href="{transcription_route(ROOT / match.group(1))}"', panels[panel_id])
         title_match = re.search(r'data-title="([^"]+)"', panel)
         title = title_match.group(1) if title_match else panel_id
-        description = re.sub(r'<[^>]+>', ' ', panel)
-        description = re.sub(r'\s+', ' ', description).strip()[:155]
-        markdown_route = route + "index.md" if panel_id == "for-ai" else ""
+        description_match = re.search(r'\bdata-description="([^"]+)"', panel.split(">", 1)[0])
+        if description_match:
+            description = html.unescape(description_match.group(1))
+        else:
+            description = re.sub(r'<[^>]+>', ' ', panel)
+            description = re.sub(r'\s+', ' ', description).strip()[:155]
+        markdown_route = {
+            "for-ai": route + "index.md",
+            "dictionary-words": "/dictionaries/words.md",
+            "dictionary-suffixes": "/dictionaries/suffixes.md",
+        }.get(panel_id, "")
         page = html_document(source, panel, panel_id, title, description, route, markdown_route)
         path = page_path(route)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1017,7 +1214,9 @@ def main() -> None:
         heading = re.search(r'^#\s+(.+)$', markdown, re.M)
         title = entry.get("title") or (heading.group(1) if heading else source_path.stem)
         copy_text = resolved_copy_texts[relative]
-        analysis = markdown_html(markdown, source_url)
+        has_commentary = bool(commentary_markdown(markdown))
+        has_nested_translation = re.search(r'(?m)^[ \t]{2,}[-*] ', author_translation_markdown(markdown)) is not None
+        analysis = markdown_html(markdown, source_url, nested_lists=has_commentary or has_nested_translation)
         copy_block = ""
         if copy_text:
             copy_block = (
@@ -1061,6 +1260,28 @@ def main() -> None:
         # Исходные относительные ссылки словаря требуют копии по пути Markdown-файла
         shutil.copyfile(source_path, OUTPUT / relative.removeprefix("docs/"))
         urls.append(BASE_URL + route)
+
+    # Прежние адреса удалённых общих копий ведут к единственному тематическому разбору
+    for previous, retained in TRANSCRIPTION_REDIRECTS.items():
+        if retained not in published_paths:
+            raise ValueError(f"Нет опубликованного разбора для прежнего адреса: {retained}")
+        route = transcription_route(ROOT / previous)
+        target_route = transcription_route(ROOT / retained)
+        target_url = BASE_URL + target_route
+        redirect = (
+            '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8">'
+            f'<meta http-equiv="refresh" content="0;url={html.escape(target_route, quote=True)}">'
+            f'<link rel="canonical" href="{html.escape(target_url, quote=True)}">'
+            '<meta name="robots" content="noindex,follow"><title>Разбор перенесён</title></head><body>'
+            f'<p>Разбор перенесён в тематический раздел. <a href="{html.escape(target_route, quote=True)}">Открыть разбор</a></p>'
+            '</body></html>\n'
+        )
+        pointer = f"# Разбор перенесён\n\n[Открыть единственный тематический разбор]({target_url})\n"
+        path = page_path(route)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(redirect, encoding="utf-8")
+        path.with_suffix(".md").write_text(pointer, encoding="utf-8")
+        (OUTPUT / previous.removeprefix("docs/")).write_text(pointer, encoding="utf-8")
 
     manifest = {str(path.relative_to(ROOT)).replace("\\", "/"): digest_file(path) for path in sorted(set(sources))}
     manifest_text = json.dumps({"schema": 1, "sources": manifest}, ensure_ascii=False, indent=2) + "\n"
