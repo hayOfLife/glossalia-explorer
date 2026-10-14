@@ -123,7 +123,7 @@ class StaticBuildTest(unittest.TestCase):
     def test_analysis_index_preserves_distinct_versions_and_links(self) -> None:
         catalogue = ROOT / "docs/TRANSCRIPTION_ANALYSES.md"
         links = re.findall(r'^- \[([^\n]+)\]\((https://[^)]+)\)', catalogue.read_text(encoding="utf-8"), re.M)
-        self.assertEqual(77, len(links))
+        self.assertEqual(81, len(links))
         self.assertEqual(len(links), len({url for _, url in links}))
         fragment = (OUTPUT / "data/transcription-analyses.html").read_text(encoding="utf-8")
         parser = PageParser()
@@ -221,7 +221,12 @@ class StaticBuildTest(unittest.TestCase):
                           "../transcriptions/T00035/script14_analysis.md", "../transcriptions/T00045/part_1.md",
                           "../transcriptions/T00045/part_2.md", "../transcriptions/T00046.md",
                           "../transcriptions/T00049.md", "../transcriptions/T00050/part_1.md", "../transcriptions/T00055.md", "../transcriptions/T00056.md",
+                          "../transcriptions/T00051.md", "../transcriptions/T00052.md",
+                          "../transcriptions/T00053.md", "../transcriptions/T00060.md",
                           "../transcriptions/T00017.md", "../transcriptions/T00019.md", "../transcriptions/T00020.md",
+                          "../transcriptions/T00027/part_1.md", "../transcriptions/T00032/part_2.md",
+                          "../transcriptions/T00038.md", "../transcriptions/T00040/part_1.md",
+                          "../transcriptions/T00042/part_2.md",
                           "../transcriptions/T00027/part_7.md", "../transcriptions/T00033/part_5.md",
                           "../transcriptions/T00039.md", "../transcriptions/T00059.md",
                           "../transcriptions/T00061.md", "../transcriptions/T00063.md",
@@ -840,7 +845,7 @@ class StaticBuildTest(unittest.TestCase):
         self.assertLess(transcription_page.index('id="transcription-copy"'), transcription_page.index('class="author-translation"'))
 
         purposes = json.loads((ROOT / "site" / "public_html" / "data" / "transcription-purposes.json").read_text(encoding="utf-8"))
-        self.assertEqual(38, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
+        self.assertEqual(39, (ROOT / "site" / "public_html" / "index.html").read_text(encoding="utf-8").count('class="transcription-purpose"'))
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00033/part_1.md"])
         self.assertEqual("<p>Пока не заполнено</p>", purposes["docs/transcriptions/T00034/part_1.md"])
         for relative in ("docs/transcriptions/T00032/part_3.md", "docs/transcriptions/T00045/part_2.md", "docs/transcriptions/T00047/part_1.md"):

@@ -9,6 +9,7 @@ This is my working notebook for continuing this particular chat and project, cre
 1. Read the repository [AGENTS.md](../AGENTS.md) and the applicable documentation rules.
 2. Read [project and chat context](project-context.md) for the author's decisions and the source layout.
 3. For a transcription, read [my decoding workflow](decoding-workflow.md), then the current prompt and canonical dictionaries.
+   When spellings and recorded sounds differ, consult the [spelling and sound reference](spelling-and-sound.md) and check its language, stress and pronunciation conditions.
 4. Read [working hypotheses](hypotheses.md) when a new passage resembles one of the saved cases.
 5. Verify dates, file contents, publication state and dictionary readings in the current checkout. A dated note is not evidence that a file has since been committed or deployed.
 
@@ -18,6 +19,7 @@ This is my working notebook for continuing this particular chat and project, cre
 | --- | --- |
 | [Project and chat context](project-context.md) | Author preferences, ownership of sources, site integration and recent records |
 | [Decoding workflow](decoding-workflow.md) | How to move from exact sounds to alternatives and a coherent proposed translation |
+| [Spelling and sound](spelling-and-sound.md) | Conditional pronunciation correspondences in Russian, Latin, Greek and Hebrew |
 | [Working hypotheses](hypotheses.md) | My models of compression, mixed language, scope and the T00061 case |
 
 ## Relationship to existing material

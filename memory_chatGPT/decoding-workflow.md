@@ -8,6 +8,8 @@ I get more useful candidates by retaining the exact sound structure, testing sma
 
 Read the current [main prompt](../site/public_html/data/promptForAlice_guessingTheMeaningOfTheGlossary.txt), [word method](../docs/dictionary/methodology.md), [suffix method](../docs/dictionary/suffix-methodology.md) and [sign system](../site/public_html/assets/documents/transcription-symbol-systems.md). These owners can change; this page saves how I reason, rather than a second copy of their definitions.
 
+For differing spellings and sounds, consult the [spelling and sound reference](spelling-and-sound.md), added on 13 October 2026. Apply each correspondence only with its language, pronunciation tradition and positional conditions; preserve uncertain stress and the original recorded form.
+
 ## 1. Keep three layers separate
 
 | Layer | What it contains |
@@ -95,4 +97,26 @@ The current source is [T00065](../docs/transcriptions/T00065.md). The author aut
 - Keep a sentence ending when composing the readable translation: «\» and «/» have the same function. Several command-like fragments before that boundary can be separated by semicolons without inventing new sentence endings.
 - Revise the candidate when the author corrects its intended image. For «серрум», the current direction is alchemical sulfur, not the previously proposed iron properties «устойчивость / защитная прочность». The sulfur–soul analogy is documented in the sources retained in T00065; the identification of this recorded word remains an author hypothesis. The isolated «ф» after the pause remains unresolved.
 - Keep contextual candidates local. «лоялти» can suggest faithfulness or commitment to a cause; the object of that commitment is not supplied by the word. «юр → юридический» and «ва → вариант» are author proposals for this case, not universal replacements in every similar form.
-- Preserve unknown words in the coherent version instead of letting a fluent reconstruction hide them. The acquaintance's biography supplies receiving circumstances, not independent evidence for a particular lexical reading.
+- Preserve unknown words in the coherent version instead of letting a fluent reconstruction hide them. Receiving circumstances do not independently establish a particular lexical reading.
+
+## 11. Check a whole word before splitting it, 13 October 2026
+
+The lexical audit found [Ергостериум](../docs/transcriptions/T00046.md) close to Latin ergasterium, a workshop, attested in Isidore XV.6.1 and related to Greek ἐργαστήριον. The full consonant sequence is explained without inventing several tiny roots; the recorded vowel о versus а still needs checking. This is a strong candidate, not an independently verified reading of the prayer.
+
+Use this order: search the full form and close whole-word spellings, try two or three large components, and only then test short-root combinations. Latin borrowings from Greek and specialised or older vocabulary can account for a long form more economically than a mixed-language compound. A useful whole-word match does not require interpreting every familiar-looking internal sequence as its own morpheme.
+
+Also distinguish a correction to the source-language gloss from rejection of the author's image. The audit separated tenendum, holding or retaining, from the proposed remelting image; that image can remain attributed to the author. When replacing a Strong number for a noun, preserve an adjacent correct number referring to its verb. Recheck both the label and the actual link.
+
+### Compare sounds before counting vowel substitutions, 13 October 2026
+
+The author reminded me that a transcription records speech sounds and proposed Russian unstressed а/о merger for Ергостериум versus ergasterium. The tentative stress was «ЕргостЕриум  вроде». With that stress, the vowel is pretonic; Russian adaptation can make the two source spellings sound close. Compare the plausible sound and stress before treating a different letter as an unexplained sound change. Preserve the exact recorded form, the author's uncertainty about stress, and the candidate status; do not generalise Russian reduction into a rule of Latin or arbitrary vowel replacement.
+
+### Other audit lessons worth keeping, 13 October 2026
+
+- A wrong dictionary reference does not necessarily invalidate the whole proposed meaning. Correct the exact defect first: the reference, foreign spelling, part of speech, grammatical form or claimed literal meaning. For example, distinguish a noun's Strong entry from its related verb rather than changing every occurrence of the number in a block.
+- A recognised component can improve the analysis without solving its container. Keep the unknown remainder visible: `Ен · воркинг`, `екторгум · форк` and `Ергостериум · ефо` are partial readings, not complete translations. A smooth sentence must not silently supply a subject, object or completed outcome.
+- Test grammar after recognising a word. Latin `volutus` is not an imperative merely because the proposed translation contains a command. Likewise, a recorded Greek stem without its ending does not establish person, tense or mood. Keep a useful contextual instruction separate from the lexical form supporting it.
+- Correcting a foreign gloss does not require deleting an author's image. `tenendum` supports holding or retaining; remelting remains a separately attributed interpretation. This distinction lets me remove a definite linguistic error while retaining useful context.
+- Count independent original occurrences, not quotations, indexes or full copies of one analysis. A repeated form helps select a search direction; repeated proposed translations do not independently confirm its meaning.
+
+The detailed changes and verification belong to the [dated lexical audit](../docs/dictionary/lexical-audit-2026-10-13.md), while current meanings remain in the canonical dictionaries. These notes keep the reasoning procedure rather than another active dictionary.

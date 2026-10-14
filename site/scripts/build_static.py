@@ -38,6 +38,7 @@ ROUTES = {
     "termination-of-pregnancy": "/termination-of-pregnancy/",
     "situation-5": "/situations/agnosticism/",
     "situation-6": "/situations/life-partner/",
+    "situation-11": "/situations/psychological-support/",
     "situation-7": "/situations/mental-health/",
     "situation-8": "/situations/divine-guidance/",
     "situation-9": "/situations/occultism-support/",
